@@ -152,9 +152,7 @@ export default function FormatoPage() {
         {/* Header */}
         <div className="flex items-start justify-between mb-2">
           <div className="flex items-center gap-3 flex-1">
-            <div className="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center text-xs text-gray-500 text-center leading-tight">
-              Escudo<br />UNDC
-            </div>
+            <img src="/UNDC_logo.jpg" alt="UNDC" className="w-20 h-20 object-contain rounded-full" />
             <div className="text-center flex-1">
               <p className="text-xs text-gray-500 italic">Ley de Org. N° 29498</p>
               <p className="text-[10px] text-gray-400">Licenciada según Res. del Consejo Universitario N° 116-2019-SUNEDU/CD</p>
@@ -162,9 +160,7 @@ export default function FormatoPage() {
               <p className="font-bold text-sm">SERVICIO DE COMEDOR UNIVERSITARIO</p>
             </div>
           </div>
-          <div className="w-16 h-16 bg-gray-200 rounded flex items-center justify-center text-[10px] text-gray-500 text-center">
-            DBU
-          </div>
+          <img src="/DBU.jpg" alt="DBU" className="w-16 h-16 object-contain" />
         </div>
 
         <div className="text-center mb-3">
