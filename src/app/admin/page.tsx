@@ -81,6 +81,12 @@ export default function AdminPage() {
               📄 Formato
             </button>
             <button
+              onClick={() => router.push("/admin/historial")}
+              className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-xl transition text-sm font-medium"
+            >
+              📚 Historial
+            </button>
+            <button
               onClick={() => router.push("/admin/monitoreo")}
               className="bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded-xl transition text-sm font-medium"
             >

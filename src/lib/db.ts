@@ -60,6 +60,17 @@ function initDb(database: Database.Database) {
     CREATE INDEX IF NOT EXISTS idx_inscripciones_cupo ON inscripciones(cupo_id);
     CREATE INDEX IF NOT EXISTS idx_inscripciones_estudiante ON inscripciones(estudiante_id);
     CREATE INDEX IF NOT EXISTS idx_estudiantes_codigo ON estudiantes(codigo);
+
+    CREATE TABLE IF NOT EXISTS formatos_guardados (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      fecha TEXT NOT NULL,
+      tipo TEXT NOT NULL CHECK(tipo IN ('almuerzo', 'cena')),
+      capacidad INTEGER NOT NULL,
+      cantidad_inscritos INTEGER NOT NULL,
+      inscritos_json TEXT NOT NULL,
+      guardado_en DATETIME DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(fecha, tipo)
+    );
   `);
 
   // Insertar admin por defecto si no existe
