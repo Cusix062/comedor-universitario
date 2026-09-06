@@ -39,7 +39,7 @@ export default function ValidarPage() {
     setMensaje("");
 
     if (!busqueda.trim()) {
-      setError("Ingrese un código, nombre o DNI");
+      setError("Ingrese un código, nombre o N° de cupo");
       return;
     }
 
@@ -76,6 +76,7 @@ export default function ValidarPage() {
         setResultado(null);
         setBusqueda("");
         fetchInscritos();
+        inputRef.current?.focus();
       }
     } catch {
       setError("Error al marcar asistencia");
@@ -94,25 +95,29 @@ export default function ValidarPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-gradient-to-r from-purple-600 to-pink-600 text-white p-4 shadow-lg">
-        <div className="max-w-4xl mx-auto flex justify-between items-center">
-          <div>
-            <h1 className="text-xl font-bold">📱 Validación de Tickets</h1>
-            <p className="text-purple-100 text-sm">Escanea o busca por código/nombre</p>
+      <header className="text-white shadow-lg" style={{ background: "linear-gradient(135deg, #581c87, #7c3aed)" }}>
+        <div className="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center text-lg">
+              📱
+            </div>
+            <div>
+              <h1 className="text-lg font-bold">Validación de Tickets</h1>
+              <p className="text-purple-200 text-xs">Escanea o busca por código/nombre</p>
+            </div>
           </div>
           <button
             onClick={() => router.push("/admin")}
-            className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition"
+            className="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-xl transition text-sm font-medium"
           >
             ← Volver
           </button>
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto p-4 space-y-6">
-        {/* Buscador */}
-        <div className="bg-white rounded-xl shadow p-6">
-          <div className="flex gap-4">
+      <main className="max-w-5xl mx-auto p-4 space-y-5">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <div className="flex gap-3">
             <input
               ref={inputRef}
               type="text"
@@ -120,62 +125,61 @@ export default function ValidarPage() {
               onChange={(e) => setBusqueda(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Escribe código, nombre o N° de cupo..."
-              className="flex-1 border-2 border-gray-300 rounded-xl px-4 py-4 text-lg focus:border-purple-500 focus:outline-none"
+              className="flex-1 border-2 border-gray-200 rounded-xl px-5 py-4 text-base text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all"
             />
             <button
               onClick={buscar}
-              className="bg-purple-500 text-white px-8 py-4 rounded-xl font-semibold hover:bg-purple-600 transition text-lg"
+              className="text-white px-8 py-4 rounded-xl font-semibold transition-all shadow-lg hover:scale-[1.02] active:scale-[0.98] flex items-center gap-2"
+              style={{ background: "linear-gradient(135deg, #7c3aed, #6d28d9)" }}
             >
               🔍 Buscar
             </button>
           </div>
-          <p className="text-sm text-gray-500 mt-2">
+          <p className="text-xs text-gray-400 mt-2">
             Presiona Enter para buscar o confirmar atención
           </p>
         </div>
 
-        {/* Mensajes */}
         {mensaje && (
-          <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-lg">
-            {mensaje}
+          <div className="bg-green-50 border border-green-200 text-green-700 px-5 py-4 rounded-xl flex items-center gap-3">
+            <span className="text-xl">✅</span>
+            <span className="font-medium">{mensaje}</span>
           </div>
         )}
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-lg">
-            {error}
+          <div className="bg-red-50 border border-red-200 text-red-700 px-5 py-4 rounded-xl flex items-center gap-3">
+            <span className="text-xl">⚠️</span>
+            <span className="font-medium">{error}</span>
           </div>
         )}
 
-        {/* Resultado */}
         {resultado && (
-          <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-            <div className={`p-6 ${
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className={`px-6 py-8 text-center ${
               resultado.estado === "atendido"
-                ? "bg-green-500"
+                ? "bg-emerald-500"
                 : resultado.turno === "almuerzo"
-                ? "bg-red-500"
-                : "bg-orange-500"
-            } text-white text-center`}>
-              <p className="text-6xl font-bold">#{resultado.numero_orden}</p>
-              <p className="text-xl mt-2">
+                ? "bg-green-500"
+                : "bg-amber-500"
+            }`}>
+              <p className="text-6xl font-bold text-white">#{resultado.numero_orden}</p>
+              <p className="text-xl mt-2 text-white/90 font-medium">
                 {resultado.turno === "almuerzo" ? "🥗 Almuerzo" : "🌙 Cena"}
               </p>
             </div>
-            <div className="p-6 space-y-3">
-              <div className="flex justify-between">
-                <span className="text-gray-500">Nombre:</span>
-                <span className="font-bold text-lg">{resultado.nombre}</span>
+            <div className="p-6 space-y-4">
+              <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                <span className="text-sm text-gray-500">Nombre</span>
+                <span className="font-bold text-gray-800">{resultado.nombre}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Código:</span>
-                <span className="font-bold">{resultado.codigo}</span>
+              <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                <span className="text-sm text-gray-500">Código</span>
+                <span className="font-bold text-gray-800 font-mono">{resultado.codigo}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Estado:</span>
+              <div className="flex justify-between items-center py-2">
+                <span className="text-sm text-gray-500">Estado</span>
                 <span className={`font-bold ${
-                  resultado.estado === "reservado"
-                    ? "text-yellow-600"
-                    : "text-green-600"
+                  resultado.estado === "reservado" ? "text-amber-600" : "text-green-600"
                 }`}>
                   {resultado.estado === "reservado" ? "⏳ Pendiente" : "✅ Atendido"}
                 </span>
@@ -184,7 +188,8 @@ export default function ValidarPage() {
               {resultado.estado === "reservado" && (
                 <button
                   onClick={marcarAtendido}
-                  className="w-full bg-green-500 text-white py-4 rounded-xl font-bold text-xl hover:bg-green-600 transition mt-4"
+                  className="w-full text-white py-4 rounded-xl font-bold text-lg transition-all shadow-lg shadow-green-500/25 hover:shadow-green-500/40 hover:scale-[1.02] active:scale-[0.98] mt-4"
+                  style={{ background: "linear-gradient(135deg, #16a34a, #15803d)" }}
                 >
                   ✅ Marcar como Atendido
                 </button>
@@ -193,18 +198,20 @@ export default function ValidarPage() {
           </div>
         )}
 
-        {/* Lista rápida */}
-        <div className="bg-white rounded-xl shadow p-4">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="font-semibold">📋 Lista del día</h2>
+            <h2 className="text-base font-bold text-gray-800 flex items-center gap-2">
+              <span className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center text-sm">📋</span>
+              Lista del día
+            </h2>
             <input
               type="date"
               value={fecha}
               onChange={(e) => setFecha(e.target.value)}
-              className="border rounded-lg px-3 py-1 text-sm"
+              className="border-2 border-gray-200 rounded-xl px-3 py-1.5 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none"
             />
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
             {inscritos.map((insc) => (
               <button
                 key={insc.id}
@@ -214,22 +221,25 @@ export default function ValidarPage() {
                   setError("");
                   setMensaje("");
                 }}
-                className={`p-3 rounded-lg text-left border-2 transition ${
+                className={`p-4 rounded-xl text-left border-2 transition-all hover:scale-[1.02] active:scale-[0.98] ${
                   insc.estado === "atendido"
                     ? "border-green-300 bg-green-50"
                     : insc.turno === "almuerzo"
-                    ? "border-red-200 hover:border-red-400 bg-red-50"
-                    : "border-orange-200 hover:border-orange-400 bg-orange-50"
+                    ? "border-gray-200 hover:border-green-400 bg-white"
+                    : "border-gray-200 hover:border-amber-400 bg-white"
                 }`}
               >
-                <p className="font-bold text-lg">#{insc.numero_orden}</p>
-                <p className="text-sm text-gray-700 truncate">{insc.nombre}</p>
-                <p className="text-xs text-gray-500">{insc.codigo}</p>
+                <p className="font-bold text-xl text-gray-800">#{insc.numero_orden}</p>
+                <p className="text-xs text-gray-600 truncate mt-1">{insc.nombre}</p>
+                <p className="text-xs text-gray-400 font-mono mt-0.5">{insc.codigo}</p>
               </button>
             ))}
           </div>
           {inscritos.length === 0 && (
-            <p className="text-center text-gray-500 py-4">No hay inscritos hoy</p>
+            <div className="text-center py-8">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center text-3xl mx-auto mb-3">📭</div>
+              <p className="text-gray-400">No hay inscritos hoy</p>
+            </div>
           )}
         </div>
       </main>

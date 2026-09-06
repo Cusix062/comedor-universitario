@@ -43,14 +43,13 @@ export default function RegistroPage() {
     setTelefono(est.telefono || "");
     setCiclo(est.ciclo || 1);
 
-    // Actualizar hora cada segundo
     const timer = setInterval(() => setHoraActual(new Date()), 1000);
     return () => clearInterval(timer);
   }, [router]);
 
   useEffect(() => {
     fetchCupos();
-    const interval = setInterval(fetchCupos, 30000); // Actualizar cada 30s
+    const interval = setInterval(fetchCupos, 30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -83,7 +82,6 @@ export default function RegistroPage() {
         return;
       }
 
-      // Obtener el ID del cupo
       const cuposRes = await fetch(`/api/cupos?fecha=${fecha}`);
       const cuposDelDia = await cuposRes.json();
 
@@ -94,8 +92,6 @@ export default function RegistroPage() {
       }
 
       if (!cupoId) {
-        // Si no tenemos el ID, necesitamos obtenerlo de otra forma
-        // Por ahora, crear el cupo si no existe
         const crearRes = await fetch("/api/admin/turnos", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -110,7 +106,6 @@ export default function RegistroPage() {
           return;
         }
 
-        // Volver a obtener cupos
         const cuposRes2 = await fetch(`/api/cupos?fecha=${fecha}`);
         const cuposData2 = await cuposRes2.json();
         const turnoData = tipo === "almuerzo" ? cuposData2.almuerzo : cuposData2.cena;
@@ -122,7 +117,6 @@ export default function RegistroPage() {
         return;
       }
 
-      // Registrar inscripción
       const regRes = await fetch("/api/registro", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -154,9 +148,9 @@ export default function RegistroPage() {
     const horaEnMinutos = hora * 60 + minutos;
 
     if (tipo === "almuerzo") {
-      return horaEnMinutos >= 630; // 10:30 AM
+      return horaEnMinutos >= 630;
     } else {
-      return horaEnMinutos >= 930; // 3:30 PM
+      return horaEnMinutos >= 930;
     }
   };
 
@@ -166,178 +160,248 @@ export default function RegistroPage() {
     router.push("/");
   };
 
-  if (!estudiante) return <div className="min-h-screen flex items-center justify-center">Cargando...</div>;
+  const porcentajeAlmuerzo = cupos?.almuerzo && cupos.almuerzo.capacidad > 0
+    ? (cupos.almuerzo.ocupados / cupos.almuerzo.capacidad) * 100
+    : 0;
+
+  const porcentajeCena = cupos?.cena && cupos.cena.capacidad > 0
+    ? (cupos.cena.ocupados / cupos.cena.capacidad) * 100
+    : 0;
+
+  if (!estudiante) return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="text-center">
+        <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto" />
+        <p className="mt-4 text-gray-500 font-medium">Cargando...</p>
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-gradient-to-r from-red-600 to-orange-500 text-white p-4 shadow-lg">
-        <div className="max-w-4xl mx-auto flex justify-between items-center">
-          <div>
-            <h1 className="text-xl font-bold">🍽️ Comedor Universitario</h1>
-            <p className="text-red-100 text-sm">Registro de Adicionales</p>
+      <header className="text-white shadow-lg" style={{ background: "linear-gradient(135deg, #1e3a5f, #2563eb)" }}>
+        <div className="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center text-lg">
+              🍽️
+            </div>
+            <div>
+              <h1 className="text-lg font-bold">Comedor Universitario</h1>
+              <p className="text-blue-200 text-xs">Registro de Adicionales</p>
+            </div>
           </div>
           <div className="text-right">
-            <p className="font-medium">{estudiante.nombre}</p>
-            <p className="text-red-100 text-sm">Código: {estudiante.codigo}</p>
+            <p className="font-semibold text-sm">{estudiante.nombre}</p>
+            <p className="text-blue-200 text-xs">Código: {estudiante.codigo}</p>
           </div>
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto p-4 space-y-6">
-        {/* Reloj */}
-        <div className="bg-white rounded-xl shadow p-4 text-center">
-          <p className="text-gray-500 text-sm">Hora actual</p>
-          <p className="text-3xl font-mono font-bold text-gray-800">
-            {horaActual.toLocaleTimeString("es-PE", { hour12: true })}
-          </p>
+      <main className="max-w-5xl mx-auto p-4 space-y-5">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex items-center justify-between">
+          <div>
+            <p className="text-xs text-gray-400 uppercase tracking-wider font-medium">Hora actual</p>
+            <p className="text-3xl font-bold text-gray-800 font-mono tracking-wider mt-1">
+              {horaActual.toLocaleTimeString("es-PE", { hour12: true })}
+            </p>
+          </div>
+          <div className="text-right">
+            <p className="text-xs text-gray-400 uppercase tracking-wider font-medium">Fecha</p>
+            <p className="text-sm font-semibold text-gray-600 mt-1">
+              {horaActual.toLocaleDateString("es-PE", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+            </p>
+          </div>
         </div>
 
-        {/* Mensajes */}
         {mensaje && (
-          <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
-            ✅ {mensaje}
+          <div className="bg-green-50 border border-green-200 text-green-700 px-5 py-4 rounded-xl flex items-center gap-3">
+            <span className="text-xl">✅</span>
+            <span className="font-medium">{mensaje}</span>
           </div>
         )}
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-            ❌ {error}
+          <div className="bg-red-50 border border-red-200 text-red-700 px-5 py-4 rounded-xl flex items-center gap-3">
+            <span className="text-xl">⚠️</span>
+            <span className="font-medium">{error}</span>
           </div>
         )}
 
-        {/* Datos del estudiante */}
-        <div className="bg-white rounded-xl shadow p-6">
-          <h2 className="text-lg font-semibold mb-4">📋 Tus Datos</h2>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm text-gray-600">Nombre</label>
-              <p className="font-medium">{estudiante.nombre}</p>
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <h2 className="text-base font-bold text-gray-800 mb-4 flex items-center gap-2">
+            <span className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center text-sm">📋</span>
+            Tus Datos
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-gray-50 rounded-xl p-3">
+              <p className="text-xs text-gray-400 font-medium">Nombre</p>
+              <p className="font-semibold text-gray-800 text-sm mt-1">{estudiante.nombre}</p>
             </div>
-            <div>
-              <label className="block text-sm text-gray-600">Código</label>
-              <p className="font-medium">{estudiante.codigo}</p>
+            <div className="bg-gray-50 rounded-xl p-3">
+              <p className="text-xs text-gray-400 font-medium">Código</p>
+              <p className="font-semibold text-gray-800 text-sm mt-1">{estudiante.codigo}</p>
             </div>
-            <div>
-              <label className="block text-sm text-gray-600">Correo</label>
-              <p className="font-medium">{estudiante.correo}</p>
+            <div className="bg-gray-50 rounded-xl p-3">
+              <p className="text-xs text-gray-400 font-medium">Correo</p>
+              <p className="font-semibold text-gray-800 text-sm mt-1 truncate">{estudiante.correo}</p>
             </div>
-            <div>
-              <label className="block text-sm text-gray-600">Ciclo</label>
-              <p className="font-medium">{estudiante.ciclo}°</p>
+            <div className="bg-gray-50 rounded-xl p-3">
+              <p className="text-xs text-gray-400 font-medium">Ciclo</p>
+              <p className="font-semibold text-gray-800 text-sm mt-1">{estudiante.ciclo}°</p>
             </div>
           </div>
         </div>
 
-        {/* Turnos disponibles */}
-        <div className="grid md:grid-cols-2 gap-4">
-          {/* Almuerzo */}
-          <div className="bg-white rounded-xl shadow p-6">
-            <div className="text-center mb-4">
-              <span className="text-4xl">🥗</span>
-              <h3 className="text-xl font-bold mt-2">Almuerzo</h3>
-              <p className="text-gray-500 text-sm">Apertura: 10:30 AM</p>
-            </div>
-            {cupos?.almuerzo && cupos.almuerzo.capacidad > 0 ? (
-              <>
-                <div className="mb-4">
-                  <div className="flex justify-between text-sm mb-1">
-                    <span>Cupos:</span>
-                    <span className="font-bold">
-                      {cupos.almuerzo.ocupados}/{cupos.almuerzo.capacidad}
-                    </span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-3">
-                    <div
-                      className="bg-red-500 h-3 rounded-full transition-all"
-                      style={{
-                        width: `${(cupos.almuerzo.ocupados / cupos.almuerzo.capacidad) * 100}%`,
-                      }}
-                    />
-                  </div>
+        <div className="grid md:grid-cols-2 gap-5">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-5">
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl" style={{ background: "linear-gradient(135deg, #dcfce7, #bbf7d0)" }}>
+                  🥗
                 </div>
-                <button
-                  onClick={() => registrarEnTurno("almuerzo")}
-                  disabled={!puedeRegistrar("almuerzo") || cupos.almuerzo.estado === "cerrado" || cargando}
-                  className={`w-full py-3 rounded-lg font-semibold transition ${
-                    puedeRegistrar("almuerzo") && cupos.almuerzo.estado !== "cerrado"
-                      ? "bg-red-500 text-white hover:bg-red-600"
-                      : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                  }`}
-                >
-                  {!puedeRegistrar("almuerzo")
-                    ? "⏰ Abre a las 10:30 AM"
-                    : cupos.almuerzo.estado === "cerrado"
-                    ? "❌ Cupos Agotados"
-                    : cargando
-                    ? "⏳ Registrando..."
-                    : "🍽️ Solicitar Almuerzo"}
-                </button>
-              </>
-            ) : (
-              <p className="text-center text-gray-500">Sin cupos configurados</p>
-            )}
+                <div>
+                  <h3 className="text-lg font-bold text-gray-800">Almuerzo</h3>
+                  <p className="text-xs text-gray-400">Apertura: 10:30 AM</p>
+                </div>
+              </div>
+
+              {cupos?.almuerzo && cupos.almuerzo.capacidad > 0 ? (
+                <>
+                  <div className="mb-5">
+                    <div className="flex justify-between items-end mb-2">
+                      <span className="text-sm text-gray-500">Cupos disponibles</span>
+                      <span className="text-lg font-bold text-gray-800">
+                        {cupos.almuerzo.ocupados}/{cupos.almuerzo.capacidad}
+                      </span>
+                    </div>
+                    <div className="w-full bg-gray-100 rounded-full h-3">
+                      <div
+                        className="h-3 rounded-full transition-all duration-500"
+                        style={{
+                          width: `${porcentajeAlmuerzo}%`,
+                          background: porcentajeAlmuerzo >= 80
+                            ? "linear-gradient(90deg, #f97316, #dc2626)"
+                            : "linear-gradient(90deg, #22c55e, #16a34a)",
+                        }}
+                      />
+                    </div>
+                    <div className="flex justify-between mt-1">
+                      <span className="text-xs text-gray-400">0%</span>
+                      <span className="text-xs text-gray-400">100%</span>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => registrarEnTurno("almuerzo")}
+                    disabled={!puedeRegistrar("almuerzo") || cupos.almuerzo.estado === "cerrado" || cargando}
+                    className={`w-full py-3.5 rounded-xl font-semibold text-base transition-all ${
+                      puedeRegistrar("almuerzo") && cupos.almuerzo.estado !== "cerrado"
+                        ? "text-white shadow-lg shadow-green-500/25 hover:shadow-green-500/40 hover:scale-[1.02] active:scale-[0.98]"
+                        : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    }`}
+                    style={
+                      puedeRegistrar("almuerzo") && cupos.almuerzo.estado !== "cerrado"
+                        ? { background: "linear-gradient(135deg, #22c55e, #16a34a)" }
+                        : undefined
+                    }
+                  >
+                    {!puedeRegistrar("almuerzo")
+                      ? "⏰ Abre a las 10:30 AM"
+                      : cupos.almuerzo.estado === "cerrado"
+                      ? "❌ Cupos Agotados"
+                      : cargando
+                      ? "Registrando..."
+                      : "🍽️ Solicitar Almuerzo"}
+                  </button>
+                </>
+              ) : (
+                <div className="text-center py-6">
+                  <p className="text-gray-400 text-sm">Sin cupos configurados</p>
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Cena */}
-          <div className="bg-white rounded-xl shadow p-6">
-            <div className="text-center mb-4">
-              <span className="text-4xl">🌙</span>
-              <h3 className="text-xl font-bold mt-2">Cena</h3>
-              <p className="text-gray-500 text-sm">Apertura: 3:30 PM</p>
-            </div>
-            {cupos?.cena && cupos.cena.capacidad > 0 ? (
-              <>
-                <div className="mb-4">
-                  <div className="flex justify-between text-sm mb-1">
-                    <span>Cupos:</span>
-                    <span className="font-bold">
-                      {cupos.cena.ocupados}/{cupos.cena.capacidad}
-                    </span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-3">
-                    <div
-                      className="bg-orange-500 h-3 rounded-full transition-all"
-                      style={{
-                        width: `${(cupos.cena.ocupados / cupos.cena.capacidad) * 100}%`,
-                      }}
-                    />
-                  </div>
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-5">
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl" style={{ background: "linear-gradient(135deg, #fef3c7, #fde68a)" }}>
+                  🌙
                 </div>
-                <button
-                  onClick={() => registrarEnTurno("cena")}
-                  disabled={!puedeRegistrar("cena") || cupos.cena.estado === "cerrado" || cargando}
-                  className={`w-full py-3 rounded-lg font-semibold transition ${
-                    puedeRegistrar("cena") && cupos.cena.estado !== "cerrado"
-                      ? "bg-orange-500 text-white hover:bg-orange-600"
-                      : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                  }`}
-                >
-                  {!puedeRegistrar("cena")
-                    ? "⏰ Abre a las 3:30 PM"
-                    : cupos.cena.estado === "cerrado"
-                    ? "❌ Cupos Agotados"
-                    : cargando
-                    ? "⏳ Registrando..."
-                    : "🌙 Solicitar Cena"}
-                </button>
-              </>
-            ) : (
-              <p className="text-center text-gray-500">Sin cupos configurados</p>
-            )}
+                <div>
+                  <h3 className="text-lg font-bold text-gray-800">Cena</h3>
+                  <p className="text-xs text-gray-400">Apertura: 3:30 PM</p>
+                </div>
+              </div>
+
+              {cupos?.cena && cupos.cena.capacidad > 0 ? (
+                <>
+                  <div className="mb-5">
+                    <div className="flex justify-between items-end mb-2">
+                      <span className="text-sm text-gray-500">Cupos disponibles</span>
+                      <span className="text-lg font-bold text-gray-800">
+                        {cupos.cena.ocupados}/{cupos.cena.capacidad}
+                      </span>
+                    </div>
+                    <div className="w-full bg-gray-100 rounded-full h-3">
+                      <div
+                        className="h-3 rounded-full transition-all duration-500"
+                        style={{
+                          width: `${porcentajeCena}%`,
+                          background: porcentajeCena >= 80
+                            ? "linear-gradient(90deg, #f97316, #dc2626)"
+                            : "linear-gradient(90deg, #f59e0b, #d97706)",
+                        }}
+                      />
+                    </div>
+                    <div className="flex justify-between mt-1">
+                      <span className="text-xs text-gray-400">0%</span>
+                      <span className="text-xs text-gray-400">100%</span>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => registrarEnTurno("cena")}
+                    disabled={!puedeRegistrar("cena") || cupos.cena.estado === "cerrado" || cargando}
+                    className={`w-full py-3.5 rounded-xl font-semibold text-base transition-all ${
+                      puedeRegistrar("cena") && cupos.cena.estado !== "cerrado"
+                        ? "text-white shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 hover:scale-[1.02] active:scale-[0.98]"
+                        : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    }`}
+                    style={
+                      puedeRegistrar("cena") && cupos.cena.estado !== "cerrado"
+                        ? { background: "linear-gradient(135deg, #f59e0b, #d97706)" }
+                        : undefined
+                    }
+                  >
+                    {!puedeRegistrar("cena")
+                      ? "⏰ Abre a las 3:30 PM"
+                      : cupos.cena.estado === "cerrado"
+                      ? "❌ Cupos Agotados"
+                      : cargando
+                      ? "Registrando..."
+                      : "🌙 Solicitar Cena"}
+                  </button>
+                </>
+              ) : (
+                <div className="text-center py-6">
+                  <p className="text-gray-400 text-sm">Sin cupos configurados</p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Botones */}
         <div className="flex gap-4">
           <button
             onClick={() => router.push("/dashboard")}
-            className="flex-1 bg-blue-500 text-white py-3 rounded-lg font-semibold hover:bg-blue-600 transition"
+            className="flex-1 text-white py-3.5 rounded-xl font-semibold text-sm transition-all shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
+            style={{ background: "linear-gradient(135deg, #2563eb, #1d4ed8)" }}
           >
             🎫 Ver Mi Ticket
           </button>
           <button
             onClick={cerrarSesion}
-            className="flex-1 bg-gray-500 text-white py-3 rounded-lg font-semibold hover:bg-gray-600 transition"
+            className="flex-1 bg-white border-2 border-gray-200 text-gray-600 py-3.5 rounded-xl font-semibold text-sm transition-all hover:bg-gray-50 hover:border-gray-300 flex items-center justify-center gap-2"
           >
             🚪 Cerrar Sesión
           </button>

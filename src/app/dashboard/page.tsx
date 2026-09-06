@@ -45,9 +45,9 @@ export default function DashboardPage() {
       });
 
       QRCode.toDataURL(qrData, {
-        width: 300,
+        width: 280,
         margin: 2,
-        color: { dark: "#000000", light: "#ffffff" },
+        color: { dark: "#1e293b", light: "#ffffff" },
       }).then(setQrUrl);
     }
   }, [seleccionada, estudiante]);
@@ -58,7 +58,6 @@ export default function DashboardPage() {
       const res = await fetch(`/api/admin/validar?fecha=${fecha}`);
       const data = await res.json();
 
-      // Filtrar por el estudiante actual
       const est = JSON.parse(localStorage.getItem("estudiante") || "{}");
       const misInscripciones = data.filter((i: any) => i.codigo === est.codigo);
       setInscripciones(misInscripciones);
@@ -77,120 +76,140 @@ export default function DashboardPage() {
     router.push("/");
   };
 
-  if (!estudiante) return <div className="min-h-screen flex items-center justify-center">Cargando...</div>;
+  if (!estudiante) return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="text-center">
+        <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto" />
+        <p className="mt-4 text-gray-500 font-medium">Cargando...</p>
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-4 shadow-lg">
-        <div className="max-w-4xl mx-auto flex justify-between items-center">
-          <div>
-            <h1 className="text-xl font-bold">🎫 Mi Ticket</h1>
-            <p className="text-blue-100 text-sm">Comedor Universitario</p>
+      <header className="text-white shadow-lg" style={{ background: "linear-gradient(135deg, #1e3a5f, #2563eb)" }}>
+        <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center text-lg">
+              🎫
+            </div>
+            <div>
+              <h1 className="text-lg font-bold">Mi Ticket</h1>
+              <p className="text-blue-200 text-xs">Comedor Universitario</p>
+            </div>
           </div>
           <button
             onClick={() => router.push("/registro")}
-            className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition"
+            className="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-xl transition text-sm font-medium"
           >
             ← Volver
           </button>
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto p-4 space-y-6">
-        {/* Info del estudiante */}
-        <div className="bg-white rounded-xl shadow p-4 flex items-center gap-4">
-          <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-2xl">
+      <main className="max-w-4xl mx-auto p-4 space-y-5">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex items-center gap-4">
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl" style={{ background: "linear-gradient(135deg, #dbeafe, #bfdbfe)" }}>
             🎓
           </div>
           <div>
-            <h2 className="font-bold text-lg">{estudiante.nombre}</h2>
-            <p className="text-gray-500 text-sm">Código: {estudiante.codigo}</p>
+            <h2 className="font-bold text-gray-800">{estudiante.nombre}</h2>
+            <p className="text-sm text-gray-500">Código: {estudiante.codigo}</p>
           </div>
         </div>
 
-        {/* Ticket QR */}
         {seleccionada && qrUrl ? (
-          <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-            <div className="bg-gradient-to-r from-red-500 to-orange-500 p-4 text-center text-white">
-              <h3 className="text-xl font-bold">🍽️ Ticket de Adicional</h3>
-              <p className="text-red-100">{seleccionada.fecha}</p>
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="text-white text-center py-6 px-4" style={{ background: "linear-gradient(135deg, #1e3a5f, #2563eb)" }}>
+              <h3 className="text-xl font-bold">Ticket de Adicional</h3>
+              <p className="text-blue-200 text-sm mt-1">{seleccionada.fecha}</p>
             </div>
-            <div className="p-6 text-center">
-              <img src={qrUrl} alt="QR Code" className="mx-auto mb-4 rounded-lg shadow" />
-              <div className="space-y-2">
-                <p className="text-3xl font-bold text-gray-800">
+            <div className="p-8 text-center">
+              <div className="inline-block p-4 bg-white rounded-2xl shadow-lg border border-gray-100 mb-6">
+                <img src={qrUrl} alt="QR Code" className="rounded-lg" />
+              </div>
+
+              <div className="space-y-3">
+                <div className="inline-block px-6 py-2 rounded-full text-3xl font-bold text-gray-800 bg-gray-100">
                   N° {seleccionada.numero_orden}
-                </p>
-                <p className={`text-lg font-semibold ${
-                  seleccionada.turno === "almuerzo" ? "text-red-600" : "text-orange-600"
+                </div>
+                <p className={`text-lg font-bold ${
+                  seleccionada.turno === "almuerzo" ? "text-green-600" : "text-amber-600"
                 }`}>
                   {seleccionada.turno === "almuerzo" ? "🥗 Almuerzo" : "🌙 Cena"}
                 </p>
-                <p className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
+                <div className={`inline-block px-4 py-2 rounded-full text-sm font-semibold ${
                   seleccionada.estado === "reservado"
-                    ? "bg-yellow-100 text-yellow-800"
+                    ? "bg-amber-100 text-amber-700"
                     : seleccionada.estado === "atendido"
-                    ? "bg-green-100 text-green-800"
-                    : "bg-red-100 text-red-800"
+                    ? "bg-green-100 text-green-700"
+                    : "bg-red-100 text-red-700"
                 }`}>
                   {seleccionada.estado === "reservado"
                     ? "⏳ Pendiente"
                     : seleccionada.estado === "atendido"
                     ? "✅ Atendido"
                     : "❌ Cancelado"}
-                </p>
+                </div>
               </div>
-              <p className="text-xs text-gray-400 mt-4">
+              <p className="text-xs text-gray-400 mt-6">
                 Presenta este código QR en la entrada del comedor
               </p>
             </div>
           </div>
         ) : (
-          <div className="bg-white rounded-xl shadow p-8 text-center">
-            <span className="text-6xl">📭</span>
-            <h3 className="text-xl font-bold mt-4 text-gray-800">Sin inscripciones hoy</h3>
-            <p className="text-gray-500 mt-2">
-              Regístrate para obtener tu ración adicional
-            </p>
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center">
+            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center text-4xl mx-auto mb-4">
+              📭
+            </div>
+            <h3 className="text-xl font-bold text-gray-800">Sin inscripciones hoy</h3>
+            <p className="text-gray-500 mt-2 text-sm">Regístrate para obtener tu ración adicional</p>
             <button
               onClick={() => router.push("/registro")}
-              className="mt-4 bg-red-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-red-600 transition"
+              className="mt-6 text-white px-6 py-3 rounded-xl font-semibold transition-all shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:scale-[1.02] active:scale-[0.98]"
+              style={{ background: "linear-gradient(135deg, #2563eb, #1d4ed8)" }}
             >
               Ir a Registrar
             </button>
           </div>
         )}
 
-        {/* Historial */}
         {inscripciones.length > 0 && (
-          <div className="bg-white rounded-xl shadow p-4">
-            <h3 className="font-semibold mb-3">📋 Mis inscripciones de hoy</h3>
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
+              <span className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center text-sm">📋</span>
+              Mis inscripciones de hoy
+            </h3>
             <div className="space-y-2">
               {inscripciones.map((insc) => (
                 <button
                   key={insc.id}
                   onClick={() => setSeleccionada(insc)}
-                  className={`w-full text-left p-3 rounded-lg border-2 transition ${
+                  className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
                     seleccionada?.id === insc.id
                       ? "border-blue-500 bg-blue-50"
-                      : "border-gray-200 hover:border-gray-300"
+                      : "border-gray-100 hover:border-gray-200 hover:bg-gray-50"
                   }`}
                 >
                   <div className="flex justify-between items-center">
-                    <div>
-                      <span className="font-bold">N° {insc.numero_orden}</span>
-                      <span className={`ml-2 text-sm ${
-                        insc.turno === "almuerzo" ? "text-red-600" : "text-orange-600"
-                      }`}>
-                        {insc.turno === "almuerzo" ? "🥗 Almuerzo" : "🌙 Cena"}
+                    <div className="flex items-center gap-3">
+                      <span className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center font-bold text-gray-700">
+                        {insc.numero_orden}
                       </span>
+                      <div>
+                        <span className={`text-sm font-semibold ${
+                          insc.turno === "almuerzo" ? "text-green-600" : "text-amber-600"
+                        }`}>
+                          {insc.turno === "almuerzo" ? "🥗 Almuerzo" : "🌙 Cena"}
+                        </span>
+                      </div>
                     </div>
-                    <span className={`text-sm ${
+                    <span className={`text-xs font-semibold px-3 py-1 rounded-full ${
                       insc.estado === "reservado"
-                        ? "text-yellow-600"
+                        ? "bg-amber-100 text-amber-700"
                         : insc.estado === "atendido"
-                        ? "text-green-600"
-                        : "text-red-600"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-red-100 text-red-700"
                     }`}>
                       {insc.estado}
                     </span>
@@ -203,7 +222,7 @@ export default function DashboardPage() {
 
         <button
           onClick={cerrarSesion}
-          className="w-full bg-gray-500 text-white py-3 rounded-lg font-semibold hover:bg-gray-600 transition"
+          className="w-full bg-white border-2 border-gray-200 text-gray-600 py-3.5 rounded-xl font-semibold text-sm transition-all hover:bg-gray-50 hover:border-gray-300"
         >
           🚪 Cerrar Sesión
         </button>

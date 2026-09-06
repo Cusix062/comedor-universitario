@@ -51,37 +51,44 @@ export default function AdminPage() {
 
   const almuerzos = inscritos.filter((i) => i.turno === "almuerzo");
   const cenas = inscritos.filter((i) => i.turno === "cena");
+  const atendidos = inscritos.filter((i) => i.estado === "atendido").length;
+  const pendientes = inscritos.filter((i) => i.estado === "reservado").length;
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-gradient-to-r from-gray-800 to-gray-900 text-white p-4 shadow-lg">
-        <div className="max-w-6xl mx-auto flex justify-between items-center">
-          <div>
-            <h1 className="text-xl font-bold">👨‍💼 Panel de Administración</h1>
-            <p className="text-gray-300 text-sm">Comedor Universitario</p>
+      <header className="text-white shadow-lg" style={{ background: "linear-gradient(135deg, #0f172a, #1e293b)" }}>
+        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center text-lg">
+              👨‍💼
+            </div>
+            <div>
+              <h1 className="text-lg font-bold">Panel de Administración</h1>
+              <p className="text-gray-400 text-xs">Comedor Universitario</p>
+            </div>
           </div>
           <div className="flex gap-2">
             <button
               onClick={() => router.push("/admin/turnos")}
-              className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg transition"
+              className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-xl transition text-sm font-medium"
             >
-              ⚙️ Configurar Cupos
+              ⚙️ Cupos
             </button>
             <button
               onClick={() => router.push("/admin/monitoreo")}
-              className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg transition"
+              className="bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded-xl transition text-sm font-medium"
             >
               📊 Monitoreo
             </button>
             <button
               onClick={() => router.push("/admin/validar")}
-              className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg transition"
+              className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-xl transition text-sm font-medium"
             >
-              📱 Validar QR
+              📱 Validar
             </button>
             <button
               onClick={cerrarSesion}
-              className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg transition"
+              className="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-xl transition text-sm font-medium"
             >
               🚪 Salir
             </button>
@@ -89,108 +96,111 @@ export default function AdminPage() {
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto p-4 space-y-6">
-        {/* Selector de fecha */}
-        <div className="bg-white rounded-xl shadow p-4 flex items-center gap-4">
-          <label className="font-medium">📅 Fecha:</label>
-          <input
-            type="date"
-            value={fecha}
-            onChange={(e) => setFecha(e.target.value)}
-            className="border rounded-lg px-3 py-2"
-          />
+      <main className="max-w-7xl mx-auto p-4 space-y-5">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex flex-wrap items-center gap-4">
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-semibold text-gray-700">📅 Fecha:</label>
+            <input
+              type="date"
+              value={fecha}
+              onChange={(e) => setFecha(e.target.value)}
+              className="border-2 border-gray-200 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+            />
+          </div>
           <button
             onClick={fetchInscritos}
-            className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+            className="text-white px-5 py-2 rounded-xl text-sm font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
+            style={{ background: "linear-gradient(135deg, #2563eb, #1d4ed8)" }}
           >
             🔄 Actualizar
           </button>
           <a
             href={`/api/admin/export?fecha=${fecha}`}
-            className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600"
+            className="bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-2 rounded-xl text-sm font-semibold transition-all"
           >
             📥 Exportar Excel
           </a>
         </div>
 
-        {/* Estadísticas */}
-        <div className="grid grid-cols-4 gap-4">
-          <div className="bg-white rounded-xl shadow p-4 text-center">
-            <p className="text-3xl font-bold text-red-600">{almuerzos.length}</p>
-            <p className="text-gray-500 text-sm">Almuerzos</p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 text-center">
+            <p className="text-3xl font-bold text-green-600">{almuerzos.length}</p>
+            <p className="text-gray-500 text-sm mt-1 font-medium">🥗 Almuerzos</p>
           </div>
-          <div className="bg-white rounded-xl shadow p-4 text-center">
-            <p className="text-3xl font-bold text-orange-600">{cenas.length}</p>
-            <p className="text-gray-500 text-sm">Cenas</p>
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 text-center">
+            <p className="text-3xl font-bold text-amber-600">{cenas.length}</p>
+            <p className="text-gray-500 text-sm mt-1 font-medium">🌙 Cenas</p>
           </div>
-          <div className="bg-white rounded-xl shadow p-4 text-center">
-            <p className="text-3xl font-bold text-green-600">
-              {inscritos.filter((i) => i.estado === "atendido").length}
-            </p>
-            <p className="text-gray-500 text-sm">Atendidos</p>
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 text-center">
+            <p className="text-3xl font-bold text-blue-600">{atendidos}</p>
+            <p className="text-gray-500 text-sm mt-1 font-medium">✅ Atendidos</p>
           </div>
-          <div className="bg-white rounded-xl shadow p-4 text-center">
-            <p className="text-3xl font-bold text-yellow-600">
-              {inscritos.filter((i) => i.estado === "reservado").length}
-            </p>
-            <p className="text-gray-500 text-sm">Pendientes</p>
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 text-center">
+            <p className="text-3xl font-bold text-gray-600">{pendientes}</p>
+            <p className="text-gray-500 text-sm mt-1 font-medium">⏳ Pendientes</p>
           </div>
         </div>
 
-        {/* Lista de inscritos */}
-        <div className="bg-white rounded-xl shadow p-4">
-          <h2 className="text-lg font-semibold mb-4">
-            📋 Inscritos del día ({inscritos.length} total)
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <h2 className="text-base font-bold text-gray-800 mb-4 flex items-center gap-2">
+            <span className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center text-sm">📋</span>
+            Inscritos del día ({inscritos.length} total)
           </h2>
 
           {cargando ? (
-            <p className="text-center text-gray-500 py-8">Cargando...</p>
+            <div className="text-center py-12">
+              <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto" />
+              <p className="mt-3 text-gray-400 text-sm">Cargando...</p>
+            </div>
           ) : inscritos.length === 0 ? (
-            <p className="text-center text-gray-500 py-8">No hay inscritos aún</p>
+            <div className="text-center py-12">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center text-3xl mx-auto mb-3">📭</div>
+              <p className="text-gray-400">No hay inscritos aún</p>
+            </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b bg-gray-50">
-                    <th className="text-left p-2">N°</th>
-                    <th className="text-left p-2">Código</th>
-                    <th className="text-left p-2">Nombre</th>
-                    <th className="text-left p-2">Turno</th>
-                    <th className="text-left p-2">Estado</th>
-                    <th className="text-left p-2">Acción</th>
+                  <tr className="border-b border-gray-100">
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">N°</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Código</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Nombre</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Turno</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Estado</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Acción</th>
                   </tr>
                 </thead>
                 <tbody>
                   {inscritos.map((insc) => (
-                    <tr key={insc.id} className="border-b hover:bg-gray-50">
-                      <td className="p-2 font-bold">{insc.numero_orden}</td>
-                      <td className="p-2">{insc.codigo}</td>
-                      <td className="p-2">{insc.nombre}</td>
-                      <td className="p-2">
-                        <span className={`px-2 py-1 rounded text-xs ${
+                    <tr key={insc.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                      <td className="py-3 px-4 font-bold text-gray-800">{insc.numero_orden}</td>
+                      <td className="py-3 px-4 text-gray-600 font-mono text-xs">{insc.codigo}</td>
+                      <td className="py-3 px-4 font-semibold text-gray-800">{insc.nombre}</td>
+                      <td className="py-3 px-4">
+                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
                           insc.turno === "almuerzo"
-                            ? "bg-red-100 text-red-800"
-                            : "bg-orange-100 text-orange-800"
+                            ? "bg-green-100 text-green-700"
+                            : "bg-amber-100 text-amber-700"
                         }`}>
                           {insc.turno === "almuerzo" ? "🥗 Almuerzo" : "🌙 Cena"}
                         </span>
                       </td>
-                      <td className="p-2">
-                        <span className={`px-2 py-1 rounded text-xs ${
+                      <td className="py-3 px-4">
+                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
                           insc.estado === "reservado"
-                            ? "bg-yellow-100 text-yellow-800"
+                            ? "bg-amber-100 text-amber-700"
                             : insc.estado === "atendido"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
+                            ? "bg-green-100 text-green-700"
+                            : "bg-red-100 text-red-700"
                         }`}>
                           {insc.estado}
                         </span>
                       </td>
-                      <td className="p-2">
+                      <td className="py-3 px-4">
                         {insc.estado === "reservado" && (
                           <button
                             onClick={() => marcarAtendido(insc.id)}
-                            className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 text-xs"
+                            className="bg-green-500 hover:bg-green-600 text-white px-4 py-1.5 rounded-lg text-xs font-semibold transition-all"
                           >
                             ✅ Atender
                           </button>
