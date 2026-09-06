@@ -75,6 +75,12 @@ export default function AdminPage() {
               ⚙️ Cupos
             </button>
             <button
+              onClick={() => router.push("/admin/formato")}
+              className="bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-xl transition text-sm font-medium"
+            >
+              📄 Formato
+            </button>
+            <button
               onClick={() => router.push("/admin/monitoreo")}
               className="bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded-xl transition text-sm font-medium"
             >
