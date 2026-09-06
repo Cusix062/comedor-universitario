@@ -52,3 +52,26 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Error interno" }, { status: 500 });
   }
 }
+
+// DELETE: Eliminar formato guardado
+export async function DELETE(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json({ error: "ID requerido" }, { status: 400 });
+    }
+
+    const db = getDb();
+    const result = db.prepare("DELETE FROM formatos_guardados WHERE id = ?").run(id);
+
+    if (result.changes === 0) {
+      return NextResponse.json({ error: "Formato no encontrado" }, { status: 404 });
+    }
+
+    return NextResponse.json({ success: true, mensaje: "Formato eliminado" });
+  } catch (error) {
+    return NextResponse.json({ error: "Error interno" }, { status: 500 });
+  }
+}

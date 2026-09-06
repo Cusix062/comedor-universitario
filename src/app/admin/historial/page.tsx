@@ -43,6 +43,26 @@ export default function HistorialPage() {
     setInscritos(JSON.parse(formato.inscritos_json));
   };
 
+  const eliminarFormato = async (id: number) => {
+    if (!confirm("¿Estás seguro de eliminar este formato guardado?")) return;
+
+    try {
+      const res = await fetch(`/api/admin/formatos?id=${id}`, {
+        method: "DELETE",
+      });
+
+      if (res.ok) {
+        setFormatos(formatos.filter((f) => f.id !== id));
+        if (seleccionado?.id === id) {
+          setSeleccionado(null);
+          setInscritos([]);
+        }
+      }
+    } catch {
+      console.error("Error al eliminar");
+    }
+  };
+
   const fechaFormateada = (fecha: string) => {
     return new Date(fecha + "T12:00:00").toLocaleDateString("es-PE", {
       weekday: "long",
@@ -107,30 +127,44 @@ export default function HistorialPage() {
                 </div>
               ) : (
                 formatos.map((formato) => (
-                  <button
+                  <div
                     key={formato.id}
-                    onClick={() => verFormato(formato)}
-                    className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
+                    className={`flex items-center gap-2 p-2 rounded-xl border-2 transition-all ${
                       seleccionado?.id === formato.id
                         ? "border-blue-500 bg-blue-50"
                         : "border-gray-100 bg-white hover:border-gray-200 hover:bg-gray-50"
                     }`}
                   >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-bold text-gray-800 text-sm">{fechaFormateada(formato.fecha)}</p>
-                        <p className={`text-xs font-semibold mt-1 ${
-                          formato.tipo === "almuerzo" ? "text-green-600" : "text-amber-600"
-                        }`}>
-                          {formato.tipo === "almuerzo" ? "🥗 Almuerzo" : "🌙 Cena"}
-                        </p>
+                    <button
+                      onClick={() => verFormato(formato)}
+                      className="flex-1 text-left"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-bold text-gray-800 text-sm">{fechaFormateada(formato.fecha)}</p>
+                          <p className={`text-xs font-semibold mt-1 ${
+                            formato.tipo === "almuerzo" ? "text-green-600" : "text-amber-600"
+                          }`}>
+                            {formato.tipo === "almuerzo" ? "🥗 Almuerzo" : "🌙 Cena"}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-bold text-gray-800">{formato.cantidad_inscritos}/{formato.capacidad}</p>
+                          <p className="text-xs text-gray-400">inscritos</p>
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <p className="font-bold text-gray-800">{formato.cantidad_inscritos}/{formato.capacidad}</p>
-                        <p className="text-xs text-gray-400">inscritos</p>
-                      </div>
-                    </div>
-                  </button>
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        eliminarFormato(formato.id);
+                      }}
+                      className="bg-red-100 hover:bg-red-200 text-red-600 w-9 h-9 rounded-lg flex items-center justify-center transition flex-shrink-0"
+                      title="Eliminar formato"
+                    >
+                      🗑️
+                    </button>
+                  </div>
                 ))
               )}
             </div>
