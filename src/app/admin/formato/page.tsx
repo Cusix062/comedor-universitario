@@ -106,11 +106,24 @@ export default function FormatoPage() {
     <>
       <style>{`
         @media print {
-          body * { visibility: hidden; }
-          .print-area, .print-area * { visibility: visible; }
-          .print-area { position: absolute; left: 0; top: 0; width: 100%; }
+          body * { visibility: hidden !important; }
+          .print-area, .print-area * { visibility: visible !important; }
+          .print-area { 
+            position: fixed !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 20px !important;
+            background: white !important;
+            z-index: 99999 !important;
+            display: block !important;
+          }
           .no-print { display: none !important; }
           @page { size: A4 portrait; margin: 10mm 15mm; }
+        }
+        @media screen {
+          .print-area { display: none !important; }
         }
       `}</style>
 
@@ -277,8 +290,8 @@ export default function FormatoPage() {
         </div>
       </div>
 
-      {/* Imprimible */}
-      <div className="print-area bg-white max-w-[800px] mx-auto my-8 p-8 shadow-lg border border-gray-200 hidden">
+      {/* Imprimible - solo visible al imprimir */}
+      <div className="print-area bg-white max-w-[800px] mx-auto">
         <div className="flex items-start justify-between mb-2">
           <div className="flex items-center gap-3 flex-1">
             <img src="/UNDC_logo.jpg" alt="UNDC" className="w-20 h-20 object-contain rounded-full" />
