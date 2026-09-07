@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 
@@ -30,46 +30,188 @@ export default function RegistroPage() {
   const [horaActual, setHoraActual] = useState(new Date());
   const router = useRouter();
 
-  // CAPTCHA
-  const [captchaA, setCaptchaA] = useState(0);
-  const [captchaB, setCaptchaB] = useState(0);
-  const [captchaOp, setCaptchaOp] = useState<"+" | "-" | "×">("+");
-  const [captchaRespuesta, setCaptchaRespuesta] = useState("");
+  // CAPTCHA Puzzle
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const piezaCanvasRef = useRef<HTMLCanvasElement>(null);
   const [captchaVerificado, setCaptchaVerificado] = useState(false);
   const [captchaError, setCaptchaError] = useState("");
+  const [captchaPieza, setCaptchaPieza] = useState({ x: 0, y: 0, size: 0 });
+  const [captchaIntentos, setCaptchaIntentos] = useState(0);
+  const captchaDataRef = useRef<{ colores: string[]; formas: any[] }>({ colores: [], formas: [] });
 
-  const generarCaptcha = () => {
-    const ops: ("+" | "-" | "×")[] = ["+", "-", "×"];
-    const op = ops[Math.floor(Math.random() * ops.length)];
-    let a = Math.floor(Math.random() * 15) + 1;
-    let b = Math.floor(Math.random() * 15) + 1;
-    if (op === "-" && a < b) [a, b] = [b, a];
-    setCaptchaA(a);
-    setCaptchaB(b);
-    setCaptchaOp(op);
-    setCaptchaRespuesta("");
+  const generarCaptcha = useCallback(() => {
+    const canvas = canvasRef.current;
+    const piezaCanvas = piezaCanvasRef.current;
+    if (!canvas || !piezaCanvas) return;
+
+    const ctx = canvas.getContext("2d");
+    const piezaCtx = piezaCanvas.getContext("2d");
+    if (!ctx || !piezaCtx) return;
+
+    const W = 280;
+    const H = 160;
+    canvas.width = W;
+    canvas.height = H;
+
+    // Fondo degradado aleatorio
+    const grad = ctx.createLinearGradient(0, 0, W, H);
+    const coloresBase = [
+      ["#667eea", "#764ba2"], ["#f093fb", "#f5576c"], ["#4facfe", "#00f2fe"],
+      ["#43e97b", "#38f9d7"], ["#fa709a", "#fee140"], ["#a18cd1", "#fbc2eb"],
+      ["#fccb90", "#d57eeb"], ["#e0c3fc", "#8ec5fc"], ["#f5576c", "#ff6a88"],
+    ];
+    const par = coloresBase[Math.floor(Math.random() * coloresBase.length)];
+    grad.addColorStop(0, par[0]);
+    grad.addColorStop(1, par[1]);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+
+    // Formas aleatorias
+    const formas: any[] = [];
+    for (let i = 0; i < 12; i++) {
+      const tipo = Math.random() > 0.5 ? "circulo" : "rect";
+      const x = Math.random() * W;
+      const y = Math.random() * H;
+      const size = 15 + Math.random() * 40;
+      const color = `hsl(${Math.random() * 360}, ${60 + Math.random() * 30}%, ${50 + Math.random() * 25}%)`;
+      const alpha = 0.4 + Math.random() * 0.5;
+
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = color;
+
+      if (tipo === "circulo") {
+        ctx.beginPath();
+        ctx.arc(x, y, size / 2, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        const rot = Math.random() * Math.PI;
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(rot);
+        ctx.fillRect(-size / 2, -size / 3, size, size * 0.6);
+        ctx.restore();
+      }
+
+      formas.push({ tipo, x, y, size, color, alpha });
+    }
+
+    ctx.globalAlpha = 1;
+
+    // Líneas decorativas
+    for (let i = 0; i < 5; i++) {
+      ctx.strokeStyle = `hsl(${Math.random() * 360}, 70%, 60%)`;
+      ctx.lineWidth = 2 + Math.random() * 3;
+      ctx.globalAlpha = 0.3 + Math.random() * 0.4;
+      ctx.beginPath();
+      ctx.moveTo(Math.random() * W, Math.random() * H);
+      ctx.lineTo(Math.random() * W, Math.random() * H);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+
+    // Texto distorsionado
+    const textos = ["UNDC", "COMEDOR", "SISTEMAS", "2026", "CAÑETE"];
+    for (let i = 0; i < 3; i++) {
+      ctx.save();
+      ctx.font = `bold ${20 + Math.random() * 20}px Arial`;
+      ctx.fillStyle = `rgba(255,255,255,${0.15 + Math.random() * 0.2})`;
+      ctx.translate(Math.random() * W, Math.random() * H);
+      ctx.rotate((Math.random() - 0.5) * 0.8);
+      ctx.fillText(textos[Math.floor(Math.random() * textos.length)], 0, 0);
+      ctx.restore();
+    }
+
+    captchaDataRef.current = { colores: par, formas };
+
+    // Elegir pieza a extraer
+    const piezaSize = 40 + Math.floor(Math.random() * 15);
+    const margen = 10;
+    const px = margen + Math.floor(Math.random() * (W - piezaSize - margen * 2));
+    const py = margen + Math.floor(Math.random() * (H - piezaSize - margen * 2));
+
+    setCaptchaPieza({ x: px, y: py, size: piezaSize });
+
+    // Dibujar pieza en canvas pequeño
+    piezaCanvas.width = piezaSize + 10;
+    piezaCanvas.height = piezaSize + 10;
+    piezaCtx.drawImage(canvas, px, py, piezaSize, piezaSize, 5, 5, piezaSize, piezaSize);
+
+    // Dibujar borde de pieza
+    piezaCtx.strokeStyle = "#fff";
+    piezaCtx.lineWidth = 3;
+    piezaCtx.strokeRect(5, 5, piezaSize, piezaSize);
+    piezaCtx.shadowColor = "rgba(0,0,0,0.5)";
+    piezaCtx.shadowBlur = 6;
+    piezaCtx.strokeRect(5, 5, piezaSize, piezaSize);
+    piezaCtx.shadowBlur = 0;
+
+    // Vaciar zona en canvas principal
+    ctx.fillStyle = "rgba(255,255,255,0.7)";
+    ctx.fillRect(px, py, piezaSize, piezaSize);
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = 2;
+    ctx.setLineDash([4, 4]);
+    ctx.strokeRect(px, py, piezaSize, piezaSize);
+    ctx.setLineDash([]);
+
+    // Icono de puzzle en el hueco
+    ctx.fillStyle = "rgba(0,0,0,0.3)";
+    ctx.font = `${piezaSize * 0.5}px Arial`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("?", px + piezaSize / 2, py + piezaSize / 2);
+    ctx.textAlign = "start";
+    ctx.textBaseline = "alphabetic";
+
     setCaptchaVerificado(false);
     setCaptchaError("");
-  };
+    setCaptchaIntentos(0);
+  }, []);
 
-  const verificarCaptcha = () => {
-    let resultado = 0;
-    if (captchaOp === "+") resultado = captchaA + captchaB;
-    else if (captchaOp === "-") resultado = captchaA - captchaB;
-    else resultado = captchaA * captchaB;
+  const manejarClickCanvas = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (captchaVerificado) return;
 
-    if (parseInt(captchaRespuesta) === resultado) {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const clickX = (e.clientX - rect.left) * scaleX;
+    const clickY = (e.clientY - rect.top) * scaleY;
+
+    const { x, y, size } = captchaPieza;
+    const tolerancia = 15;
+
+    if (
+      clickX >= x - tolerancia &&
+      clickX <= x + size + tolerancia &&
+      clickY >= y - tolerancia &&
+      clickY <= y + size + tolerancia
+    ) {
       setCaptchaVerificado(true);
       setCaptchaError("");
+
+      // Dibujar la pieza en su lugar
+      const ctx = canvas.getContext("2d");
+      if (ctx && piezaCanvasRef.current) {
+        ctx.drawImage(piezaCanvasRef.current, 5, 5, size, size, x, y, size, size);
+      }
     } else {
-      setCaptchaError("Respuesta incorrecta. Intente de nuevo.");
-      generarCaptcha();
+      const nuevosIntentos = captchaIntentos + 1;
+      setCaptchaIntentos(nuevosIntentos);
+      if (nuevosIntentos >= 3) {
+        setCaptchaError("Demasiados intentos. Se genera un nuevo captcha.");
+        setTimeout(() => generarCaptcha(), 1500);
+      } else {
+        setCaptchaError(`Posición incorrecta. Intento ${nuevosIntentos}/3`);
+      }
     }
   };
 
   useEffect(() => {
     generarCaptcha();
-  }, []);
+  }, [generarCaptcha]);
 
   useEffect(() => {
     if (status === "loading") return;
@@ -361,58 +503,76 @@ export default function RegistroPage() {
         {/* CAPTCHA */}
         {!captchaVerificado ? (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-            <h2 className="text-base font-bold text-gray-800 mb-4 flex items-center gap-2">
-              <span className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center text-sm">🤖</span>
+            <h2 className="text-base font-bold text-gray-800 mb-3 flex items-center gap-2">
+              <span className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center text-sm">🧩</span>
               Verificación Anti-Bot
             </h2>
-            <p className="text-sm text-gray-500 mb-4">Resuelve la operación matemática para continuar:</p>
+            <p className="text-sm text-gray-500 mb-4">
+              Haz clic en el espacio vacío <span className="font-bold text-purple-600">?</span> donde falta la pieza del puzzle
+            </p>
 
-            <div className="flex items-center gap-4">
-              <div className="flex-1">
-                <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-xl px-6 py-4 text-center">
-                  <p className="text-2xl font-bold text-gray-800 font-mono">
-                    {captchaA} <span className="text-purple-600">{captchaOp}</span> {captchaB} <span className="text-gray-400">=</span> <span className="text-gray-300">?</span>
-                  </p>
+            <div className="flex flex-col items-center gap-4">
+              <div className="flex items-start gap-6">
+                {/* Canvas principal */}
+                <div className="relative">
+                  <canvas
+                    ref={canvasRef}
+                    onClick={manejarClickCanvas}
+                    className="rounded-xl border-2 border-gray-200 cursor-crosshair hover:border-purple-400 transition-colors"
+                    style={{ maxWidth: "280px", maxHeight: "160px" }}
+                  />
+                  <p className="text-xs text-center text-gray-400 mt-1">Imagen con pieza faltante</p>
+                </div>
+
+                {/* Pieza a ubicar */}
+                <div className="flex flex-col items-center">
+                  <div className="bg-gradient-to-br from-purple-100 to-indigo-100 border-2 border-dashed border-purple-300 rounded-xl p-2">
+                    <canvas
+                      ref={piezaCanvasRef}
+                      className="rounded-lg"
+                      style={{ maxWidth: "80px", maxHeight: "80px" }}
+                    />
+                  </div>
+                  <p className="text-xs text-center text-gray-400 mt-1 font-semibold">Pieza</p>
+                  <p className="text-xs text-center text-purple-600">👆 Colócala aquí</p>
                 </div>
               </div>
-              <div className="flex-1">
-                <input
-                  type="number"
-                  value={captchaRespuesta}
-                  onChange={(e) => setCaptchaRespuesta(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && verificarCaptcha()}
-                  placeholder="Tu respuesta"
-                  className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-center text-lg font-bold focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none"
-                />
+
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={generarCaptcha}
+                  className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl text-sm font-medium transition"
+                >
+                  🔄 Nuevo puzzle
+                </button>
+                {captchaIntentos > 0 && (
+                  <span className="text-xs text-gray-400">
+                    Intentos: {captchaIntentos}/3
+                  </span>
+                )}
               </div>
-              <button
-                onClick={verificarCaptcha}
-                disabled={!captchaRespuesta}
-                className="px-6 py-3 rounded-xl font-semibold text-sm text-white transition-all shadow-lg disabled:opacity-50"
-                style={{ background: "linear-gradient(135deg, #7c3aed, #6366f1)" }}
-              >
-                Verificar
-              </button>
             </div>
 
             {captchaError && (
-              <p className="text-red-500 text-sm mt-3 font-medium">❌ {captchaError}</p>
+              <p className="text-red-500 text-sm mt-3 font-medium text-center">❌ {captchaError}</p>
             )}
 
-            <p className="text-xs text-gray-400 mt-3">⚠️ Debe resolver el captcha antes de registrarse</p>
+            <p className="text-xs text-gray-400 mt-3 text-center">
+              ⚠️ Debe resolver el captcha antes de registrarse
+            </p>
           </div>
         ) : (
           <div className="bg-green-50 border border-green-200 rounded-2xl p-4 flex items-center gap-3">
             <span className="text-2xl">✅</span>
             <div>
-              <p className="font-bold text-green-700">Verificación completada</p>
+              <p className="font-bold text-green-700">Puzzle resuelto correctamente</p>
               <p className="text-sm text-green-600">Ahora puedes solicitar tu cupo</p>
             </div>
             <button
               onClick={generarCaptcha}
               className="ml-auto text-green-600 hover:text-green-800 text-xs font-semibold underline"
             >
-              Cambiar captcha
+              Otro puzzle
             </button>
           </div>
         )}
