@@ -32,6 +32,25 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No se pudo identificar al estudiante" }, { status: 400 });
     }
 
+    // Verificar si el estudiante es beneficiario (no debe registrarse)
+    const nombreNormalizado = nombre ? nombre.trim().toUpperCase() : "";
+    const tipoTurno = db.prepare(
+      "SELECT tipo FROM cupos WHERE id = ?"
+    ).get(cupo_id) as any;
+
+    if (nombreNormalizado && tipoTurno) {
+      const turno = tipoTurno.tipo;
+      const esBeneficiario = db.prepare(
+        "SELECT id FROM beneficiarios WHERE UPPER(TRIM(nombre)) = ? AND turno = ?"
+      ).get(nombreNormalizado, turno);
+
+      if (esBeneficiario) {
+        return NextResponse.json({
+          error: "Usted es beneficiario del comedor. No necesita registrarse por esta plataforma."
+        }, { status: 403 });
+      }
+    }
+
     // Verificar que el cupo existe y tiene espacio
     const cupo = db.prepare("SELECT * FROM cupos WHERE id = ? AND estado = 'abierto'").get(cupo_id) as any;
     if (!cupo) {

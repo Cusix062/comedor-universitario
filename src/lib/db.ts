@@ -1,5 +1,6 @@
 import Database from "better-sqlite3";
 import path from "path";
+import fs from "fs";
 
 const DB_PATH = path.join(process.cwd(), "data", "comedor.db");
 
@@ -11,6 +12,7 @@ function getDb(): Database.Database {
     db.pragma("journal_mode = WAL");
     db.pragma("foreign_keys = ON");
     initDb(db);
+    cargarBeneficiariosSiVacio(db);
   }
   return db;
 }
@@ -71,6 +73,16 @@ function initDb(database: Database.Database) {
       guardado_en DATETIME DEFAULT CURRENT_TIMESTAMP,
       UNIQUE(fecha, tipo)
     );
+
+    CREATE TABLE IF NOT EXISTS beneficiarios (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      nombre TEXT NOT NULL,
+      carrera TEXT NOT NULL,
+      ciclo_grupo TEXT NOT NULL,
+      turno TEXT NOT NULL CHECK(turno IN ('almuerzo', 'cena'))
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_beneficiarios_nombre ON beneficiarios(nombre);
   `);
 
   // Insertar admin por defecto si no existe
@@ -82,6 +94,29 @@ function initDb(database: Database.Database) {
       "Administrador General"
     );
   }
+}
+
+function cargarBeneficiariosSiVacio(database: Database.Database) {
+  const count = database.prepare("SELECT COUNT(*) as total FROM beneficiarios").get() as any;
+  if (count.total > 0) return;
+
+  const jsonPath = path.join(process.cwd(), "data", "beneficiarios.json");
+  if (!fs.existsSync(jsonPath)) return;
+
+  const data = JSON.parse(fs.readFileSync(jsonPath, "utf-8"));
+
+  const insert = database.prepare("INSERT INTO beneficiarios (nombre, carrera, ciclo_grupo, turno) VALUES (?, ?, ?, ?)");
+
+  database.transaction(() => {
+    for (const nombre of data.almuerzo || []) {
+      insert.run(nombre.trim(), "INGENIERÍA DE SISTEMAS", "BENEFICIARIO", "almuerzo");
+    }
+    for (const nombre of data.cena || []) {
+      insert.run(nombre.trim(), "INGENIERÍA DE SISTEMAS", "BENEFICIARIO", "cena");
+    }
+  })();
+
+  console.log(`✅ ${(data.almuerzo?.length || 0) + (data.cena?.length || 0)} beneficiarios cargados`);
 }
 
 export default getDb;
