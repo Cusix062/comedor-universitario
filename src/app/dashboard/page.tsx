@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import QRCode from "qrcode";
 
 interface Inscripcion {
@@ -14,6 +15,7 @@ interface Inscripcion {
 }
 
 export default function DashboardPage() {
+  const { data: session, status } = useSession();
   const [estudiante, setEstudiante] = useState<any>(null);
   const [inscripciones, setInscripciones] = useState<Inscripcion[]>([]);
   const [qrUrl, setQrUrl] = useState<string>("");
@@ -21,17 +23,34 @@ export default function DashboardPage() {
   const router = useRouter();
 
   useEffect(() => {
-    const session = localStorage.getItem("session");
-    const estudianteData = localStorage.getItem("estudiante");
+    if (status === "loading") return;
 
-    if (!session || !estudianteData) {
-      router.push("/");
+    // Sesión de Google
+    if (session?.user) {
+      const est = {
+        codigo: session.user.email?.split("@")[0] || "",
+        nombre: session.user.name || "",
+        correo: session.user.email || "",
+      };
+      setEstudiante(est);
+      fetchInscritos(est.codigo);
       return;
     }
 
-    setEstudiante(JSON.parse(estudianteData));
-    fetchInscripciones();
-  }, [router]);
+    // Sesión manual (localStorage)
+    const sessionLocal = localStorage.getItem("session");
+    const estudianteData = localStorage.getItem("estudiante");
+
+    if (sessionLocal && estudianteData) {
+      const est = JSON.parse(estudianteData);
+      setEstudiante(est);
+      fetchInscritos(est.codigo);
+      return;
+    }
+
+    // Sin sesión
+    router.push("/");
+  }, [router, session, status]);
 
   useEffect(() => {
     if (seleccionada) {
@@ -52,17 +71,14 @@ export default function DashboardPage() {
     }
   }, [seleccionada, estudiante]);
 
-  const fetchInscripciones = async () => {
+  const fetchInscritos = async (codigo: string) => {
     try {
       const fecha = new Date().toISOString().split("T")[0];
       const res = await fetch(`/api/admin/validar?fecha=${fecha}`);
       const data = await res.json();
-
-      const est = JSON.parse(localStorage.getItem("estudiante") || "{}");
-      const misInscripciones = data.filter((i: any) => i.codigo === est.codigo);
+      const misInscripciones = data.filter((i: any) => i.codigo === codigo);
       setInscripciones(misInscripciones);
-
-      if (misInscripciones.length > 0 && !seleccionada) {
+      if (misInscripciones.length > 0) {
         setSeleccionada(misInscripciones[misInscripciones.length - 1]);
       }
     } catch {
@@ -70,13 +86,18 @@ export default function DashboardPage() {
     }
   };
 
-  const cerrarSesion = () => {
+  const cerrarSesion = async () => {
     localStorage.removeItem("session");
     localStorage.removeItem("estudiante");
-    router.push("/");
+    if (session) {
+      const { signOut } = await import("next-auth/react");
+      await signOut({ callbackUrl: "/" });
+    } else {
+      router.push("/");
+    }
   };
 
-  if (!estudiante) return (
+  if (status === "loading" || !estudiante) return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="text-center">
         <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto" />

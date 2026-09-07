@@ -14,6 +14,7 @@ interface Estudiante {
 }
 
 interface CupoInfo {
+  id?: number;
   capacidad: number;
   ocupados: number;
   estado: string;
@@ -22,8 +23,6 @@ interface CupoInfo {
 export default function RegistroPage() {
   const { data: session, status } = useSession();
   const [estudiante, setEstudiante] = useState<Estudiante | null>(null);
-  const [telefono, setTelefono] = useState("");
-  const [ciclo, setCiclo] = useState(1);
   const [cupos, setCupos] = useState<{ almuerzo: CupoInfo; cena: CupoInfo } | null>(null);
   const [mensaje, setMensaje] = useState("");
   const [error, setError] = useState("");
@@ -32,46 +31,37 @@ export default function RegistroPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Esperar a que cargue la sesión
     if (status === "loading") return;
 
-    // Si tiene sesión de Google
     if (session?.user) {
-      const est: Estudiante = {
+      setEstudiante({
         id: 0,
         codigo: session.user.email?.split("@")[0] || "",
         nombre: session.user.name || "",
         correo: session.user.email || "",
         ciclo: 1,
         telefono: "",
-      };
-      setEstudiante(est);
-      setTelefono("");
-      setCiclo(1);
+      });
       const timer = setInterval(() => setHoraActual(new Date()), 1000);
       return () => clearInterval(timer);
     }
 
-    // Si tiene sesión manual (localStorage)
     const sessionLocal = localStorage.getItem("session");
     const estudianteData = localStorage.getItem("estudiante");
 
     if (sessionLocal && estudianteData) {
       const est = JSON.parse(estudianteData);
       setEstudiante(est);
-      setTelefono(est.telefono || "");
-      setCiclo(est.ciclo || 1);
       const timer = setInterval(() => setHoraActual(new Date()), 1000);
       return () => clearInterval(timer);
     }
 
-    // No hay sesión
     router.push("/");
   }, [router, session, status]);
 
   useEffect(() => {
     fetchCupos();
-    const interval = setInterval(fetchCupos, 30000);
+    const interval = setInterval(fetchCupos, 10000);
     return () => clearInterval(interval);
   }, []);
 
@@ -117,17 +107,12 @@ export default function RegistroPage() {
         const crearRes = await fetch("/api/admin/turnos", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            fecha,
-            [`${tipo}_capacidad`]: 50,
-          }),
+          body: JSON.stringify({ fecha, [`${tipo}_capacidad`]: 50 }),
         });
-
         if (!crearRes.ok) {
           setError("Error al configurar cupos");
           return;
         }
-
         const cuposRes2 = await fetch(`/api/cupos?fecha=${fecha}`);
         const cuposData2 = await cuposRes2.json();
         const turnoData = tipo === "almuerzo" ? cuposData2.almuerzo : cuposData2.cena;
@@ -139,7 +124,6 @@ export default function RegistroPage() {
         return;
       }
 
-      // Obtener o crear estudiante en BD
       const regRes = await fetch("/api/registro", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -168,16 +152,25 @@ export default function RegistroPage() {
     }
   };
 
+  const getMinutosRestantes = (horaApertura: number): number => {
+    const hora = horaActual.getHours();
+    const minutos = horaActual.getMinutes();
+    const horaEnMinutos = hora * 60 + minutos;
+    return Math.max(0, horaApertura - horaEnMinutos);
+  };
+
   const puedeRegistrar = (tipo: "almuerzo" | "cena"): boolean => {
     const hora = horaActual.getHours();
     const minutos = horaActual.getMinutes();
     const horaEnMinutos = hora * 60 + minutos;
+    if (tipo === "almuerzo") return horaEnMinutos >= 630;
+    return horaEnMinutos >= 930;
+  };
 
-    if (tipo === "almuerzo") {
-      return horaEnMinutos >= 630;
-    } else {
-      return horaEnMinutos >= 930;
-    }
+  const estaLleno = (tipo: "almuerzo" | "cena"): boolean => {
+    if (!cupos) return false;
+    const turno = tipo === "almuerzo" ? cupos.almuerzo : cupos.cena;
+    return turno?.estado === "cerrado" || (turno?.ocupados >= turno?.capacidad && turno?.capacidad > 0);
   };
 
   const cerrarSesion = async () => {
@@ -192,12 +185,9 @@ export default function RegistroPage() {
   };
 
   const porcentajeAlmuerzo = cupos?.almuerzo && cupos.almuerzo.capacidad > 0
-    ? (cupos.almuerzo.ocupados / cupos.almuerzo.capacidad) * 100
-    : 0;
-
+    ? (cupos.almuerzo.ocupados / cupos.almuerzo.capacidad) * 100 : 0;
   const porcentajeCena = cupos?.cena && cupos.cena.capacidad > 0
-    ? (cupos.cena.ocupados / cupos.cena.capacidad) * 100
-    : 0;
+    ? (cupos.cena.ocupados / cupos.cena.capacidad) * 100 : 0;
 
   if (status === "loading" || !estudiante) return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -213,9 +203,7 @@ export default function RegistroPage() {
       <header className="text-white shadow-lg" style={{ background: "linear-gradient(135deg, #1e3a5f, #2563eb)" }}>
         <div className="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center text-lg">
-              🍽️
-            </div>
+            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center text-lg">🍽️</div>
             <div>
               <h1 className="text-lg font-bold">Comedor Universitario</h1>
               <p className="text-blue-200 text-xs">Registro de Adicionales</p>
@@ -229,6 +217,7 @@ export default function RegistroPage() {
       </header>
 
       <main className="max-w-5xl mx-auto p-4 space-y-5">
+        {/* Reloj */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex items-center justify-between">
           <div>
             <p className="text-xs text-gray-400 uppercase tracking-wider font-medium">Hora actual</p>
@@ -244,6 +233,7 @@ export default function RegistroPage() {
           </div>
         </div>
 
+        {/* Mensajes */}
         {mensaje && (
           <div className="bg-green-50 border border-green-200 text-green-700 px-5 py-4 rounded-xl flex items-center gap-3">
             <span className="text-xl">✅</span>
@@ -257,6 +247,7 @@ export default function RegistroPage() {
           </div>
         )}
 
+        {/* Datos del estudiante */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
           <h2 className="text-base font-bold text-gray-800 mb-4 flex items-center gap-2">
             <span className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center text-sm">📋</span>
@@ -282,13 +273,13 @@ export default function RegistroPage() {
           </div>
         </div>
 
+        {/* Turnos */}
         <div className="grid md:grid-cols-2 gap-5">
+          {/* ALMUERZO */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="p-6">
               <div className="flex items-center gap-3 mb-5">
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl" style={{ background: "linear-gradient(135deg, #dcfce7, #bbf7d0)" }}>
-                  🥗
-                </div>
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl" style={{ background: "linear-gradient(135deg, #dcfce7, #bbf7d0)" }}>🥗</div>
                 <div>
                   <h3 className="text-lg font-bold text-gray-800">Almuerzo</h3>
                   <p className="text-xs text-gray-400">Apertura: 10:30 AM</p>
@@ -297,9 +288,10 @@ export default function RegistroPage() {
 
               {cupos?.almuerzo && cupos.almuerzo.capacidad > 0 ? (
                 <>
-                  <div className="mb-5">
+                  {/* Barra de progreso */}
+                  <div className="mb-4">
                     <div className="flex justify-between items-end mb-2">
-                      <span className="text-sm text-gray-500">Cupos disponibles</span>
+                      <span className="text-sm text-gray-500">Cupos</span>
                       <span className="text-lg font-bold text-gray-800">
                         {cupos.almuerzo.ocupados}/{cupos.almuerzo.capacidad}
                       </span>
@@ -315,34 +307,31 @@ export default function RegistroPage() {
                         }}
                       />
                     </div>
-                    <div className="flex justify-between mt-1">
-                      <span className="text-xs text-gray-400">0%</span>
-                      <span className="text-xs text-gray-400">100%</span>
-                    </div>
                   </div>
 
-                  <button
-                    onClick={() => registrarEnTurno("almuerzo")}
-                    disabled={!puedeRegistrar("almuerzo") || cupos.almuerzo.estado === "cerrado" || cargando}
-                    className={`w-full py-3.5 rounded-xl font-semibold text-base transition-all ${
-                      puedeRegistrar("almuerzo") && cupos.almuerzo.estado !== "cerrado"
-                        ? "text-white shadow-lg shadow-green-500/25 hover:shadow-green-500/40 hover:scale-[1.02] active:scale-[0.98]"
-                        : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                    }`}
-                    style={
-                      puedeRegistrar("almuerzo") && cupos.almuerzo.estado !== "cerrado"
-                        ? { background: "linear-gradient(135deg, #22c55e, #16a34a)" }
-                        : undefined
-                    }
-                  >
-                    {!puedeRegistrar("almuerzo")
-                      ? "⏰ Abre a las 10:30 AM"
-                      : cupos.almuerzo.estado === "cerrado"
-                      ? "❌ Cupos Agotados"
-                      : cargando
-                      ? "Registrando..."
-                      : "🍽️ Solicitar Almuerzo"}
-                  </button>
+                  {/* Botón */}
+                  {estaLleno("almuerzo") ? (
+                    <div className="w-full py-4 rounded-xl text-center bg-red-50 border-2 border-red-200">
+                      <p className="text-red-700 font-bold text-lg">🔒 CUPOS LLENOS</p>
+                      <p className="text-red-500 text-sm mt-1">Vuelva mañana</p>
+                    </div>
+                  ) : !puedeRegistrar("almuerzo") ? (
+                    <div className="w-full py-4 rounded-xl text-center bg-amber-50 border-2 border-amber-200">
+                      <p className="text-amber-700 font-bold text-lg">⏰ turnO no disponible</p>
+                      <p className="text-amber-500 text-sm mt-1">
+                        Abre en {getMinutosRestantes(630)} minutos (10:30 AM)
+                      </p>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => registrarEnTurno("almuerzo")}
+                      disabled={cargando}
+                      className="w-full py-3.5 rounded-xl font-semibold text-base text-white transition-all shadow-lg shadow-green-500/25 hover:shadow-green-500/40 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+                      style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)" }}
+                    >
+                      {cargando ? "Registrando..." : "🍽️ Solicitar Almuerzo"}
+                    </button>
+                  )}
                 </>
               ) : (
                 <div className="text-center py-6">
@@ -352,12 +341,11 @@ export default function RegistroPage() {
             </div>
           </div>
 
+          {/* CENA */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="p-6">
               <div className="flex items-center gap-3 mb-5">
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl" style={{ background: "linear-gradient(135deg, #fef3c7, #fde68a)" }}>
-                  🌙
-                </div>
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl" style={{ background: "linear-gradient(135deg, #fef3c7, #fde68a)" }}>🌙</div>
                 <div>
                   <h3 className="text-lg font-bold text-gray-800">Cena</h3>
                   <p className="text-xs text-gray-400">Apertura: 3:30 PM</p>
@@ -366,9 +354,9 @@ export default function RegistroPage() {
 
               {cupos?.cena && cupos.cena.capacidad > 0 ? (
                 <>
-                  <div className="mb-5">
+                  <div className="mb-4">
                     <div className="flex justify-between items-end mb-2">
-                      <span className="text-sm text-gray-500">Cupos disponibles</span>
+                      <span className="text-sm text-gray-500">Cupos</span>
                       <span className="text-lg font-bold text-gray-800">
                         {cupos.cena.ocupados}/{cupos.cena.capacidad}
                       </span>
@@ -384,34 +372,30 @@ export default function RegistroPage() {
                         }}
                       />
                     </div>
-                    <div className="flex justify-between mt-1">
-                      <span className="text-xs text-gray-400">0%</span>
-                      <span className="text-xs text-gray-400">100%</span>
-                    </div>
                   </div>
 
-                  <button
-                    onClick={() => registrarEnTurno("cena")}
-                    disabled={!puedeRegistrar("cena") || cupos.cena.estado === "cerrado" || cargando}
-                    className={`w-full py-3.5 rounded-xl font-semibold text-base transition-all ${
-                      puedeRegistrar("cena") && cupos.cena.estado !== "cerrado"
-                        ? "text-white shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 hover:scale-[1.02] active:scale-[0.98]"
-                        : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                    }`}
-                    style={
-                      puedeRegistrar("cena") && cupos.cena.estado !== "cerrado"
-                        ? { background: "linear-gradient(135deg, #f59e0b, #d97706)" }
-                        : undefined
-                    }
-                  >
-                    {!puedeRegistrar("cena")
-                      ? "⏰ Abre a las 3:30 PM"
-                      : cupos.cena.estado === "cerrado"
-                      ? "❌ Cupos Agotados"
-                      : cargando
-                      ? "Registrando..."
-                      : "🌙 Solicitar Cena"}
-                  </button>
+                  {estaLleno("cena") ? (
+                    <div className="w-full py-4 rounded-xl text-center bg-red-50 border-2 border-red-200">
+                      <p className="text-red-700 font-bold text-lg">🔒 CUPOS LLENOS</p>
+                      <p className="text-red-500 text-sm mt-1">Vuelva mañana</p>
+                    </div>
+                  ) : !puedeRegistrar("cena") ? (
+                    <div className="w-full py-4 rounded-xl text-center bg-amber-50 border-2 border-amber-200">
+                      <p className="text-amber-700 font-bold text-lg">⏰ Turno no disponible</p>
+                      <p className="text-amber-500 text-sm mt-1">
+                        Abre en {getMinutosRestantes(930)} minutos (3:30 PM)
+                      </p>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => registrarEnTurno("cena")}
+                      disabled={cargando}
+                      className="w-full py-3.5 rounded-xl font-semibold text-base text-white transition-all shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+                      style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)" }}
+                    >
+                      {cargando ? "Registrando..." : "🌙 Solicitar Cena"}
+                    </button>
+                  )}
                 </>
               ) : (
                 <div className="text-center py-6">
@@ -422,17 +406,18 @@ export default function RegistroPage() {
           </div>
         </div>
 
+        {/* Botones */}
         <div className="flex gap-4">
           <button
             onClick={() => router.push("/dashboard")}
-            className="flex-1 text-white py-3.5 rounded-xl font-semibold text-sm transition-all shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
+            className="flex-1 text-white py-3.5 rounded-xl font-semibold text-sm transition-all shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:scale-[1.02] active:scale-[0.98]"
             style={{ background: "linear-gradient(135deg, #2563eb, #1d4ed8)" }}
           >
             🎫 Ver Mi Ticket
           </button>
           <button
             onClick={cerrarSesion}
-            className="flex-1 bg-white border-2 border-gray-200 text-gray-600 py-3.5 rounded-xl font-semibold text-sm transition-all hover:bg-gray-50 hover:border-gray-300 flex items-center justify-center gap-2"
+            className="flex-1 bg-white border-2 border-gray-200 text-gray-600 py-3.5 rounded-xl font-semibold text-sm transition-all hover:bg-gray-50 hover:border-gray-300"
           >
             🚪 Cerrar Sesión
           </button>
