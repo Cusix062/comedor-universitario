@@ -165,11 +165,11 @@ export default function RegistroPage() {
     const h = hora * 60 + minutos;
 
     if (tipo === "almuerzo") {
-      // Almuerzo: 10:30 AM (630) a 2:00 PM (840)
-      return h >= 630 && h <= 840;
+      // Almuerzo: 10:30 AM (630) a 12:00 PM (720)
+      return h >= 630 && h <= 720;
     } else {
-      // Cena: 3:30 PM (930) a 8:00 PM (1200)
-      return h >= 930 && h <= 1200;
+      // Cena: 3:30 PM (930) a 5:00 PM (1020)
+      return h >= 930 && h <= 1020;
     }
   };
 
@@ -292,7 +292,7 @@ export default function RegistroPage() {
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl" style={{ background: "linear-gradient(135deg, #dcfce7, #bbf7d0)" }}>🥗</div>
                 <div>
                   <h3 className="text-lg font-bold text-gray-800">Almuerzo</h3>
-                  <p className="text-xs text-gray-400">10:30 AM - 2:00 PM</p>
+                  <p className="text-xs text-gray-400">10:30 AM - 12:00 PM</p>
                 </div>
               </div>
 
@@ -332,10 +332,10 @@ export default function RegistroPage() {
                         Abre en {getMinutosRestantes(630)} minutos (10:30 AM)
                       </p>
                     </div>
-                  ) : horaActual.getHours() * 60 + horaActual.getMinutes() > 840 ? (
+                  ) : horaActual.getHours() * 60 + horaActual.getMinutes() > 720 ? (
                     <div className="w-full py-4 rounded-xl text-center bg-gray-100 border-2 border-gray-200">
                       <p className="text-gray-600 font-bold text-lg">⛔ Horario Finalizado</p>
-                      <p className="text-gray-500 text-sm mt-1">Horario: 10:30 AM - 2:00 PM</p>
+                      <p className="text-gray-500 text-sm mt-1">Horario: 10:30 AM - 12:00 PM</p>
                     </div>
                   ) : (
                     <button
@@ -363,7 +363,7 @@ export default function RegistroPage() {
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl" style={{ background: "linear-gradient(135deg, #fef3c7, #fde68a)" }}>🌙</div>
                 <div>
                   <h3 className="text-lg font-bold text-gray-800">Cena</h3>
-                  <p className="text-xs text-gray-400">3:30 PM - 8:00 PM</p>
+                  <p className="text-xs text-gray-400">3:30 PM - 5:00 PM</p>
                 </div>
               </div>
 
@@ -401,10 +401,10 @@ export default function RegistroPage() {
                         Abre en {getMinutosRestantes(930)} minutos (3:30 PM)
                       </p>
                     </div>
-                  ) : horaActual.getHours() * 60 + horaActual.getMinutes() > 1200 ? (
+                  ) : horaActual.getHours() * 60 + horaActual.getMinutes() > 1020 ? (
                     <div className="w-full py-4 rounded-xl text-center bg-gray-100 border-2 border-gray-200">
                       <p className="text-gray-600 font-bold text-lg">⛔ Horario Finalizado</p>
-                      <p className="text-gray-500 text-sm mt-1">Horario: 3:30 PM - 8:00 PM</p>
+                      <p className="text-gray-500 text-sm mt-1">Horario: 3:30 PM - 5:00 PM</p>
                     </div>
                   ) : (
                     <button
