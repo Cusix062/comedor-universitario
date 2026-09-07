@@ -33,6 +33,20 @@ export default function RegistroPage() {
   useEffect(() => {
     if (status === "loading") return;
 
+    const getHoraActual = (): Date => {
+      const simActivo = localStorage.getItem("simulacion_activo") === "true";
+      if (simActivo) {
+        const h = parseInt(localStorage.getItem("simulacion_hora") || "0");
+        const m = parseInt(localStorage.getItem("simulacion_minuto") || "0");
+        const fake = new Date();
+        fake.setHours(h, m, 0, 0);
+        return fake;
+      }
+      return new Date();
+    };
+
+    setHoraActual(getHoraActual());
+
     if (session?.user) {
       setEstudiante({
         id: 0,
@@ -42,7 +56,7 @@ export default function RegistroPage() {
         ciclo: 1,
         telefono: "",
       });
-      const timer = setInterval(() => setHoraActual(new Date()), 1000);
+      const timer = setInterval(() => setHoraActual(getHoraActual()), 1000);
       return () => clearInterval(timer);
     }
 
@@ -52,7 +66,7 @@ export default function RegistroPage() {
     if (sessionLocal && estudianteData) {
       const est = JSON.parse(estudianteData);
       setEstudiante(est);
-      const timer = setInterval(() => setHoraActual(new Date()), 1000);
+      const timer = setInterval(() => setHoraActual(getHoraActual()), 1000);
       return () => clearInterval(timer);
     }
 
@@ -227,6 +241,19 @@ export default function RegistroPage() {
       </header>
 
       <main className="max-w-5xl mx-auto p-4 space-y-5">
+        {/* Indicador de simulación */}
+        {typeof window !== "undefined" && localStorage.getItem("simulacion_activo") === "true" && (
+          <div className="bg-yellow-50 border-2 border-yellow-300 rounded-2xl p-4 flex items-center gap-3">
+            <span className="text-2xl">⚠️</span>
+            <div>
+              <p className="font-bold text-yellow-800">Modo Simulación Activo</p>
+              <p className="text-sm text-yellow-600">
+                Hora simulada: {localStorage.getItem("simulacion_hora")}:{localStorage.getItem("simulacion_minuto")}
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Reloj */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex items-center justify-between">
           <div>

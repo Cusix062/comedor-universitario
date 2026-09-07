@@ -9,6 +9,12 @@ export default function AdminPage() {
   const [cargando, setCargando] = useState(false);
   const router = useRouter();
 
+  // Estado para simulador de tiempo
+  const [showTimeSimulator, setShowTimeSimulator] = useState(false);
+  const [horaSimulada, setHoraSimulada] = useState("");
+  const [minutoSimulado, setMinutoSimulado] = useState("");
+  const [modoSimulacion, setModoSimulacion] = useState(false);
+
   useEffect(() => {
     const adminSession = localStorage.getItem("admin_session");
     if (!adminSession) {
@@ -16,6 +22,14 @@ export default function AdminPage() {
       return;
     }
     fetchInscritos();
+
+    // Cargar estado de simulación
+    const simActivo = localStorage.getItem("simulacion_activo") === "true";
+    const hSim = localStorage.getItem("simulacion_hora") || "";
+    const mSim = localStorage.getItem("simulacion_minuto") || "";
+    setModoSimulacion(simActivo);
+    setHoraSimulada(hSim);
+    setMinutoSimulado(mSim);
   }, [router, fecha]);
 
   const fetchInscritos = async () => {
@@ -63,6 +77,39 @@ export default function AdminPage() {
     router.push("/");
   };
 
+  const activarSimulacion = () => {
+    if (!horaSimulada || !minutoSimulado) {
+      alert("Selecciona hora y minuto");
+      return;
+    }
+    localStorage.setItem("simulacion_activo", "true");
+    localStorage.setItem("simulacion_hora", horaSimulada);
+    localStorage.setItem("simulacion_minuto", minutoSimulado);
+    setModoSimulacion(true);
+    setShowTimeSimulator(false);
+  };
+
+  const desactivarSimulacion = () => {
+    localStorage.removeItem("simulacion_activo");
+    localStorage.removeItem("simulacion_hora");
+    localStorage.removeItem("simulacion_minuto");
+    setModoSimulacion(false);
+    setHoraSimulada("");
+    setMinutoSimulado("");
+  };
+
+  const presets = [
+    { label: "8:00 AM (Antes)", hora: "08", minuto: "00" },
+    { label: "10:30 AM (Abre almuerzo)", hora: "10", minuto: "30" },
+    { label: "11:00 AM (Almuerzo)", hora: "11", minuto: "00" },
+    { label: "12:00 PM (Cierra almuerzo)", hora: "12", minuto: "00" },
+    { label: "2:00 PM (Mediodía)", hora: "14", minuto: "00" },
+    { label: "3:30 PM (Abre cena)", hora: "15", minuto: "30" },
+    { label: "4:00 PM (Cena)", hora: "16", minuto: "00" },
+    { label: "5:00 PM (Cierra cena)", hora: "17", minuto: "00" },
+    { label: "8:00 PM (Noche)", hora: "20", minuto: "00" },
+  ];
+
   const almuerzos = inscritos.filter((i) => i.turno === "almuerzo");
   const cenas = inscritos.filter((i) => i.turno === "cena");
   const atendidos = inscritos.filter((i) => i.estado === "atendido").length;
@@ -82,6 +129,16 @@ export default function AdminPage() {
             </div>
           </div>
           <div className="flex gap-2">
+            <button
+              onClick={() => setShowTimeSimulator(true)}
+              className={`px-4 py-2 rounded-xl transition text-sm font-medium ${
+                modoSimulacion
+                  ? "bg-yellow-500 hover:bg-yellow-600 text-black"
+                  : "bg-gray-600 hover:bg-gray-700"
+              }`}
+            >
+              ⏰ {modoSimulacion ? `${horaSimulada}:${minutoSimulado}` : "Simular Hora"}
+            </button>
             <button
               onClick={() => router.push("/admin/turnos")}
               className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-xl transition text-sm font-medium"
@@ -248,6 +305,99 @@ export default function AdminPage() {
           )}
         </div>
       </main>
+
+      {/* Modal Simulador de Hora */}
+      {showTimeSimulator && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                <span className="text-2xl">⏰</span> Simulador de Hora
+              </h3>
+              <button
+                onClick={() => setShowTimeSimulator(false)}
+                className="text-gray-400 hover:text-gray-600 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+
+            {modoSimulacion && (
+              <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-xl">
+                <p className="text-yellow-700 text-sm font-medium">
+                  🔴 Modo simulación activo: {horaSimulada}:{minutoSimulado}
+                </p>
+              </div>
+            )}
+
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Seleccionar hora:</label>
+              <div className="flex gap-3">
+                <select
+                  value={horaSimulada}
+                  onChange={(e) => setHoraSimulada(e.target.value)}
+                  className="flex-1 border border-gray-300 rounded-xl px-4 py-3 text-lg font-mono focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">Hora</option>
+                  {Array.from({ length: 24 }, (_, i) => (
+                    <option key={i} value={String(i).padStart(2, "0")}>
+                      {String(i).padStart(2, "0")}
+                    </option>
+                  ))}
+                </select>
+                <span className="text-2xl font-bold text-gray-400 self-center">:</span>
+                <select
+                  value={minutoSimulado}
+                  onChange={(e) => setMinutoSimulado(e.target.value)}
+                  className="flex-1 border border-gray-300 rounded-xl px-4 py-3 text-lg font-mono focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">Min</option>
+                  {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].map((m) => (
+                    <option key={m} value={String(m).padStart(2, "0")}>
+                      {String(m).padStart(2, "0")}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Accesos rápidos:</label>
+              <div className="grid grid-cols-3 gap-2">
+                {presets.map((p) => (
+                  <button
+                    key={p.label}
+                    onClick={() => {
+                      setHoraSimulada(p.hora);
+                      setMinutoSimulado(p.minuto);
+                    }}
+                    className="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-xs font-medium text-gray-700 transition text-left"
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={activarSimulacion}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-semibold transition"
+              >
+                Activar Simulación
+              </button>
+              {modoSimulacion && (
+                <button
+                  onClick={desactivarSimulacion}
+                  className="flex-1 bg-red-500 hover:bg-red-600 text-white py-3 rounded-xl font-semibold transition"
+                >
+                  Desactivar
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
