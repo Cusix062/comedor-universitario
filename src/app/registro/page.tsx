@@ -30,146 +30,241 @@ export default function RegistroPage() {
   const [horaActual, setHoraActual] = useState(new Date());
   const router = useRouter();
 
-  // CAPTCHA Puzzle
+  // CAPTCHA Multi-tipo
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const piezaCanvasRef = useRef<HTMLCanvasElement>(null);
   const [captchaVerificado, setCaptchaVerificado] = useState(false);
   const [captchaError, setCaptchaError] = useState("");
-  const [captchaPieza, setCaptchaPieza] = useState({ x: 0, y: 0, size: 0 });
   const [captchaIntentos, setCaptchaIntentos] = useState(0);
-  const captchaDataRef = useRef<{ colores: string[]; formas: any[] }>({ colores: [], formas: [] });
+  const [captchaTipo, setCaptchaTipo] = useState<"puzzle" | "numeros" | "letras" | "mixto">("puzzle");
+  const [captchaTexto, setCaptchaTexto] = useState("");
+  const [captchaInput, setCaptchaInput] = useState("");
+  const [captchaPieza, setCaptchaPieza] = useState({ x: 0, y: 0, size: 0 });
 
-  const generarCaptcha = useCallback(() => {
-    const canvas = canvasRef.current;
-    const piezaCanvas = piezaCanvasRef.current;
-    if (!canvas || !piezaCanvas) return;
+  const generarTextoCaptcha = (tipo: string): string => {
+    if (tipo === "numeros") {
+      return Array.from({ length: 6 }, () => Math.floor(Math.random() * 10)).join("");
+    }
+    if (tipo === "letras") {
+      const letras = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+      return Array.from({ length: 5 }, () => letras[Math.floor(Math.random() * letras.length)]).join("");
+    }
+    // mixto
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    return Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+  };
 
+  const dibujarTextoCaptcha = (canvas: HTMLCanvasElement, texto: string) => {
     const ctx = canvas.getContext("2d");
-    const piezaCtx = piezaCanvas.getContext("2d");
-    if (!ctx || !piezaCtx) return;
+    if (!ctx) return;
 
-    const W = 280;
-    const H = 160;
+    const W = 260;
+    const H = 90;
     canvas.width = W;
     canvas.height = H;
 
-    // Fondo degradado aleatorio
+    // Fondo
     const grad = ctx.createLinearGradient(0, 0, W, H);
-    const coloresBase = [
-      ["#667eea", "#764ba2"], ["#f093fb", "#f5576c"], ["#4facfe", "#00f2fe"],
-      ["#43e97b", "#38f9d7"], ["#fa709a", "#fee140"], ["#a18cd1", "#fbc2eb"],
-      ["#fccb90", "#d57eeb"], ["#e0c3fc", "#8ec5fc"], ["#f5576c", "#ff6a88"],
+    const colores = [
+      ["#1a1a2e", "#16213e"], ["#0f3460", "#1a1a2e"], ["#162447", "#1f4068"],
+      ["#1b1b2f", "#162447"], ["#0a1628", "#1b2838"], ["#1a1a2e", "#0f3460"],
     ];
-    const par = coloresBase[Math.floor(Math.random() * coloresBase.length)];
+    const par = colores[Math.floor(Math.random() * colores.length)];
     grad.addColorStop(0, par[0]);
     grad.addColorStop(1, par[1]);
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, W, H);
 
-    // Formas aleatorias
-    const formas: any[] = [];
-    for (let i = 0; i < 12; i++) {
-      const tipo = Math.random() > 0.5 ? "circulo" : "rect";
-      const x = Math.random() * W;
-      const y = Math.random() * H;
-      const size = 15 + Math.random() * 40;
-      const color = `hsl(${Math.random() * 360}, ${60 + Math.random() * 30}%, ${50 + Math.random() * 25}%)`;
-      const alpha = 0.4 + Math.random() * 0.5;
-
-      ctx.globalAlpha = alpha;
-      ctx.fillStyle = color;
-
-      if (tipo === "circulo") {
-        ctx.beginPath();
-        ctx.arc(x, y, size / 2, 0, Math.PI * 2);
-        ctx.fill();
-      } else {
-        const rot = Math.random() * Math.PI;
-        ctx.save();
-        ctx.translate(x, y);
-        ctx.rotate(rot);
-        ctx.fillRect(-size / 2, -size / 3, size, size * 0.6);
-        ctx.restore();
-      }
-
-      formas.push({ tipo, x, y, size, color, alpha });
-    }
-
-    ctx.globalAlpha = 1;
-
-    // Líneas decorativas
-    for (let i = 0; i < 5; i++) {
-      ctx.strokeStyle = `hsl(${Math.random() * 360}, 70%, 60%)`;
-      ctx.lineWidth = 2 + Math.random() * 3;
-      ctx.globalAlpha = 0.3 + Math.random() * 0.4;
+    // Líneas de ruido
+    for (let i = 0; i < 20; i++) {
+      ctx.strokeStyle = `rgba(${Math.random() * 255},${Math.random() * 255},${Math.random() * 255},0.15)`;
+      ctx.lineWidth = 1 + Math.random() * 2;
       ctx.beginPath();
       ctx.moveTo(Math.random() * W, Math.random() * H);
       ctx.lineTo(Math.random() * W, Math.random() * H);
       ctx.stroke();
     }
-    ctx.globalAlpha = 1;
 
-    // Texto distorsionado
-    const textos = ["UNDC", "COMEDOR", "SISTEMAS", "2026", "CAÑETE"];
-    for (let i = 0; i < 3; i++) {
-      ctx.save();
-      ctx.font = `bold ${20 + Math.random() * 20}px Arial`;
-      ctx.fillStyle = `rgba(255,255,255,${0.15 + Math.random() * 0.2})`;
-      ctx.translate(Math.random() * W, Math.random() * H);
-      ctx.rotate((Math.random() - 0.5) * 0.8);
-      ctx.fillText(textos[Math.floor(Math.random() * textos.length)], 0, 0);
-      ctx.restore();
+    // Puntos de ruido
+    for (let i = 0; i < 80; i++) {
+      ctx.fillStyle = `rgba(${Math.random() * 255},${Math.random() * 255},${Math.random() * 255},${0.2 + Math.random() * 0.3})`;
+      ctx.beginPath();
+      ctx.arc(Math.random() * W, Math.random() * H, 1 + Math.random() * 2, 0, Math.PI * 2);
+      ctx.fill();
     }
 
-    captchaDataRef.current = { colores: par, formas };
+    // Dibujar cada caracter con transformaciones
+    const chars = texto.split("");
+    const charW = W / (chars.length + 1);
 
-    // Elegir pieza a extraer
-    const piezaSize = 40 + Math.floor(Math.random() * 15);
-    const margen = 10;
-    const px = margen + Math.floor(Math.random() * (W - piezaSize - margen * 2));
-    const py = margen + Math.floor(Math.random() * (H - piezaSize - margen * 2));
+    chars.forEach((char, i) => {
+      ctx.save();
+      const x = charW * (i + 1);
+      const y = H / 2 + (Math.random() - 0.5) * 20;
 
-    setCaptchaPieza({ x: px, y: py, size: piezaSize });
+      ctx.translate(x, y);
+      ctx.rotate((Math.random() - 0.5) * 0.5);
 
-    // Dibujar pieza en canvas pequeño
-    piezaCanvas.width = piezaSize + 10;
-    piezaCanvas.height = piezaSize + 10;
-    piezaCtx.drawImage(canvas, px, py, piezaSize, piezaSize, 5, 5, piezaSize, piezaSize);
+      const escala = 0.8 + Math.random() * 0.6;
+      ctx.scale(escala, escala);
 
-    // Dibujar borde de pieza
-    piezaCtx.strokeStyle = "#fff";
-    piezaCtx.lineWidth = 3;
-    piezaCtx.strokeRect(5, 5, piezaSize, piezaSize);
-    piezaCtx.shadowColor = "rgba(0,0,0,0.5)";
-    piezaCtx.shadowBlur = 6;
-    piezaCtx.strokeRect(5, 5, piezaSize, piezaSize);
-    piezaCtx.shadowBlur = 0;
+      // Sombra
+      ctx.shadowColor = `hsl(${Math.random() * 360}, 80%, 50%)`;
+      ctx.shadowBlur = 4 + Math.random() * 4;
+      ctx.shadowOffsetX = (Math.random() - 0.5) * 3;
+      ctx.shadowOffsetY = (Math.random() - 0.5) * 3;
 
-    // Vaciar zona en canvas principal
-    ctx.fillStyle = "rgba(255,255,255,0.7)";
-    ctx.fillRect(px, py, piezaSize, piezaSize);
-    ctx.strokeStyle = "#fff";
+      ctx.font = `bold ${28 + Math.random() * 8}px 'Courier New', monospace`;
+      ctx.fillStyle = `hsl(${Math.random() * 360}, ${70 + Math.random() * 25}%, ${55 + Math.random() * 20}%)`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(char, 0, 0);
+
+      ctx.restore();
+    });
+
+    // Línea tachada
+    ctx.strokeStyle = `rgba(255,255,255,0.3)`;
     ctx.lineWidth = 2;
-    ctx.setLineDash([4, 4]);
-    ctx.strokeRect(px, py, piezaSize, piezaSize);
-    ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.moveTo(10, H / 2 + (Math.random() - 0.5) * 30);
+    ctx.lineTo(W - 10, H / 2 + (Math.random() - 0.5) * 30);
+    ctx.stroke();
+  };
 
-    // Icono de puzzle en el hueco
-    ctx.fillStyle = "rgba(0,0,0,0.3)";
-    ctx.font = `${piezaSize * 0.5}px Arial`;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText("?", px + piezaSize / 2, py + piezaSize / 2);
-    ctx.textAlign = "start";
-    ctx.textBaseline = "alphabetic";
+  const generarCaptcha = useCallback(() => {
+    const tipos: ("puzzle" | "numeros" | "letras" | "mixto")[] = ["puzzle", "numeros", "letras", "mixto"];
+    const tipo = tipos[Math.floor(Math.random() * tipos.length)];
+    setCaptchaTipo(tipo);
+
+    if (tipo === "puzzle") {
+      // Generar puzzle visual
+      setTimeout(() => {
+        const canvas = canvasRef.current;
+        const piezaCanvas = piezaCanvasRef.current;
+        if (!canvas || !piezaCanvas) return;
+
+        const ctx = canvas.getContext("2d");
+        const piezaCtx = piezaCanvas.getContext("2d");
+        if (!ctx || !piezaCtx) return;
+
+        const W = 280;
+        const H = 160;
+        canvas.width = W;
+        canvas.height = H;
+
+        const grad = ctx.createLinearGradient(0, 0, W, H);
+        const coloresBase = [
+          ["#667eea", "#764ba2"], ["#f093fb", "#f5576c"], ["#4facfe", "#00f2fe"],
+          ["#43e97b", "#38f9d7"], ["#fa709a", "#fee140"], ["#a18cd1", "#fbc2eb"],
+        ];
+        const par = coloresBase[Math.floor(Math.random() * coloresBase.length)];
+        grad.addColorStop(0, par[0]);
+        grad.addColorStop(1, par[1]);
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, W, H);
+
+        for (let i = 0; i < 10; i++) {
+          const tipo = Math.random() > 0.5 ? "circulo" : "rect";
+          const x = Math.random() * W;
+          const y = Math.random() * H;
+          const size = 15 + Math.random() * 40;
+          ctx.globalAlpha = 0.4 + Math.random() * 0.5;
+          ctx.fillStyle = `hsl(${Math.random() * 360}, 70%, 55%)`;
+          if (tipo === "circulo") {
+            ctx.beginPath();
+            ctx.arc(x, y, size / 2, 0, Math.PI * 2);
+            ctx.fill();
+          } else {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(Math.random() * Math.PI);
+            ctx.fillRect(-size / 2, -size / 3, size, size * 0.6);
+            ctx.restore();
+          }
+        }
+        ctx.globalAlpha = 1;
+
+        for (let i = 0; i < 4; i++) {
+          ctx.strokeStyle = `hsl(${Math.random() * 360}, 70%, 60%)`;
+          ctx.lineWidth = 2 + Math.random() * 3;
+          ctx.globalAlpha = 0.3 + Math.random() * 0.3;
+          ctx.beginPath();
+          ctx.moveTo(Math.random() * W, Math.random() * H);
+          ctx.lineTo(Math.random() * W, Math.random() * H);
+          ctx.stroke();
+        }
+        ctx.globalAlpha = 1;
+
+        const piezaSize = 40 + Math.floor(Math.random() * 15);
+        const margen = 10;
+        const px = margen + Math.floor(Math.random() * (W - piezaSize - margen * 2));
+        const py = margen + Math.floor(Math.random() * (H - piezaSize - margen * 2));
+
+        setCaptchaPieza({ x: px, y: py, size: piezaSize });
+
+        piezaCanvas.width = piezaSize + 10;
+        piezaCanvas.height = piezaSize + 10;
+        piezaCtx.drawImage(canvas, px, py, piezaSize, piezaSize, 5, 5, piezaSize, piezaSize);
+        piezaCtx.strokeStyle = "#fff";
+        piezaCtx.lineWidth = 3;
+        piezaCtx.strokeRect(5, 5, piezaSize, piezaSize);
+
+        ctx.fillStyle = "rgba(255,255,255,0.7)";
+        ctx.fillRect(px, py, piezaSize, piezaSize);
+        ctx.strokeStyle = "#fff";
+        ctx.lineWidth = 2;
+        ctx.setLineDash([4, 4]);
+        ctx.strokeRect(px, py, piezaSize, piezaSize);
+        ctx.setLineDash([]);
+        ctx.fillStyle = "rgba(0,0,0,0.3)";
+        ctx.font = `${piezaSize * 0.5}px Arial`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("?", px + piezaSize / 2, py + piezaSize / 2);
+        ctx.textAlign = "start";
+        ctx.textBaseline = "alphabetic";
+      }, 50);
+    } else {
+      // Generar texto (numeros, letras, mixto)
+      const texto = generarTextoCaptcha(tipo);
+      setCaptchaTexto(texto);
+      setTimeout(() => {
+        const canvas = canvasRef.current;
+        if (canvas) dibujarTextoCaptcha(canvas, texto);
+      }, 50);
+    }
 
     setCaptchaVerificado(false);
     setCaptchaError("");
+    setCaptchaInput("");
     setCaptchaIntentos(0);
   }, []);
 
+  const verificarTextoCaptcha = () => {
+    if (captchaInput.toUpperCase() === captchaTexto) {
+      setCaptchaVerificado(true);
+      setCaptchaError("");
+    } else {
+      const nuevos = captchaIntentos + 1;
+      setCaptchaIntentos(nuevos);
+      if (nuevos >= 3) {
+        setCaptchaError("Demasiados intentos. Se genera un nuevo captcha.");
+        setTimeout(() => generarCaptcha(), 1200);
+      } else {
+        setCaptchaError(`Código incorrecto. Intento ${nuevos}/3`);
+        setCaptchaInput("");
+        // Regenerarcanvas con nuevo texto
+        const texto = generarTextoCaptcha(captchaTipo);
+        setCaptchaTexto(texto);
+        const canvas = canvasRef.current;
+        if (canvas) dibujarTextoCaptcha(canvas, texto);
+      }
+    }
+  };
+
   const manejarClickCanvas = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (captchaVerificado) return;
+    if (captchaVerificado || captchaTipo !== "puzzle") return;
 
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -184,27 +279,23 @@ export default function RegistroPage() {
     const tolerancia = 15;
 
     if (
-      clickX >= x - tolerancia &&
-      clickX <= x + size + tolerancia &&
-      clickY >= y - tolerancia &&
-      clickY <= y + size + tolerancia
+      clickX >= x - tolerancia && clickX <= x + size + tolerancia &&
+      clickY >= y - tolerancia && clickY <= y + size + tolerancia
     ) {
       setCaptchaVerificado(true);
       setCaptchaError("");
-
-      // Dibujar la pieza en su lugar
       const ctx = canvas.getContext("2d");
       if (ctx && piezaCanvasRef.current) {
         ctx.drawImage(piezaCanvasRef.current, 5, 5, size, size, x, y, size, size);
       }
     } else {
-      const nuevosIntentos = captchaIntentos + 1;
-      setCaptchaIntentos(nuevosIntentos);
-      if (nuevosIntentos >= 3) {
+      const nuevos = captchaIntentos + 1;
+      setCaptchaIntentos(nuevos);
+      if (nuevos >= 3) {
         setCaptchaError("Demasiados intentos. Se genera un nuevo captcha.");
-        setTimeout(() => generarCaptcha(), 1500);
+        setTimeout(() => generarCaptcha(), 1200);
       } else {
-        setCaptchaError(`Posición incorrecta. Intento ${nuevosIntentos}/3`);
+        setCaptchaError(`Posición incorrecta. Intento ${nuevos}/3`);
       }
     }
   };
@@ -504,52 +595,110 @@ export default function RegistroPage() {
         {!captchaVerificado ? (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
             <h2 className="text-base font-bold text-gray-800 mb-3 flex items-center gap-2">
-              <span className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center text-sm">🧩</span>
+              <span className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center text-sm">
+                {captchaTipo === "puzzle" ? "🧩" : "🔐"}
+              </span>
               Verificación Anti-Bot
             </h2>
-            <p className="text-sm text-gray-500 mb-4">
-              Haz clic en el espacio vacío <span className="font-bold text-purple-600">?</span> donde falta la pieza del puzzle
-            </p>
+
+            {/* Instrucciones según tipo */}
+            {captchaTipo === "puzzle" && (
+              <p className="text-sm text-gray-500 mb-4">
+                Haz clic en el espacio vacío <span className="font-bold text-purple-600">?</span> donde falta la pieza del puzzle
+              </p>
+            )}
+            {captchaTipo === "numeros" && (
+              <p className="text-sm text-gray-500 mb-4">
+                Escribe los <span className="font-bold text-blue-600">números</span> que ves en la imagen
+              </p>
+            )}
+            {captchaTipo === "letras" && (
+              <p className="text-sm text-gray-500 mb-4">
+                Escribe las <span className="font-bold text-green-600">letras</span> que ves en la imagen (sin espacios)
+              </p>
+            )}
+            {captchaTipo === "mixto" && (
+              <p className="text-sm text-gray-500 mb-4">
+                Escribe el <span className="font-bold text-orange-600">código</span> (letras y números) que ves en la imagen
+              </p>
+            )}
 
             <div className="flex flex-col items-center gap-4">
-              <div className="flex items-start gap-6">
-                {/* Canvas principal */}
-                <div className="relative">
-                  <canvas
-                    ref={canvasRef}
-                    onClick={manejarClickCanvas}
-                    className="rounded-xl border-2 border-gray-200 cursor-crosshair hover:border-purple-400 transition-colors"
-                    style={{ maxWidth: "280px", maxHeight: "160px" }}
-                  />
-                  <p className="text-xs text-center text-gray-400 mt-1">Imagen con pieza faltante</p>
-                </div>
-
-                {/* Pieza a ubicar */}
-                <div className="flex flex-col items-center">
-                  <div className="bg-gradient-to-br from-purple-100 to-indigo-100 border-2 border-dashed border-purple-300 rounded-xl p-2">
+              {/* Tipo PUZZLE */}
+              {captchaTipo === "puzzle" && (
+                <div className="flex items-start gap-6">
+                  <div className="relative">
                     <canvas
-                      ref={piezaCanvasRef}
-                      className="rounded-lg"
-                      style={{ maxWidth: "80px", maxHeight: "80px" }}
+                      ref={canvasRef}
+                      onClick={manejarClickCanvas}
+                      className="rounded-xl border-2 border-gray-200 cursor-crosshair hover:border-purple-400 transition-colors"
+                      style={{ maxWidth: "280px", maxHeight: "160px" }}
+                    />
+                    <p className="text-xs text-center text-gray-400 mt-1">Imagen con pieza faltante</p>
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <div className="bg-gradient-to-br from-purple-100 to-indigo-100 border-2 border-dashed border-purple-300 rounded-xl p-2">
+                      <canvas
+                        ref={piezaCanvasRef}
+                        className="rounded-lg"
+                        style={{ maxWidth: "80px", maxHeight: "80px" }}
+                      />
+                    </div>
+                    <p className="text-xs text-center text-gray-400 mt-1 font-semibold">Pieza</p>
+                    <p className="text-xs text-center text-purple-600">👆 Colócala aquí</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Tipo TEXTO (numeros, letras, mixto) */}
+              {captchaTipo !== "puzzle" && (
+                <div className="flex flex-col items-center gap-3">
+                  <div className="relative">
+                    <canvas
+                      ref={canvasRef}
+                      className="rounded-xl border-2 border-gray-200"
+                      style={{ maxWidth: "260px", maxHeight: "90px" }}
                     />
                   </div>
-                  <p className="text-xs text-center text-gray-400 mt-1 font-semibold">Pieza</p>
-                  <p className="text-xs text-center text-purple-600">👆 Colócala aquí</p>
+                  <div className="flex gap-2 w-full max-w-xs">
+                    <input
+                      type="text"
+                      value={captchaInput}
+                      onChange={(e) => setCaptchaInput(e.target.value.toUpperCase())}
+                      onKeyDown={(e) => e.key === "Enter" && verificarTextoCaptcha()}
+                      placeholder={captchaTipo === "numeros" ? "Solo números..." : captchaTipo === "letras" ? "Solo letras..." : "Código..."}
+                      maxLength={8}
+                      className="flex-1 border-2 border-gray-200 rounded-xl px-4 py-3 text-center text-lg font-bold font-mono tracking-[0.3em] focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none uppercase"
+                      autoFocus
+                    />
+                    <button
+                      onClick={verificarTextoCaptcha}
+                      disabled={!captchaInput}
+                      className="px-5 py-3 rounded-xl font-semibold text-sm text-white transition-all shadow-lg disabled:opacity-50"
+                      style={{ background: "linear-gradient(135deg, #7c3aed, #6366f1)" }}
+                    >
+                      ✓
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div className="flex items-center gap-3">
                 <button
                   onClick={generarCaptcha}
                   className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl text-sm font-medium transition"
                 >
-                  🔄 Nuevo puzzle
+                  🔄 {captchaTipo === "puzzle" ? "Nuevo puzzle" : "Otro código"}
                 </button>
                 {captchaIntentos > 0 && (
-                  <span className="text-xs text-gray-400">
-                    Intentos: {captchaIntentos}/3
-                  </span>
+                  <span className="text-xs text-gray-400">Intentos: {captchaIntentos}/3</span>
                 )}
+                <span className="text-xs px-2 py-1 bg-purple-50 text-purple-600 rounded-lg font-medium">
+                  {captchaTipo === "puzzle" && "🧩 Puzzle"}
+                  {captchaTipo === "numeros" && "🔢 Números"}
+                  {captchaTipo === "letras" && "🔤 Letras"}
+                  {captchaTipo === "mixto" && "🔐 Mixto"}
+                </span>
               </div>
             </div>
 
@@ -565,14 +714,14 @@ export default function RegistroPage() {
           <div className="bg-green-50 border border-green-200 rounded-2xl p-4 flex items-center gap-3">
             <span className="text-2xl">✅</span>
             <div>
-              <p className="font-bold text-green-700">Puzzle resuelto correctamente</p>
+              <p className="font-bold text-green-700">Verificación completada</p>
               <p className="text-sm text-green-600">Ahora puedes solicitar tu cupo</p>
             </div>
             <button
               onClick={generarCaptcha}
               className="ml-auto text-green-600 hover:text-green-800 text-xs font-semibold underline"
             >
-              Otro puzzle
+              Otro captcha
             </button>
           </div>
         )}
