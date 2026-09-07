@@ -44,6 +44,20 @@ export default function AdminPage() {
     }
   };
 
+  const eliminarInscripcion = async (inscripcionId: number, nombre: string) => {
+    if (!confirm(`¿Eliminar la inscripción de ${nombre}? Se liberará el cupo.`)) return;
+    try {
+      const res = await fetch(`/api/admin/validar?id=${inscripcionId}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        fetchInscritos();
+      }
+    } catch {
+      console.error("Error");
+    }
+  };
+
   const cerrarSesion = () => {
     localStorage.removeItem("admin_session");
     router.push("/");
@@ -209,14 +223,22 @@ export default function AdminPage() {
                         </span>
                       </td>
                       <td className="py-3 px-4">
-                        {insc.estado === "reservado" && (
+                        <div className="flex gap-2">
+                          {insc.estado === "reservado" && (
+                            <button
+                              onClick={() => marcarAtendido(insc.id)}
+                              className="bg-green-500 hover:bg-green-600 text-white px-4 py-1.5 rounded-lg text-xs font-semibold transition-all"
+                            >
+                              ✅ Atender
+                            </button>
+                          )}
                           <button
-                            onClick={() => marcarAtendido(insc.id)}
-                            className="bg-green-500 hover:bg-green-600 text-white px-4 py-1.5 rounded-lg text-xs font-semibold transition-all"
+                            onClick={() => eliminarInscripcion(insc.id, insc.nombre)}
+                            className="bg-red-500 hover:bg-red-600 text-white px-4 py-1.5 rounded-lg text-xs font-semibold transition-all"
                           >
-                            ✅ Atender
+                            🗑️ Eliminar
                           </button>
-                        )}
+                        </div>
                       </td>
                     </tr>
                   ))}

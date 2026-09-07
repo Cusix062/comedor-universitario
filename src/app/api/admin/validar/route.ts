@@ -71,3 +71,35 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: "Error interno" }, { status: 500 });
   }
 }
+
+// DELETE: Eliminar inscripción
+export async function DELETE(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const inscripcion_id = searchParams.get("id");
+
+    if (!inscripcion_id) {
+      return NextResponse.json({ error: "ID requerido" }, { status: 400 });
+    }
+
+    const db = getDb();
+
+    const inscripcion = db.prepare("SELECT cupo_id FROM inscripciones WHERE id = ?").get(inscripcion_id) as any;
+    if (!inscripcion) {
+      return NextResponse.json({ error: "Inscripción no encontrada" }, { status: 404 });
+    }
+
+    db.transaction(() => {
+      db.prepare("DELETE FROM inscripciones WHERE id = ?").run(inscripcion_id);
+      db.prepare("UPDATE cupos SET ocupados = MAX(0, ocupados - 1) WHERE id = ?").run(inscripcion.cupo_id);
+      const cupo = db.prepare("SELECT * FROM cupos WHERE id = ?").get(inscripcion.cupo_id) as any;
+      if (cupo && cupo.estado === "cerrado" && cupo.ocupados < cupo.capacidad) {
+        db.prepare("UPDATE cupos SET estado = 'abierto' WHERE id = ?").run(inscripcion.cupo_id);
+      }
+    })();
+
+    return NextResponse.json({ success: true, mensaje: "Inscripción eliminada" });
+  } catch (error) {
+    return NextResponse.json({ error: "Error interno" }, { status: 500 });
+  }
+}
