@@ -140,6 +140,12 @@ export default function AdminPage() {
               ⏰ {modoSimulacion ? `${horaSimulada}:${minutoSimulado}` : "Simular Hora"}
             </button>
             <button
+              onClick={() => router.push("/admin/suspensiones")}
+              className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-xl transition text-sm font-medium"
+            >
+              🚫 Suspensiones
+            </button>
+            <button
               onClick={() => router.push("/admin/turnos")}
               className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-xl transition text-sm font-medium"
             >

@@ -83,6 +83,20 @@ function initDb(database: Database.Database) {
     );
 
     CREATE INDEX IF NOT EXISTS idx_beneficiarios_nombre ON beneficiarios(nombre);
+
+    CREATE TABLE IF NOT EXISTS suspenciones (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      estudiante_id INTEGER NOT NULL,
+      tipo TEXT NOT NULL CHECK(tipo IN ('almuerzo', 'cena', 'ambos')),
+      fecha_inicio TEXT NOT NULL,
+      fecha_fin TEXT NOT NULL,
+      motivo TEXT NOT NULL DEFAULT '',
+      creado_en DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (estudiante_id) REFERENCES estudiantes(id)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_suspenciones_estudiante ON suspenciones(estudiante_id);
+    CREATE INDEX IF NOT EXISTS idx_suspenciones_fechas ON suspenciones(fecha_inicio, fecha_fin);
   `);
 
   // Insertar admin por defecto si no existe

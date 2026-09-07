@@ -45,6 +45,26 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Verificar si el estudiante está suspendido
+    if (idEstudiante && tipoTurno) {
+      const hoy = new Date().toISOString().split("T")[0];
+      const turno = tipoTurno.tipo;
+
+      const suspension = db.prepare(
+        `SELECT * FROM suspenciones 
+         WHERE estudiante_id = ? 
+         AND (tipo = ? OR tipo = 'ambos')
+         AND fecha_inicio <= ? AND fecha_fin >= ?`
+      ).get(idEstudiante, turno, hoy, hoy) as any;
+
+      if (suspension) {
+        const turnoLabel = suspension.tipo === "ambos" ? "ambos turnos" : suspension.tipo;
+        return NextResponse.json({
+          error: `Usted se encuentra suspendido/a para ${turnoLabel} hasta el ${suspension.fecha_fin}.${suspension.motivo ? ` Motivo: ${suspension.motivo}` : ""}`
+        }, { status: 403 });
+      }
+    }
+
     // Verificar que el cupo existe y tiene espacio
     const cupo = db.prepare("SELECT * FROM cupos WHERE id = ? AND estado = 'abierto'").get(cupo_id) as any;
     if (!cupo) {
