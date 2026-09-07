@@ -30,6 +30,47 @@ export default function RegistroPage() {
   const [horaActual, setHoraActual] = useState(new Date());
   const router = useRouter();
 
+  // CAPTCHA
+  const [captchaA, setCaptchaA] = useState(0);
+  const [captchaB, setCaptchaB] = useState(0);
+  const [captchaOp, setCaptchaOp] = useState<"+" | "-" | "×">("+");
+  const [captchaRespuesta, setCaptchaRespuesta] = useState("");
+  const [captchaVerificado, setCaptchaVerificado] = useState(false);
+  const [captchaError, setCaptchaError] = useState("");
+
+  const generarCaptcha = () => {
+    const ops: ("+" | "-" | "×")[] = ["+", "-", "×"];
+    const op = ops[Math.floor(Math.random() * ops.length)];
+    let a = Math.floor(Math.random() * 15) + 1;
+    let b = Math.floor(Math.random() * 15) + 1;
+    if (op === "-" && a < b) [a, b] = [b, a];
+    setCaptchaA(a);
+    setCaptchaB(b);
+    setCaptchaOp(op);
+    setCaptchaRespuesta("");
+    setCaptchaVerificado(false);
+    setCaptchaError("");
+  };
+
+  const verificarCaptcha = () => {
+    let resultado = 0;
+    if (captchaOp === "+") resultado = captchaA + captchaB;
+    else if (captchaOp === "-") resultado = captchaA - captchaB;
+    else resultado = captchaA * captchaB;
+
+    if (parseInt(captchaRespuesta) === resultado) {
+      setCaptchaVerificado(true);
+      setCaptchaError("");
+    } else {
+      setCaptchaError("Respuesta incorrecta. Intente de nuevo.");
+      generarCaptcha();
+    }
+  };
+
+  useEffect(() => {
+    generarCaptcha();
+  }, []);
+
   useEffect(() => {
     if (status === "loading") return;
 
@@ -91,6 +132,13 @@ export default function RegistroPage() {
 
   const registrarEnTurno = async (tipo: "almuerzo" | "cena") => {
     if (!estudiante) return;
+
+    // Verificar CAPTCHA
+    if (!captchaVerificado) {
+      setError("Debe completar el captcha antes de registrarse");
+      return;
+    }
+
     setError("");
     setMensaje("");
     setCargando(true);
@@ -309,6 +357,65 @@ export default function RegistroPage() {
             </div>
           </div>
         </div>
+
+        {/* CAPTCHA */}
+        {!captchaVerificado ? (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <h2 className="text-base font-bold text-gray-800 mb-4 flex items-center gap-2">
+              <span className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center text-sm">🤖</span>
+              Verificación Anti-Bot
+            </h2>
+            <p className="text-sm text-gray-500 mb-4">Resuelve la operación matemática para continuar:</p>
+
+            <div className="flex items-center gap-4">
+              <div className="flex-1">
+                <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-xl px-6 py-4 text-center">
+                  <p className="text-2xl font-bold text-gray-800 font-mono">
+                    {captchaA} <span className="text-purple-600">{captchaOp}</span> {captchaB} <span className="text-gray-400">=</span> <span className="text-gray-300">?</span>
+                  </p>
+                </div>
+              </div>
+              <div className="flex-1">
+                <input
+                  type="number"
+                  value={captchaRespuesta}
+                  onChange={(e) => setCaptchaRespuesta(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && verificarCaptcha()}
+                  placeholder="Tu respuesta"
+                  className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-center text-lg font-bold focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none"
+                />
+              </div>
+              <button
+                onClick={verificarCaptcha}
+                disabled={!captchaRespuesta}
+                className="px-6 py-3 rounded-xl font-semibold text-sm text-white transition-all shadow-lg disabled:opacity-50"
+                style={{ background: "linear-gradient(135deg, #7c3aed, #6366f1)" }}
+              >
+                Verificar
+              </button>
+            </div>
+
+            {captchaError && (
+              <p className="text-red-500 text-sm mt-3 font-medium">❌ {captchaError}</p>
+            )}
+
+            <p className="text-xs text-gray-400 mt-3">⚠️ Debe resolver el captcha antes de registrarse</p>
+          </div>
+        ) : (
+          <div className="bg-green-50 border border-green-200 rounded-2xl p-4 flex items-center gap-3">
+            <span className="text-2xl">✅</span>
+            <div>
+              <p className="font-bold text-green-700">Verificación completada</p>
+              <p className="text-sm text-green-600">Ahora puedes solicitar tu cupo</p>
+            </div>
+            <button
+              onClick={generarCaptcha}
+              className="ml-auto text-green-600 hover:text-green-800 text-xs font-semibold underline"
+            >
+              Cambiar captcha
+            </button>
+          </div>
+        )}
 
         {/* Turnos */}
         <div className="grid md:grid-cols-2 gap-5">
