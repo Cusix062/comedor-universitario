@@ -468,6 +468,8 @@ export default function RegistroPage() {
     }
   };
 
+  const hayHorarioActivo = estaEnHorario("almuerzo") || estaEnHorario("cena");
+
   const puedeRegistrar = (tipo: "almuerzo" | "cena"): boolean => {
     return estaEnHorario(tipo);
   };
@@ -591,8 +593,28 @@ export default function RegistroPage() {
           </div>
         </div>
 
-        {/* CAPTCHA */}
-        {!captchaVerificado ? (
+        {/* Registro solo disponible en horario */}
+        {!hayHorarioActivo ? (
+          <div className="bg-gray-100 border-2 border-gray-200 rounded-2xl p-8 text-center">
+            <div className="text-4xl mb-3">⏰</div>
+            <h3 className="text-lg font-bold text-gray-700 mb-2">Fuera de Horario de Registro</h3>
+            <p className="text-gray-500 text-sm mb-4">Los horarios de inscripción son:</p>
+            <div className="flex justify-center gap-6">
+              <div className="bg-white rounded-xl px-5 py-3 border border-gray-200">
+                <p className="text-sm font-bold text-gray-800">🥗 Almuerzo</p>
+                <p className="text-xs text-gray-500">10:30 AM - 12:00 PM</p>
+              </div>
+              <div className="bg-white rounded-xl px-5 py-3 border border-gray-200">
+                <p className="text-sm font-bold text-gray-800">🌙 Cena</p>
+                <p className="text-xs text-gray-500">3:30 PM - 5:00 PM</p>
+              </div>
+            </div>
+            <p className="text-xs text-gray-400 mt-4">Vuelva dentro del horario establecido para registrarse</p>
+          </div>
+        ) : (
+          <>
+            {/* CAPTCHA */}
+            {!captchaVerificado ? (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
             <h2 className="text-base font-bold text-gray-800 mb-3 flex items-center gap-2">
               <span className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center text-sm">
@@ -868,6 +890,8 @@ export default function RegistroPage() {
             </div>
           </div>
         </div>
+          </>
+        )}
 
         {/* Botones */}
         <div className="flex gap-4">
