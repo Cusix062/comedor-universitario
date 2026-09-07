@@ -16,10 +16,7 @@ export default function LoginPage() {
     setError("");
     setCargando(true);
     try {
-      const result = await signIn("google", { redirect: false });
-      if (result?.error) {
-        setError("No se pudo iniciar sesión con Google");
-      }
+      await signIn("google", { callbackUrl: "/registro" });
     } catch {
       setError("Error de conexión");
     } finally {

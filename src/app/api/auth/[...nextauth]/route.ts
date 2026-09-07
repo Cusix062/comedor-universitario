@@ -13,7 +13,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (user.email && user.email.endsWith("@undc.edu.pe")) {
         return true;
       }
-      return "/auth/error";
+      return false;
     },
     async session({ session, token }) {
       if (session.user) {

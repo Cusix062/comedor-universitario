@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 
 interface Estudiante {
   id: number;
@@ -19,6 +20,7 @@ interface CupoInfo {
 }
 
 export default function RegistroPage() {
+  const { data: session, status } = useSession();
   const [estudiante, setEstudiante] = useState<Estudiante | null>(null);
   const [telefono, setTelefono] = useState("");
   const [ciclo, setCiclo] = useState(1);
@@ -30,22 +32,42 @@ export default function RegistroPage() {
   const router = useRouter();
 
   useEffect(() => {
-    const session = localStorage.getItem("session");
-    const estudianteData = localStorage.getItem("estudiante");
+    // Esperar a que cargue la sesión
+    if (status === "loading") return;
 
-    if (!session || !estudianteData) {
-      router.push("/");
-      return;
+    // Si tiene sesión de Google
+    if (session?.user) {
+      const est: Estudiante = {
+        id: 0,
+        codigo: session.user.email?.split("@")[0] || "",
+        nombre: session.user.name || "",
+        correo: session.user.email || "",
+        ciclo: 1,
+        telefono: "",
+      };
+      setEstudiante(est);
+      setTelefono("");
+      setCiclo(1);
+      const timer = setInterval(() => setHoraActual(new Date()), 1000);
+      return () => clearInterval(timer);
     }
 
-    const est = JSON.parse(estudianteData);
-    setEstudiante(est);
-    setTelefono(est.telefono || "");
-    setCiclo(est.ciclo || 1);
+    // Si tiene sesión manual (localStorage)
+    const sessionLocal = localStorage.getItem("session");
+    const estudianteData = localStorage.getItem("estudiante");
 
-    const timer = setInterval(() => setHoraActual(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, [router]);
+    if (sessionLocal && estudianteData) {
+      const est = JSON.parse(estudianteData);
+      setEstudiante(est);
+      setTelefono(est.telefono || "");
+      setCiclo(est.ciclo || 1);
+      const timer = setInterval(() => setHoraActual(new Date()), 1000);
+      return () => clearInterval(timer);
+    }
+
+    // No hay sesión
+    router.push("/");
+  }, [router, session, status]);
 
   useEffect(() => {
     fetchCupos();
@@ -117,12 +139,16 @@ export default function RegistroPage() {
         return;
       }
 
+      // Obtener o crear estudiante en BD
       const regRes = await fetch("/api/registro", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          estudiante_id: estudiante.id,
+          estudiante_id: estudiante.id || 0,
           cupo_id: cupoId,
+          codigo: estudiante.codigo,
+          nombre: estudiante.nombre,
+          correo: estudiante.correo,
         }),
       });
 
@@ -154,10 +180,15 @@ export default function RegistroPage() {
     }
   };
 
-  const cerrarSesion = () => {
+  const cerrarSesion = async () => {
     localStorage.removeItem("session");
     localStorage.removeItem("estudiante");
-    router.push("/");
+    if (session) {
+      const { signOut } = await import("next-auth/react");
+      await signOut({ callbackUrl: "/" });
+    } else {
+      router.push("/");
+    }
   };
 
   const porcentajeAlmuerzo = cupos?.almuerzo && cupos.almuerzo.capacidad > 0
@@ -168,7 +199,7 @@ export default function RegistroPage() {
     ? (cupos.cena.ocupados / cupos.cena.capacidad) * 100
     : 0;
 
-  if (!estudiante) return (
+  if (status === "loading" || !estudiante) return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="text-center">
         <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto" />
