@@ -103,7 +103,8 @@ function cargarBeneficiariosSiVacio(database: Database.Database) {
   const jsonPath = path.join(process.cwd(), "data", "beneficiarios.json");
   if (!fs.existsSync(jsonPath)) return;
 
-  const data = JSON.parse(fs.readFileSync(jsonPath, "utf-8"));
+  const raw = fs.readFileSync(jsonPath, "utf-8");
+  const data = JSON.parse(raw);
 
   const insert = database.prepare("INSERT INTO beneficiarios (nombre, carrera, ciclo_grupo, turno) VALUES (?, ?, ?, ?)");
 
@@ -119,4 +120,49 @@ function cargarBeneficiariosSiVacio(database: Database.Database) {
   console.log(`✅ ${(data.almuerzo?.length || 0) + (data.cena?.length || 0)} beneficiarios cargados`);
 }
 
+function esBeneficiario(database: Database.Database, nombre: string, turno: string): boolean {
+  if (!nombre || !turno) return false;
+
+  // Normalizar: quitar acentos, ñ→n, �→n, quitar caracteres no ASCII
+  const normalizar = (str: string): string => {
+    return str.trim().toUpperCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")  // quitar acentos
+      .replace(/[Ññ�]/g, "N")                             // ñ y � → N
+      .replace(/[^A-Z\s]/g, "")                            // solo letras y espacios
+      .replace(/\s+/g, " ")                                // espacios múltiples → uno
+      .trim();
+  };
+
+  const nombreNorm = normalizar(nombre);
+
+  // Buscar entre todos los beneficiarios del turno
+  const todos = database.prepare(
+    "SELECT nombre FROM beneficiarios WHERE turno = ?"
+  ).all(turno) as any[];
+
+  for (const b of todos) {
+    const nombreBD = normalizar(b.nombre);
+
+    // Coincidencia exacta
+    if (nombreNorm === nombreBD) return true;
+
+    // Coincidencia por palabras clave (al menos 2 de las primeras 3 palabras)
+    const palabrasBusqueda = nombreNorm.split(" ").filter((p: string) => p.length >= 3);
+    const palabrasBD = nombreBD.split(" ").filter((p: string) => p.length >= 3);
+
+    if (palabrasBusqueda.length >= 2 && palabrasBD.length >= 2) {
+      const topBusqueda = palabrasBusqueda.slice(0, 3);
+      const topBD = palabrasBD.slice(0, 3);
+      let coincidencias = 0;
+      for (const pb of topBusqueda) {
+        if (topBD.includes(pb)) coincidencias++;
+      }
+      if (coincidencias >= 2) return true;
+    }
+  }
+
+  return false;
+}
+
 export default getDb;
+export { esBeneficiario };

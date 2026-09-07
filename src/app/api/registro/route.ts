@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import getDb from "@/lib/db";
+import getDb, { esBeneficiario } from "@/lib/db";
 
 export async function POST(req: NextRequest) {
   try {
@@ -33,18 +33,12 @@ export async function POST(req: NextRequest) {
     }
 
     // Verificar si el estudiante es beneficiario (no debe registrarse)
-    const nombreNormalizado = nombre ? nombre.trim().toUpperCase() : "";
-    const tipoTurno = db.prepare(
-      "SELECT tipo FROM cupos WHERE id = ?"
-    ).get(cupo_id) as any;
+    const tipoTurno = db.prepare("SELECT tipo FROM cupos WHERE id = ?").get(cupo_id) as any;
 
-    if (nombreNormalizado && tipoTurno) {
-      const turno = tipoTurno.tipo;
-      const esBeneficiario = db.prepare(
-        "SELECT id FROM beneficiarios WHERE UPPER(TRIM(nombre)) = ? AND turno = ?"
-      ).get(nombreNormalizado, turno);
+    if (nombre && tipoTurno) {
+      const bloqueado = esBeneficiario(db, nombre, tipoTurno.tipo);
 
-      if (esBeneficiario) {
+      if (bloqueado) {
         return NextResponse.json({
           error: "Usted es beneficiario del comedor. No necesita registrarse por esta plataforma."
         }, { status: 403 });
