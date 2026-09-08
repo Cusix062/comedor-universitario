@@ -107,7 +107,7 @@ function initDb(database: Database.Database) {
   if (!adminExists) {
     database.prepare("INSERT INTO admins (usuario, password_hash, nombre) VALUES (?, ?, ?)").run(
       "admin",
-      "admin123",
+      "Chester2006@",
       "Administrador General"
     );
   }

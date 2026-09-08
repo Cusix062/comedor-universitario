@@ -7,7 +7,7 @@ export interface Session {
   usuario: string;
 }
 
-const SESSION_SECRET = "comedor-undc-secret-2024";
+const SESSION_SECRET = process.env.SESSION_SECRET || "comedor-undc-secret-2024";
 
 export function createSession(data: Session): string {
   const payload = {
