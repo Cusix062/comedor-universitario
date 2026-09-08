@@ -1,24 +1,75 @@
-import Database from "better-sqlite3";
+import { createClient, Client } from "@libsql/client";
 import path from "path";
 import fs from "fs";
 
-const DB_PATH = path.join(process.cwd(), "data", "comedor.db");
+// Turso connection
+const TURSO_URL = process.env.TURSO_DATABASE_URL || "file:local.db";
+const TURSO_AUTH = process.env.TURSO_AUTH_TOKEN || "";
 
-let db: Database.Database;
+let client: Client;
+let initialized = false;
 
-function getDb(): Database.Database {
-  if (!db) {
-    db = new Database(DB_PATH);
-    db.pragma("journal_mode = WAL");
-    db.pragma("foreign_keys = ON");
-    initDb(db);
-    cargarBeneficiariosSiVacio(db);
+function getClient(): Client {
+  if (!client) {
+    client = createClient({
+      url: TURSO_URL,
+      authToken: TURSO_AUTH,
+    });
   }
-  return db;
+  return client;
 }
 
-function initDb(database: Database.Database) {
-  database.exec(`
+// Wrapper that mimics better-sqlite3 API for compatibility
+class DatabaseWrapper {
+  private client: Client;
+
+  constructor(client: Client) {
+    this.client = client;
+  }
+
+  prepare(sql: string) {
+    const client = this.client;
+    return {
+      get(...args: any[]) {
+        return client.execute({ sql, args }).then(r => r.rows[0] || null);
+      },
+      all(...args: any[]) {
+        return client.execute({ sql, args }).then(r => r.rows);
+      },
+      run(...args: any[]) {
+        return client.execute({ sql, args }).then(r => ({
+          changes: r.rowsAffected,
+          lastInsertRowid: Number(r.lastInsertRowid),
+        }));
+      },
+    };
+  }
+
+  exec(sql: string) {
+    return this.client.executeMultiple(sql);
+  }
+
+  pragma(pragma: string) {
+    // Turso handles pragmas differently, ignore for now
+  }
+
+  transaction(fn: () => void) {
+    const client = this.client;
+    return async () => {
+      await client.execute("BEGIN TRANSACTION");
+      try {
+        await fn();
+        await client.execute("COMMIT");
+      } catch (e) {
+        await client.execute("ROLLBACK");
+        throw e;
+      }
+    };
+  }
+}
+
+async function initDb(database: Client) {
+  await database.executeMultiple(`
     CREATE TABLE IF NOT EXISTS admins (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       usuario TEXT UNIQUE NOT NULL,
@@ -61,11 +112,6 @@ function initDb(database: Database.Database) {
       UNIQUE(estudiante_id, cupo_id)
     );
 
-    CREATE INDEX IF NOT EXISTS idx_cupos_fecha ON cupos(fecha);
-    CREATE INDEX IF NOT EXISTS idx_inscripciones_cupo ON inscripciones(cupo_id);
-    CREATE INDEX IF NOT EXISTS idx_inscripciones_estudiante ON inscripciones(estudiante_id);
-    CREATE INDEX IF NOT EXISTS idx_estudiantes_codigo ON estudiantes(codigo);
-
     CREATE TABLE IF NOT EXISTS formatos_guardados (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       fecha TEXT NOT NULL,
@@ -85,8 +131,6 @@ function initDb(database: Database.Database) {
       turno TEXT NOT NULL CHECK(turno IN ('almuerzo', 'cena'))
     );
 
-    CREATE INDEX IF NOT EXISTS idx_beneficiarios_nombre ON beneficiarios(nombre);
-
     CREATE TABLE IF NOT EXISTS suspenciones (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       estudiante_id INTEGER NOT NULL,
@@ -97,25 +141,26 @@ function initDb(database: Database.Database) {
       creado_en DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (estudiante_id) REFERENCES estudiantes(id)
     );
-
-    CREATE INDEX IF NOT EXISTS idx_suspenciones_estudiante ON suspenciones(estudiante_id);
-    CREATE INDEX IF NOT EXISTS idx_suspenciones_fechas ON suspenciones(fecha_inicio, fecha_fin);
   `);
 
   // Insertar admin por defecto si no existe
-  const adminExists = database.prepare("SELECT id FROM admins WHERE usuario = ?").get("admin");
-  if (!adminExists) {
-    database.prepare("INSERT INTO admins (usuario, password_hash, nombre) VALUES (?, ?, ?)").run(
-      "admin",
-      "Chester2006@",
-      "Administrador General"
-    );
+  const adminResult = await database.execute({
+    sql: "SELECT id FROM admins WHERE usuario = ?",
+    args: ["admin"],
+  });
+
+  if (adminResult.rows.length === 0) {
+    await database.execute({
+      sql: "INSERT INTO admins (usuario, password_hash, nombre) VALUES (?, ?, ?)",
+      args: ["admin", "Chester2006@", "Administrador General"],
+    });
   }
 }
 
-function cargarBeneficiariosSiVacio(database: Database.Database) {
-  const count = database.prepare("SELECT COUNT(*) as total FROM beneficiarios").get() as any;
-  if (count.total > 0) return;
+async function cargarBeneficiariosSiVacio(database: Client) {
+  const countResult = await database.execute("SELECT COUNT(*) as total FROM beneficiarios");
+  const count = countResult.rows[0];
+  if (count && Number(count.total) > 0) return;
 
   const jsonPath = path.join(process.cwd(), "data", "beneficiarios.json");
   if (!fs.existsSync(jsonPath)) return;
@@ -123,47 +168,46 @@ function cargarBeneficiariosSiVacio(database: Database.Database) {
   const raw = fs.readFileSync(jsonPath, "utf-8");
   const data = JSON.parse(raw);
 
-  const insert = database.prepare("INSERT INTO beneficiarios (nombre, carrera, ciclo_grupo, turno) VALUES (?, ?, ?, ?)");
-
-  database.transaction(() => {
-    for (const nombre of data.almuerzo || []) {
-      insert.run(nombre.trim(), "INGENIERÍA DE SISTEMAS", "BENEFICIARIO", "almuerzo");
-    }
-    for (const nombre of data.cena || []) {
-      insert.run(nombre.trim(), "INGENIERÍA DE SISTEMAS", "BENEFICIARIO", "cena");
-    }
-  })();
+  for (const nombre of data.almuerzo || []) {
+    await database.execute({
+      sql: "INSERT INTO beneficiarios (nombre, carrera, ciclo_grupo, turno) VALUES (?, ?, ?, ?)",
+      args: [nombre.trim(), "INGENIERÍA DE SISTEMAS", "BENEFICIARIO", "almuerzo"],
+    });
+  }
+  
+  for (const nombre of data.cena || []) {
+    await database.execute({
+      sql: "INSERT INTO beneficiarios (nombre, carrera, ciclo_grupo, turno) VALUES (?, ?, ?, ?)",
+      args: [nombre.trim(), "INGENIERÍA DE SISTEMAS", "BENEFICIARIO", "cena"],
+    });
+  }
 
   console.log(`✅ ${(data.almuerzo?.length || 0) + (data.cena?.length || 0)} beneficiarios cargados`);
 }
 
-function esBeneficiario(database: Database.Database, nombre: string, turno: string): boolean {
+async function esBeneficiario(database: any, nombre: string, turno: string): Promise<boolean> {
   if (!nombre || !turno) return false;
 
-  // Normalizar: quitar acentos, ñ→n, �→n, quitar caracteres no ASCII
   const normalizar = (str: string): string => {
     return str.trim().toUpperCase()
-      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")  // quitar acentos
-      .replace(/[Ññ�]/g, "N")                             // ñ y � → N
-      .replace(/[^A-Z\s]/g, "")                            // solo letras y espacios
-      .replace(/\s+/g, " ")                                // espacios múltiples → uno
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[Ññ]/g, "N")
+      .replace(/[^A-Z\s]/g, "")
+      .replace(/\s+/g, " ")
       .trim();
   };
 
   const nombreNorm = normalizar(nombre);
 
-  // Buscar entre todos los beneficiarios del turno
-  const todos = database.prepare(
+  const result = await database.prepare(
     "SELECT nombre FROM beneficiarios WHERE turno = ?"
-  ).all(turno) as any[];
+  ).all(turno);
 
-  for (const b of todos) {
-    const nombreBD = normalizar(b.nombre);
+  for (const b of result) {
+    const nombreBD = normalizar(b.nombre as string);
 
-    // Coincidencia exacta
     if (nombreNorm === nombreBD) return true;
 
-    // Coincidencia por palabras clave (al menos 2 de las primeras 3 palabras)
     const palabrasBusqueda = nombreNorm.split(" ").filter((p: string) => p.length >= 3);
     const palabrasBD = nombreBD.split(" ").filter((p: string) => p.length >= 3);
 
@@ -181,5 +225,36 @@ function esBeneficiario(database: Database.Database, nombre: string, turno: stri
   return false;
 }
 
+// Main function to get database
+async function getDbAsync(): Promise<DatabaseWrapper> {
+  const c = getClient();
+  
+  if (!initialized) {
+    await initDb(c);
+    await cargarBeneficiariosSiVacio(c);
+    initialized = true;
+  }
+  
+  return new DatabaseWrapper(c);
+}
+
+// Sync wrapper for compatibility (uses cached data)
+let cachedDb: DatabaseWrapper | null = null;
+
+function getDb(): any {
+  if (!cachedDb) {
+    const c = getClient();
+    cachedDb = new DatabaseWrapper(c);
+    
+    // Initialize in background
+    if (!initialized) {
+      initDb(c).then(() => cargarBeneficiariosSiVacio(c)).then(() => {
+        initialized = true;
+      });
+    }
+  }
+  return cachedDb;
+}
+
 export default getDb;
-export { esBeneficiario };
+export { getDbAsync, esBeneficiario, getClient };

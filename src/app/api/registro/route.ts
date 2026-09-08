@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
     const tipoTurno = db.prepare("SELECT tipo FROM cupos WHERE id = ?").get(cupo_id) as any;
 
     if (nombre && tipoTurno) {
-      const bloqueado = esBeneficiario(db, nombre, tipoTurno.tipo);
+      const bloqueado = await esBeneficiario(db, nombre, tipoTurno.tipo);
 
       if (bloqueado) {
         return NextResponse.json({
