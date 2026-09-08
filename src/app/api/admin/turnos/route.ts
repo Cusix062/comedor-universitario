@@ -60,8 +60,9 @@ export async function POST(req: NextRequest) {
     })();
 
     return NextResponse.json({ success: true, mensaje: "Cupos actualizados correctamente" });
-  } catch (error) {
-    return NextResponse.json({ error: "Error interno" }, { status: 500 });
+  } catch (error: any) {
+    console.error("TURNOS POST ERROR:", error?.message, error?.cause?.message);
+    return NextResponse.json({ error: "Error interno", detail: error?.message }, { status: 500 });
   }
 }
 

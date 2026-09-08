@@ -107,8 +107,8 @@ export async function POST(req: NextRequest) {
       numero_orden: resultado.numero_orden,
       mensaje: `Inscripción exitosa. Tu número de cupo es #${resultado.numero_orden}`,
     });
-  } catch (error) {
-    console.error("Error en registro:", error);
-    return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
+  } catch (error: any) {
+    console.error("REGISTRO ERROR:", error?.message, error?.cause?.message);
+    return NextResponse.json({ error: "Error interno del servidor", detail: error?.message }, { status: 500 });
   }
 }
