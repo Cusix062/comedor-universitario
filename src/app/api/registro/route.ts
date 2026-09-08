@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import getDb, { esBeneficiario, getDbAsync } from "@/lib/db";
+import { esBeneficiario, getDbAsync } from "@/lib/db";
 import { getCicloNumero } from "@/lib/ciclos";
 
 export async function POST(req: NextRequest) {
@@ -12,18 +12,15 @@ export async function POST(req: NextRequest) {
 
     const db = await getDbAsync();
 
-    // Si es usuario de Google (sin estudiante_id), crear o buscar estudiante
     let idEstudiante = estudiante_id;
 
     if (!idEstudiante && codigo && nombre) {
-      // Buscar si ya existe
-      const existente = db.prepare("SELECT id FROM estudiantes WHERE codigo = ?").get(codigo) as any;
+      const existente = await db.prepare("SELECT id FROM estudiantes WHERE codigo = ?").get(codigo) as any;
       if (existente) {
         idEstudiante = existente.id;
       } else {
-        // Crear nuevo estudiante
         const cicloCalculado = getCicloNumero(codigo);
-        const result = db.prepare(
+        const result = await db.prepare(
           "INSERT INTO estudiantes (codigo, nombre, correo, ciclo, telefono) VALUES (?, ?, ?, ?, ?)"
         ).run(codigo, nombre, correo || `${codigo}@undc.edu.pe`, cicloCalculado, "");
         idEstudiante = result.lastInsertRowid;
@@ -34,11 +31,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No se pudo identificar al estudiante" }, { status: 400 });
     }
 
-    // Verificar si el estudiante es beneficiario (no debe registrarse)
-    const tipoTurno = db.prepare("SELECT tipo FROM cupos WHERE id = ?").get(cupo_id) as any;
+    const tipoTurno = await db.prepare("SELECT tipo FROM cupos WHERE id = ?").get(cupo_id) as any;
 
     if (nombre && tipoTurno) {
-      const bloqueado = await esBeneficiario(db, nombre, tipoTurno.tipo);
+      const bloqueado = esBeneficiario(db, nombre, tipoTurno.tipo);
 
       if (bloqueado) {
         return NextResponse.json({
@@ -47,12 +43,11 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Verificar si el estudiante está suspendido
     if (idEstudiante && tipoTurno) {
       const hoy = new Date().toISOString().split("T")[0];
       const turno = tipoTurno.tipo;
 
-      const suspension = db.prepare(
+      const suspension = await db.prepare(
         `SELECT * FROM suspenciones 
          WHERE estudiante_id = ? 
          AND (tipo = ? OR tipo = 'ambos')
@@ -67,8 +62,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Verificar que el cupo existe y tiene espacio
-    const cupo = db.prepare("SELECT * FROM cupos WHERE id = ? AND estado = 'abierto'").get(cupo_id) as any;
+    const cupo = await db.prepare("SELECT * FROM cupos WHERE id = ? AND estado = 'abierto'").get(cupo_id) as any;
     if (!cupo) {
       return NextResponse.json({ error: "Cupo no encontrado o cerrado" }, { status: 404 });
     }
@@ -77,8 +71,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No hay cupos disponibles" }, { status: 409 });
     }
 
-    // Verificar que el estudiante no esté ya registrado en este turno
-    const existeInscripcion = db.prepare(
+    const existeInscripcion = await db.prepare(
       "SELECT id FROM inscripciones WHERE estudiante_id = ? AND cupo_id = ?"
     ).get(idEstudiante, cupo_id);
 
@@ -86,21 +79,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Ya estás registrado en este turno" }, { status: 409 });
     }
 
-    // Transacción atómica para registrar
-    const resultado = db.transaction(() => {
-      const maxOrden = db.prepare(
+    const resultado = await db.transaction(async () => {
+      const maxOrden = await db.prepare(
         "SELECT COALESCE(MAX(numero_orden), 0) + 1 as siguiente FROM inscripciones WHERE cupo_id = ?"
       ).get(cupo_id) as any;
 
-      const result = db.prepare(
+      const result = await db.prepare(
         "INSERT INTO inscripciones (estudiante_id, cupo_id, numero_orden) VALUES (?, ?, ?)"
       ).run(idEstudiante, cupo_id, maxOrden.siguiente);
 
-      db.prepare("UPDATE cupos SET ocupados = ocupados + 1 WHERE id = ?").run(cupo_id);
+      await db.prepare("UPDATE cupos SET ocupados = ocupados + 1 WHERE id = ?").run(cupo_id);
 
-      const cupoActualizado = db.prepare("SELECT * FROM cupos WHERE id = ?").get(cupo_id) as any;
+      const cupoActualizado = await db.prepare("SELECT * FROM cupos WHERE id = ?").get(cupo_id) as any;
       if (cupoActualizado.ocupados >= cupoActualizado.capacidad) {
-        db.prepare("UPDATE cupos SET estado = 'cerrado' WHERE id = ?").run(cupo_id);
+        await db.prepare("UPDATE cupos SET estado = 'cerrado' WHERE id = ?").run(cupo_id);
       }
 
       return {

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { buscarEstudiante } from "@/lib/academic-api";
-import getDb, { getDbAsync } from "@/lib/db";
-import { createSession, authenticateEstudiante } from "@/lib/auth";
+import { getDbAsync } from "@/lib/db";
+import { createSession } from "@/lib/auth";
 import { getCicloNumero } from "@/lib/ciclos";
 
 export async function POST(req: NextRequest) {
@@ -14,28 +14,24 @@ export async function POST(req: NextRequest) {
 
     const db = await getDbAsync();
 
-    // Buscar en la API académica
     const apiResult = await buscarEstudiante(codigo);
 
     if (!apiResult) {
       return NextResponse.json({ error: "Estudiante no encontrado en la API académica" }, { status: 404 });
     }
 
-    // Verificar si el estudiante ya existe en nuestra BD
-    let estudiante = db.prepare("SELECT * FROM estudiantes WHERE codigo = ?").get(codigo) as any;
+    let estudiante = await db.prepare("SELECT * FROM estudiantes WHERE codigo = ?").get(codigo) as any;
 
     if (!estudiante) {
-      // Crear nuevo estudiante con datos de la API
       const correoInstitucional = correo || `${codigo}@undc.edu.pe`;
       const cicloCalculado = getCicloNumero(codigo);
-      const result = db.prepare(
+      const result = await db.prepare(
         "INSERT INTO estudiantes (codigo, nombre, correo, ciclo, telefono) VALUES (?, ?, ?, ?, ?)"
       ).run(codigo, apiResult.estudiante, correoInstitucional, cicloCalculado, "");
 
-      estudiante = db.prepare("SELECT * FROM estudiantes WHERE id = ?").get(result.lastInsertRowid);
+      estudiante = await db.prepare("SELECT * FROM estudiantes WHERE id = ?").get(result.lastInsertRowid);
     }
 
-    // Crear sesión
     const session = createSession({
       tipo: "estudiante",
       id: estudiante.id,

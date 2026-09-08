@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import getDb, { getDbAsync } from "@/lib/db";
+import { getDbAsync } from "@/lib/db";
 
-// GET: Buscar estudiantes o listar suspendidos
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
@@ -11,9 +10,8 @@ export async function GET(req: NextRequest) {
     const db = await getDbAsync();
     const hoy = new Date().toISOString().split("T")[0];
 
-    // Modo: listar todos los suspendidos
     if (soloActivas) {
-      const suspendidos = db.prepare(`
+      const suspendidos = await db.prepare(`
         SELECT s.*, e.codigo, e.nombre, e.correo
         FROM suspenciones s
         JOIN estudiantes e ON s.estudiante_id = e.id
@@ -24,7 +22,6 @@ export async function GET(req: NextRequest) {
       return NextResponse.json(suspendidos);
     }
 
-    // Modo: buscar estudiantes
     if (busqueda.length < 2) {
       return NextResponse.json([]);
     }
@@ -40,13 +37,11 @@ export async function GET(req: NextRequest) {
 
     const busquedaNorm = normalizar(busqueda);
 
-    // Buscar por codigo exacto
-    const porCodigo = db.prepare(
+    const porCodigo = await db.prepare(
       "SELECT * FROM estudiantes WHERE codigo = ?"
     ).all(busqueda);
 
-    // Buscar por nombre
-    const todos = db.prepare("SELECT * FROM estudiantes").all() as any[];
+    const todos = await db.prepare("SELECT * FROM estudiantes").all() as any[];
     const porNombre = todos.filter((e: any) => {
       const nombreNorm = normalizar(e.nombre);
       return nombreNorm.includes(busquedaNorm);
@@ -58,7 +53,7 @@ export async function GET(req: NextRequest) {
     for (const e of [...porCodigo, ...porNombre]) {
       if (!ids.has(e.id)) {
         ids.add(e.id);
-        const suspensiones = db.prepare(
+        const suspensiones = await db.prepare(
           "SELECT * FROM suspenciones WHERE estudiante_id = ? AND fecha_fin >= ? ORDER BY fecha_inicio DESC"
         ).all(e.id, hoy);
         resultados.push({ ...e, suspensiones });
@@ -72,7 +67,6 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// POST: Crear suspension
 export async function POST(req: NextRequest) {
   try {
     const { estudiante_id, tipo, fecha_inicio, fecha_fin, motivo } = await req.json();
@@ -91,7 +85,7 @@ export async function POST(req: NextRequest) {
 
     const db = await getDbAsync();
 
-    const superpuesta = db.prepare(
+    const superpuesta = await db.prepare(
       `SELECT id FROM suspenciones 
        WHERE estudiante_id = ? AND tipo IN (?, 'ambos') 
        AND fecha_inicio <= ? AND fecha_fin >= ?`
@@ -101,7 +95,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Ya existe una suspensión que se superpone" }, { status: 409 });
     }
 
-    const result = db.prepare(
+    const result = await db.prepare(
       "INSERT INTO suspenciones (estudiante_id, tipo, fecha_inicio, fecha_fin, motivo) VALUES (?, ?, ?, ?, ?)"
     ).run(estudiante_id, tipo, fecha_inicio, fecha_fin, motivo || "");
 
@@ -116,7 +110,6 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// PUT: Editar suspension
 export async function PUT(req: NextRequest) {
   try {
     const { id, tipo, fecha_inicio, fecha_fin, motivo } = await req.json();
@@ -135,7 +128,7 @@ export async function PUT(req: NextRequest) {
 
     const db = await getDbAsync();
 
-    const actual = db.prepare("SELECT * FROM suspenciones WHERE id = ?").get(id) as any;
+    const actual = await db.prepare("SELECT * FROM suspenciones WHERE id = ?").get(id) as any;
     if (!actual) {
       return NextResponse.json({ error: "Suspensión no encontrada" }, { status: 404 });
     }
@@ -145,8 +138,7 @@ export async function PUT(req: NextRequest) {
     const nuevaFin = fecha_fin || actual.fecha_fin;
     const nuevoMotivo = motivo !== undefined ? motivo : actual.motivo;
 
-    // Verificar superposición con otras (excluyendo la actual)
-    const superpuesta = db.prepare(
+    const superpuesta = await db.prepare(
       `SELECT id FROM suspenciones 
        WHERE id != ? AND estudiante_id = ? AND tipo IN (?, 'ambos') 
        AND fecha_inicio <= ? AND fecha_fin >= ?`
@@ -156,7 +148,7 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: "La edición genera superposición con otra suspensión" }, { status: 409 });
     }
 
-    db.prepare(
+    await db.prepare(
       "UPDATE suspenciones SET tipo = ?, fecha_inicio = ?, fecha_fin = ?, motivo = ? WHERE id = ?"
     ).run(nuevoTipo, nuevaInicio, nuevaFin, nuevoMotivo, id);
 
@@ -167,7 +159,6 @@ export async function PUT(req: NextRequest) {
   }
 }
 
-// DELETE: Eliminar suspension
 export async function DELETE(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
@@ -178,7 +169,7 @@ export async function DELETE(req: NextRequest) {
     }
 
     const db = await getDbAsync();
-    db.prepare("DELETE FROM suspenciones WHERE id = ?").run(id);
+    await db.prepare("DELETE FROM suspenciones WHERE id = ?").run(id);
 
     return NextResponse.json({ success: true, mensaje: "Suspensión eliminada" });
   } catch (error) {

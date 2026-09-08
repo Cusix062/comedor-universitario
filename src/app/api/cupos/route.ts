@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import getDb, { getDbAsync } from "@/lib/db";
+import { getDbAsync } from "@/lib/db";
 
-// GET: Obtener cupos disponibles para hoy o una fecha específica
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
@@ -9,12 +8,10 @@ export async function GET(req: NextRequest) {
 
     const db = await getDbAsync();
 
-    // Obtener cupos del día
-    const cupos = db.prepare(
+    const cupos = await db.prepare(
       "SELECT * FROM cupos WHERE fecha = ? ORDER BY tipo"
     ).all(fecha);
 
-    // Si no hay cupos para hoy, crear estructura vacía
     if (cupos.length === 0) {
       return NextResponse.json({
         fecha,

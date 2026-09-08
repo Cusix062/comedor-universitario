@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import getDb, { getDbAsync } from "@/lib/db";
+import { getDbAsync } from "@/lib/db";
 
-// GET: Obtener inscritos de un cupo
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
@@ -12,7 +11,7 @@ export async function GET(req: NextRequest) {
 
     let inscritos;
     if (cupo_id) {
-      inscritos = db.prepare(`
+      inscritos = await db.prepare(`
         SELECT i.*, e.codigo, e.nombre, e.correo, e.ciclo, e.telefono
         FROM inscripciones i
         JOIN estudiantes e ON i.estudiante_id = e.id
@@ -20,8 +19,7 @@ export async function GET(req: NextRequest) {
         ORDER BY i.numero_orden
       `).all(cupo_id);
     } else {
-      // Obtener todos los inscritos del día
-      inscritos = db.prepare(`
+      inscritos = await db.prepare(`
         SELECT i.*, e.codigo, e.nombre, e.correo, e.ciclo, e.telefono, c.tipo as turno, c.fecha
         FROM inscripciones i
         JOIN estudiantes e ON i.estudiante_id = e.id
@@ -37,7 +35,6 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// PUT: Marcar como atendido
 export async function PUT(req: NextRequest) {
   try {
     const { inscripcion_id, accion } = await req.json();
@@ -49,18 +46,16 @@ export async function PUT(req: NextRequest) {
     const db = await getDbAsync();
 
     if (accion === "atender") {
-      db.prepare("UPDATE inscripciones SET estado = 'atendido' WHERE id = ?").run(inscripcion_id);
+      await db.prepare("UPDATE inscripciones SET estado = 'atendido' WHERE id = ?").run(inscripcion_id);
     } else if (accion === "cancelar") {
-      // Obtener el cupo para decrementar ocupados
-      const inscripcion = db.prepare("SELECT cupo_id FROM inscripciones WHERE id = ?").get(inscripcion_id) as any;
+      const inscripcion = await db.prepare("SELECT cupo_id FROM inscripciones WHERE id = ?").get(inscripcion_id) as any;
       if (inscripcion) {
-        db.transaction(() => {
-          db.prepare("UPDATE inscripciones SET estado = 'cancelado' WHERE id = ?").run(inscripcion_id);
-          db.prepare("UPDATE cupos SET ocupados = MAX(0, ocupados - 1) WHERE id = ?").run(inscripcion.cupo_id);
-          // Reabrir cupo si estaba cerrado por capacidad
-          const cupo = db.prepare("SELECT * FROM cupos WHERE id = ?").get(inscripcion.cupo_id) as any;
+        await db.transaction(async () => {
+          await db.prepare("UPDATE inscripciones SET estado = 'cancelado' WHERE id = ?").run(inscripcion_id);
+          await db.prepare("UPDATE cupos SET ocupados = MAX(0, ocupados - 1) WHERE id = ?").run(inscripcion.cupo_id);
+          const cupo = await db.prepare("SELECT * FROM cupos WHERE id = ?").get(inscripcion.cupo_id) as any;
           if (cupo && cupo.estado === "cerrado" && cupo.ocupados < cupo.capacidad) {
-            db.prepare("UPDATE cupos SET estado = 'abierto' WHERE id = ?").run(inscripcion.cupo_id);
+            await db.prepare("UPDATE cupos SET estado = 'abierto' WHERE id = ?").run(inscripcion.cupo_id);
           }
         })();
       }
@@ -72,7 +67,6 @@ export async function PUT(req: NextRequest) {
   }
 }
 
-// DELETE: Eliminar inscripción
 export async function DELETE(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
@@ -84,17 +78,17 @@ export async function DELETE(req: NextRequest) {
 
     const db = await getDbAsync();
 
-    const inscripcion = db.prepare("SELECT cupo_id FROM inscripciones WHERE id = ?").get(inscripcion_id) as any;
+    const inscripcion = await db.prepare("SELECT cupo_id FROM inscripciones WHERE id = ?").get(inscripcion_id) as any;
     if (!inscripcion) {
       return NextResponse.json({ error: "Inscripción no encontrada" }, { status: 404 });
     }
 
-    db.transaction(() => {
-      db.prepare("DELETE FROM inscripciones WHERE id = ?").run(inscripcion_id);
-      db.prepare("UPDATE cupos SET ocupados = MAX(0, ocupados - 1) WHERE id = ?").run(inscripcion.cupo_id);
-      const cupo = db.prepare("SELECT * FROM cupos WHERE id = ?").get(inscripcion.cupo_id) as any;
+    await db.transaction(async () => {
+      await db.prepare("DELETE FROM inscripciones WHERE id = ?").run(inscripcion_id);
+      await db.prepare("UPDATE cupos SET ocupados = MAX(0, ocupados - 1) WHERE id = ?").run(inscripcion.cupo_id);
+      const cupo = await db.prepare("SELECT * FROM cupos WHERE id = ?").get(inscripcion.cupo_id) as any;
       if (cupo && cupo.estado === "cerrado" && cupo.ocupados < cupo.capacidad) {
-        db.prepare("UPDATE cupos SET estado = 'abierto' WHERE id = ?").run(inscripcion.cupo_id);
+        await db.prepare("UPDATE cupos SET estado = 'abierto' WHERE id = ?").run(inscripcion.cupo_id);
       }
     })();
 

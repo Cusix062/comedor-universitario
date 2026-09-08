@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
-import getDb, { getDbAsync } from "@/lib/db";
+import { getDbAsync } from "@/lib/db";
 import { calcularCiclo } from "@/lib/ciclos";
 
 export async function POST() {
   try {
     const db = await getDbAsync();
 
-    // Obtener todos los estudiantes
-    const estudiantes = db.prepare("SELECT id, codigo, nombre FROM estudiantes").all() as any[];
+    const estudiantes = await db.prepare("SELECT id, codigo, nombre FROM estudiantes").all() as any[];
 
     let actualizados = 0;
     let sinCiclo = 0;
@@ -17,8 +16,7 @@ export async function POST() {
       const cicloInfo = calcularCiclo(est.codigo);
 
       if (cicloInfo) {
-        // Actualizar el ciclo en la BD
-        db.prepare("UPDATE estudiantes SET ciclo = ? WHERE id = ?").run(
+        await db.prepare("UPDATE estudiantes SET ciclo = ? WHERE id = ?").run(
           cicloInfo.ciclo,
           est.id
         );
@@ -55,12 +53,10 @@ export async function GET() {
   try {
     const db = await getDbAsync();
 
-    // Obtener todos los estudiantes con su ciclo actual
-    const estudiantes = db.prepare(
+    const estudiantes = await db.prepare(
       "SELECT id, codigo, nombre, ciclo FROM estudiantes ORDER BY codigo"
     ).all() as any[];
 
-    // Agregar el ciclo calculado
     const conCicloCalculado = estudiantes.map((est) => {
       const cicloCalculado = calcularCiclo(est.codigo);
       return {

@@ -5,11 +5,11 @@ const IS_VERCEL = !!process.env.TURSO_DATABASE_URL;
 const DB_PATH = path.join(process.cwd(), "data", "comedor.db");
 
 let cachedDb: any = null;
+let tursoClient: any = null;
 
 // ─── LOCAL: better-sqlite3 (sync) ───────────────────────────────────────
 function getDbLocal(): any {
   if (cachedDb) return cachedDb;
-
   const Database = require("better-sqlite3");
   const database = new Database(DB_PATH);
   database.pragma("journal_mode = WAL");
@@ -21,8 +21,6 @@ function getDbLocal(): any {
 }
 
 // ─── VERCEL: Turso (async) ──────────────────────────────────────────────
-let tursoClient: any = null;
-
 async function getDbTurso(): Promise<any> {
   if (tursoClient) return tursoClient;
 
@@ -32,9 +30,6 @@ async function getDbTurso(): Promise<any> {
     authToken: process.env.TURSO_AUTH_TOKEN,
   });
 
-  tursoClient = client;
-
-  // Init schema
   await client.executeMultiple(`
     CREATE TABLE IF NOT EXISTS admins (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -100,7 +95,6 @@ async function getDbTurso(): Promise<any> {
     );
   `);
 
-  // Admin default
   const adminResult = await client.execute({ sql: "SELECT id FROM admins WHERE usuario = ?", args: ["admin"] });
   if (adminResult.rows.length === 0) {
     await client.execute({
@@ -109,7 +103,6 @@ async function getDbTurso(): Promise<any> {
     });
   }
 
-  // Beneficiarios
   const countResult = await client.execute("SELECT COUNT(*) as total FROM beneficiarios");
   if (Number(countResult.rows[0].total) === 0) {
     const jsonPath = path.join(process.cwd(), "data", "beneficiarios.json");
@@ -131,10 +124,11 @@ async function getDbTurso(): Promise<any> {
     }
   }
 
+  tursoClient = client;
   return client;
 }
 
-// ─── SHARED SCHEMA ──────────────────────────────────────────────────────
+// ─── SHARED SCHEMA (local) ──────────────────────────────────────────────
 function initSchemaSync(database: any) {
   database.exec(`
     CREATE TABLE IF NOT EXISTS admins (
@@ -241,40 +235,46 @@ function loadBeneficiariosSync(database: any) {
 }
 
 // ─── EXPORTS ─────────────────────────────────────────────────────────────
+
+// getDb() - sync only for local use (components, etc.)
 function getDb(): any {
+  if (IS_VERCEL) throw new Error("getDb() not available on Vercel - use getDbAsync()");
   return getDbLocal();
 }
 
+// getDbAsync() - returns a Turso-compatible async client
+// On local: wraps better-sqlite3 with async interface
+// On Vercel: returns raw Turso client
 async function getDbAsync(): Promise<any> {
   if (IS_VERCEL) {
     const client = await getDbTurso();
-    // Return a wrapper that mimics better-sqlite3 API
     return {
       prepare(sql: string) {
         return {
-          get(...args: any[]) {
-            return client.execute({ sql, args }).then((r: any) => r.rows[0] || null);
+          async get(...args: any[]) {
+            const r = await client.execute({ sql, args });
+            return r.rows[0] || null;
           },
-          all(...args: any[]) {
-            return client.execute({ sql, args }).then((r: any) => r.rows);
+          async all(...args: any[]) {
+            const r = await client.execute({ sql, args });
+            return r.rows;
           },
-          run(...args: any[]) {
-            return client.execute({ sql, args }).then((r: any) => ({
-              changes: r.rowsAffected,
-              lastInsertRowid: Number(r.lastInsertRowid),
-            }));
+          async run(...args: any[]) {
+            const r = await client.execute({ sql, args });
+            return { changes: r.rowsAffected, lastInsertRowid: Number(r.lastInsertRowid) };
           },
         };
       },
-      exec(sql: string) {
-        return client.executeMultiple(sql);
+      async exec(sql: string) {
+        await client.executeMultiple(sql);
       },
-      transaction(fn: () => void) {
-        return async () => {
+      transaction(fn: (...args: any[]) => any) {
+        return async (...args: any[]) => {
           await client.execute("BEGIN TRANSACTION");
           try {
-            await fn();
+            const result = await fn(...args);
             await client.execute("COMMIT");
+            return result;
           } catch (e) {
             await client.execute("ROLLBACK");
             throw e;

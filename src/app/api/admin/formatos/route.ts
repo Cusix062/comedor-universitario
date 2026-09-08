@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import getDb, { getDbAsync } from "@/lib/db";
+import { getDbAsync } from "@/lib/db";
 
-// GET: Obtener formatos guardados
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
@@ -11,13 +10,13 @@ export async function GET(req: NextRequest) {
     const db = await getDbAsync();
 
     if (fecha && tipo) {
-      const formato = db.prepare(
+      const formato = await db.prepare(
         "SELECT * FROM formatos_guardados WHERE fecha = ? AND tipo = ?"
       ).get(fecha, tipo);
       return NextResponse.json(formato || null);
     }
 
-    const formatos = db.prepare(
+    const formatos = await db.prepare(
       "SELECT * FROM formatos_guardados ORDER BY fecha DESC, tipo"
     ).all();
     return NextResponse.json(formatos);
@@ -26,7 +25,6 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// POST: Guardar formato
 export async function POST(req: NextRequest) {
   try {
     const { fecha, tipo, capacidad, cantidad_inscritos, inscritos_json } = await req.json();
@@ -37,7 +35,7 @@ export async function POST(req: NextRequest) {
 
     const db = await getDbAsync();
 
-    db.prepare(`
+    await db.prepare(`
       INSERT INTO formatos_guardados (fecha, tipo, capacidad, cantidad_inscritos, inscritos_json)
       VALUES (?, ?, ?, ?, ?)
       ON CONFLICT(fecha, tipo) DO UPDATE SET
@@ -53,7 +51,6 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// DELETE: Eliminar formato guardado
 export async function DELETE(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
@@ -64,7 +61,7 @@ export async function DELETE(req: NextRequest) {
     }
 
     const db = await getDbAsync();
-    const result = db.prepare("DELETE FROM formatos_guardados WHERE id = ?").run(id);
+    const result = await db.prepare("DELETE FROM formatos_guardados WHERE id = ?").run(id);
 
     if (result.changes === 0) {
       return NextResponse.json({ error: "Formato no encontrado" }, { status: 404 });

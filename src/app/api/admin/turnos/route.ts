@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import getDb, { getDbAsync } from "@/lib/db";
+import { getDbAsync } from "@/lib/db";
 
-// GET: Obtener todos los cupos (admin)
 export async function GET() {
   try {
     const db = await getDbAsync();
-    const cupos = db.prepare(
+    const cupos = await db.prepare(
       "SELECT * FROM cupos ORDER BY fecha DESC, tipo"
     ).all();
     return NextResponse.json(cupos);
@@ -14,7 +13,6 @@ export async function GET() {
   }
 }
 
-// POST: Crear o actualizar cupos para una fecha
 export async function POST(req: NextRequest) {
   try {
     const { fecha, almuerzo_capacidad, cena_capacidad } = await req.json();
@@ -25,39 +23,36 @@ export async function POST(req: NextRequest) {
 
     const db = await getDbAsync();
 
-    const resultado = db.transaction(() => {
-      // Upsert almuerzo
+    await db.transaction(async () => {
       if (almuerzo_capacidad !== undefined) {
-        const existente = db.prepare(
+        const existente = await db.prepare(
           "SELECT id, ocupados FROM cupos WHERE fecha = ? AND tipo = 'almuerzo'"
         ).get(fecha) as any;
 
         if (existente) {
-          // No bajar la capacidad por debajo de ocupados
           const nuevaCapacidad = Math.max(almuerzo_capacidad, existente.ocupados);
-          db.prepare(
+          await db.prepare(
             "UPDATE cupos SET capacidad = ?, estado = CASE WHEN capacidad > ocupados THEN 'abierto' ELSE 'cerrado' END WHERE id = ?"
           ).run(nuevaCapacidad, existente.id);
         } else {
-          db.prepare(
+          await db.prepare(
             "INSERT INTO cupos (fecha, tipo, capacidad) VALUES (?, 'almuerzo', ?)"
           ).run(fecha, almuerzo_capacidad);
         }
       }
 
-      // Upsert cena
       if (cena_capacidad !== undefined) {
-        const existente = db.prepare(
+        const existente = await db.prepare(
           "SELECT id, ocupados FROM cupos WHERE fecha = ? AND tipo = 'cena'"
         ).get(fecha) as any;
 
         if (existente) {
           const nuevaCapacidad = Math.max(cena_capacidad, existente.ocupados);
-          db.prepare(
+          await db.prepare(
             "UPDATE cupos SET capacidad = ?, estado = CASE WHEN capacidad > ocupados THEN 'abierto' ELSE 'cerrado' END WHERE id = ?"
           ).run(nuevaCapacidad, existente.id);
         } else {
-          db.prepare(
+          await db.prepare(
             "INSERT INTO cupos (fecha, tipo, capacidad) VALUES (?, 'cena', ?)"
           ).run(fecha, cena_capacidad);
         }
@@ -70,7 +65,6 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// PUT: Editar un cupo específico
 export async function PUT(req: NextRequest) {
   try {
     const { id, capacidad, estado } = await req.json();
@@ -81,16 +75,15 @@ export async function PUT(req: NextRequest) {
 
     const db = await getDbAsync();
 
-    const cupo = db.prepare("SELECT * FROM cupos WHERE id = ?").get(id) as any;
+    const cupo = await db.prepare("SELECT * FROM cupos WHERE id = ?").get(id) as any;
     if (!cupo) {
       return NextResponse.json({ error: "Cupo no encontrado" }, { status: 404 });
     }
 
-    // No bajar capacidad por debajo de ocupados
     const nuevaCapacidad = capacidad !== undefined ? Math.max(capacidad, cupo.ocupados) : cupo.capacidad;
     const nuevoEstado = estado || (nuevaCapacidad > cupo.ocupados ? "abierto" : "cerrado");
 
-    db.prepare("UPDATE cupos SET capacidad = ?, estado = ? WHERE id = ?").run(
+    await db.prepare("UPDATE cupos SET capacidad = ?, estado = ? WHERE id = ?").run(
       nuevaCapacidad,
       nuevoEstado,
       id
@@ -102,7 +95,6 @@ export async function PUT(req: NextRequest) {
   }
 }
 
-// DELETE: Eliminar un cupo
 export async function DELETE(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
@@ -114,7 +106,7 @@ export async function DELETE(req: NextRequest) {
 
     const db = await getDbAsync();
 
-    const cupo = db.prepare("SELECT * FROM cupos WHERE id = ?").get(id) as any;
+    const cupo = await db.prepare("SELECT * FROM cupos WHERE id = ?").get(id) as any;
     if (!cupo) {
       return NextResponse.json({ error: "Cupo no encontrado" }, { status: 404 });
     }
@@ -126,7 +118,7 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    db.prepare("DELETE FROM cupos WHERE id = ?").run(id);
+    await db.prepare("DELETE FROM cupos WHERE id = ?").run(id);
 
     return NextResponse.json({ success: true, mensaje: "Cupo eliminado" });
   } catch (error) {

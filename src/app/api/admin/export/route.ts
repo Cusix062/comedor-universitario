@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import getDb, { getDbAsync } from "@/lib/db";
+import { getDbAsync } from "@/lib/db";
 import * as XLSX from "xlsx";
 
 export async function GET(req: NextRequest) {
@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
 
     const db = await getDbAsync();
 
-    const inscritos = db.prepare(`
+    const inscritos = await db.prepare(`
       SELECT 
         i.numero_orden as "N°",
         e.codigo as "Código",
@@ -27,20 +27,13 @@ export async function GET(req: NextRequest) {
       ORDER BY c.tipo, i.numero_orden
     `).all(fecha);
 
-    // Crear workbook
     const wb = XLSX.utils.book_new();
-
-    // Hoja de almuerzo
     const almuerzos = inscritos.filter((i: any) => i.Turno === "almuerzo");
     const wsAlmuerzo = XLSX.utils.json_to_sheet(almuerzos);
     XLSX.utils.book_append_sheet(wb, wsAlmuerzo, "Almuerzo");
-
-    // Hoja de cena
     const cenas = inscritos.filter((i: any) => i.Turno === "cena");
     const wsCena = XLSX.utils.json_to_sheet(cenas);
     XLSX.utils.book_append_sheet(wb, wsCena, "Cena");
-
-    // Generar buffer
     const buffer = XLSX.write(wb, { type: "buffer", bookType: "xlsx" });
 
     return new NextResponse(buffer, {

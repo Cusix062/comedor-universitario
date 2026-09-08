@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import getDb, { getDbAsync } from "@/lib/db";
+import { getDbAsync } from "@/lib/db";
 import { calcularCiclo } from "@/lib/ciclos";
 
 export async function GET(req: NextRequest) {
@@ -13,14 +13,12 @@ export async function GET(req: NextRequest) {
 
     const db = await getDbAsync();
 
-    // Buscar estudiante
-    const estudiante = db.prepare("SELECT * FROM estudiantes WHERE codigo = ?").get(codigo) as any;
+    const estudiante = await db.prepare("SELECT * FROM estudiantes WHERE codigo = ?").get(codigo) as any;
 
     if (!estudiante) {
       return NextResponse.json({ error: "Estudiante no encontrado" }, { status: 404 });
     }
 
-    // Calcular ciclo real desde el código
     const cicloInfo = calcularCiclo(codigo);
 
     return NextResponse.json({
