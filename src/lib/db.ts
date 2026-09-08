@@ -4,22 +4,138 @@ import fs from "fs";
 const IS_VERCEL = !!process.env.TURSO_DATABASE_URL;
 const DB_PATH = path.join(process.cwd(), "data", "comedor.db");
 
-let db: any;
+let cachedDb: any = null;
 
 // ─── LOCAL: better-sqlite3 (sync) ───────────────────────────────────────
 function getDbLocal(): any {
-  if (!db) {
-    const Database = require("better-sqlite3");
-    db = new Database(DB_PATH);
-    db.pragma("journal_mode = WAL");
-    db.pragma("foreign_keys = ON");
-    initDbSync(db);
-    cargarBeneficiariosSiVacioSync(db);
-  }
-  return db;
+  if (cachedDb) return cachedDb;
+
+  const Database = require("better-sqlite3");
+  const database = new Database(DB_PATH);
+  database.pragma("journal_mode = WAL");
+  database.pragma("foreign_keys = ON");
+  initSchemaSync(database);
+  loadBeneficiariosSync(database);
+  cachedDb = database;
+  return cachedDb;
 }
 
-function initDbSync(database: any) {
+// ─── VERCEL: Turso (async) ──────────────────────────────────────────────
+let tursoClient: any = null;
+
+async function getDbTurso(): Promise<any> {
+  if (tursoClient) return tursoClient;
+
+  const { createClient } = await import("@libsql/client");
+  const client = createClient({
+    url: process.env.TURSO_DATABASE_URL!,
+    authToken: process.env.TURSO_AUTH_TOKEN,
+  });
+
+  tursoClient = client;
+
+  // Init schema
+  await client.executeMultiple(`
+    CREATE TABLE IF NOT EXISTS admins (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      usuario TEXT UNIQUE NOT NULL,
+      password_hash TEXT NOT NULL,
+      nombre TEXT NOT NULL DEFAULT 'Administrador'
+    );
+    CREATE TABLE IF NOT EXISTS estudiantes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      codigo TEXT UNIQUE NOT NULL,
+      nombre TEXT NOT NULL,
+      correo TEXT NOT NULL,
+      ciclo INTEGER NOT NULL,
+      telefono TEXT NOT NULL DEFAULT '',
+      id_externo TEXT DEFAULT '',
+      fecha_egreso TEXT DEFAULT NULL,
+      carrera TEXT DEFAULT 'INGENIERIA DE SISTEMAS',
+      fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE TABLE IF NOT EXISTS cupos (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      fecha TEXT NOT NULL,
+      tipo TEXT NOT NULL CHECK(tipo IN ('almuerzo', 'cena')),
+      capacidad INTEGER NOT NULL DEFAULT 50,
+      ocupados INTEGER NOT NULL DEFAULT 0,
+      estado TEXT NOT NULL DEFAULT 'abierto' CHECK(estado IN ('abierto', 'cerrado', 'pausado')),
+      UNIQUE(fecha, tipo)
+    );
+    CREATE TABLE IF NOT EXISTS inscripciones (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      estudiante_id INTEGER NOT NULL,
+      cupo_id INTEGER NOT NULL,
+      numero_orden INTEGER NOT NULL,
+      estado TEXT NOT NULL DEFAULT 'reservado' CHECK(estado IN ('reservado', 'atendido', 'cancelado')),
+      fecha_hora DATETIME DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(estudiante_id, cupo_id)
+    );
+    CREATE TABLE IF NOT EXISTS formatos_guardados (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      fecha TEXT NOT NULL,
+      tipo TEXT NOT NULL CHECK(tipo IN ('almuerzo', 'cena')),
+      capacidad INTEGER NOT NULL,
+      cantidad_inscritos INTEGER NOT NULL,
+      inscritos_json TEXT NOT NULL,
+      guardado_en DATETIME DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(fecha, tipo)
+    );
+    CREATE TABLE IF NOT EXISTS beneficiarios (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      nombre TEXT NOT NULL,
+      carrera TEXT NOT NULL,
+      ciclo_grupo TEXT NOT NULL,
+      turno TEXT NOT NULL CHECK(turno IN ('almuerzo', 'cena'))
+    );
+    CREATE TABLE IF NOT EXISTS suspenciones (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      estudiante_id INTEGER NOT NULL,
+      tipo TEXT NOT NULL CHECK(tipo IN ('almuerzo', 'cena', 'ambos')),
+      fecha_inicio TEXT NOT NULL,
+      fecha_fin TEXT NOT NULL,
+      motivo TEXT NOT NULL DEFAULT '',
+      creado_en DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  // Admin default
+  const adminResult = await client.execute({ sql: "SELECT id FROM admins WHERE usuario = ?", args: ["admin"] });
+  if (adminResult.rows.length === 0) {
+    await client.execute({
+      sql: "INSERT INTO admins (usuario, password_hash, nombre) VALUES (?, ?, ?)",
+      args: ["admin", "Chester2006@", "Administrador General"],
+    });
+  }
+
+  // Beneficiarios
+  const countResult = await client.execute("SELECT COUNT(*) as total FROM beneficiarios");
+  if (Number(countResult.rows[0].total) === 0) {
+    const jsonPath = path.join(process.cwd(), "data", "beneficiarios.json");
+    if (fs.existsSync(jsonPath)) {
+      const raw = fs.readFileSync(jsonPath, "utf-8");
+      const data = JSON.parse(raw);
+      for (const nombre of data.almuerzo || []) {
+        await client.execute({
+          sql: "INSERT INTO beneficiarios (nombre, carrera, ciclo_grupo, turno) VALUES (?, ?, ?, ?)",
+          args: [nombre.trim(), "INGENIERIA DE SISTEMAS", "BENEFICIARIO", "almuerzo"],
+        });
+      }
+      for (const nombre of data.cena || []) {
+        await client.execute({
+          sql: "INSERT INTO beneficiarios (nombre, carrera, ciclo_grupo, turno) VALUES (?, ?, ?, ?)",
+          args: [nombre.trim(), "INGENIERIA DE SISTEMAS", "BENEFICIARIO", "cena"],
+        });
+      }
+    }
+  }
+
+  return client;
+}
+
+// ─── SHARED SCHEMA ──────────────────────────────────────────────────────
+function initSchemaSync(database: any) {
   database.exec(`
     CREATE TABLE IF NOT EXISTS admins (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -36,7 +152,7 @@ function initDbSync(database: any) {
       telefono TEXT NOT NULL DEFAULT '',
       id_externo TEXT DEFAULT '',
       fecha_egreso TEXT DEFAULT NULL,
-      carrera TEXT DEFAULT 'INGENIERÍA DE SISTEMAS',
+      carrera TEXT DEFAULT 'INGENIERIA DE SISTEMAS',
       fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP
     );
     CREATE TABLE IF NOT EXISTS cupos (
@@ -103,9 +219,9 @@ function initDbSync(database: any) {
   }
 }
 
-function cargarBeneficiariosSiVacioSync(database: any) {
-  const count = database.prepare("SELECT COUNT(*) as total FROM beneficiarios").get() as any;
-  if (count.total > 0) return;
+function loadBeneficiariosSync(database: any) {
+  const count = database.prepare("SELECT COUNT(*) as total FROM beneficiarios").get();
+  if (count && count.total > 0) return;
 
   const jsonPath = path.join(process.cwd(), "data", "beneficiarios.json");
   if (!fs.existsSync(jsonPath)) return;
@@ -116,171 +232,56 @@ function cargarBeneficiariosSiVacioSync(database: any) {
 
   database.transaction(() => {
     for (const nombre of data.almuerzo || []) {
-      insert.run(nombre.trim(), "INGENIERÍA DE SISTEMAS", "BENEFICIARIO", "almuerzo");
+      insert.run(nombre.trim(), "INGENIERIA DE SISTEMAS", "BENEFICIARIO", "almuerzo");
     }
     for (const nombre of data.cena || []) {
-      insert.run(nombre.trim(), "INGENIERÍA DE SISTEMAS", "BENEFICIARIO", "cena");
+      insert.run(nombre.trim(), "INGENIERIA DE SISTEMAS", "BENEFICIARIO", "cena");
     }
   })();
 }
 
-// ─── VERCEL: Turso (async wrapper with sync interface) ──────────────────
-async function getDbTurso(): Promise<any> {
-  if (db) return db;
-
-  const { createClient } = require("@libsql/client");
-  const client = createClient({
-    url: process.env.TURSO_DATABASE_URL,
-    authToken: process.env.TURSO_AUTH_TOKEN,
-  });
-
-  await client.executeMultiple(`
-    CREATE TABLE IF NOT EXISTS admins (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      usuario TEXT UNIQUE NOT NULL,
-      password_hash TEXT NOT NULL,
-      nombre TEXT NOT NULL DEFAULT 'Administrador'
-    );
-    CREATE TABLE IF NOT EXISTS estudiantes (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      codigo TEXT UNIQUE NOT NULL,
-      nombre TEXT NOT NULL,
-      correo TEXT NOT NULL,
-      ciclo INTEGER NOT NULL,
-      telefono TEXT NOT NULL DEFAULT '',
-      id_externo TEXT DEFAULT '',
-      fecha_egreso TEXT DEFAULT NULL,
-      carrera TEXT DEFAULT 'INGENIERÍA DE SISTEMAS',
-      fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-    CREATE TABLE IF NOT EXISTS cupos (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      fecha TEXT NOT NULL,
-      tipo TEXT NOT NULL CHECK(tipo IN ('almuerzo', 'cena')),
-      capacidad INTEGER NOT NULL DEFAULT 50,
-      ocupados INTEGER NOT NULL DEFAULT 0,
-      estado TEXT NOT NULL DEFAULT 'abierto' CHECK(estado IN ('abierto', 'cerrado', 'pausado')),
-      UNIQUE(fecha, tipo)
-    );
-    CREATE TABLE IF NOT EXISTS inscripciones (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      estudiante_id INTEGER NOT NULL,
-      cupo_id INTEGER NOT NULL,
-      numero_orden INTEGER NOT NULL,
-      estado TEXT NOT NULL DEFAULT 'reservado' CHECK(estado IN ('reservado', 'atendido', 'cancelado')),
-      fecha_hora DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (estudiante_id) REFERENCES estudiantes(id),
-      FOREIGN KEY (cupo_id) REFERENCES cupos(id),
-      UNIQUE(estudiante_id, cupo_id)
-    );
-    CREATE TABLE IF NOT EXISTS formatos_guardados (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      fecha TEXT NOT NULL,
-      tipo TEXT NOT NULL CHECK(tipo IN ('almuerzo', 'cena')),
-      capacidad INTEGER NOT NULL,
-      cantidad_inscritos INTEGER NOT NULL,
-      inscritos_json TEXT NOT NULL,
-      guardado_en DATETIME DEFAULT CURRENT_TIMESTAMP,
-      UNIQUE(fecha, tipo)
-    );
-    CREATE TABLE IF NOT EXISTS beneficiarios (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      nombre TEXT NOT NULL,
-      carrera TEXT NOT NULL,
-      ciclo_grupo TEXT NOT NULL,
-      turno TEXT NOT NULL CHECK(turno IN ('almuerzo', 'cena'))
-    );
-    CREATE TABLE IF NOT EXISTS suspenciones (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      estudiante_id INTEGER NOT NULL,
-      tipo TEXT NOT NULL CHECK(tipo IN ('almuerzo', 'cena', 'ambos')),
-      fecha_inicio TEXT NOT NULL,
-      fecha_fin TEXT NOT NULL,
-      motivo TEXT NOT NULL DEFAULT '',
-      creado_en DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (estudiante_id) REFERENCES estudiantes(id)
-    );
-  `);
-
-  const adminResult = await client.execute({ sql: "SELECT id FROM admins WHERE usuario = ?", args: ["admin"] });
-  if (adminResult.rows.length === 0) {
-    await client.execute({
-      sql: "INSERT INTO admins (usuario, password_hash, nombre) VALUES (?, ?, ?)",
-      args: ["admin", "Chester2006@", "Administrador General"],
-    });
-  }
-
-  // Load beneficiaries
-  const countResult = await client.execute("SELECT COUNT(*) as total FROM beneficiarios");
-  if (Number(countResult.rows[0].total) === 0) {
-    const jsonPath = path.join(process.cwd(), "data", "beneficiarios.json");
-    if (fs.existsSync(jsonPath)) {
-      const raw = fs.readFileSync(jsonPath, "utf-8");
-      const data = JSON.parse(raw);
-      for (const nombre of data.almuerzo || []) {
-        await client.execute({
-          sql: "INSERT INTO beneficiarios (nombre, carrera, ciclo_grupo, turno) VALUES (?, ?, ?, ?)",
-          args: [nombre.trim(), "INGENIERÍA DE SISTEMAS", "BENEFICIARIO", "almuerzo"],
-        });
-      }
-      for (const nombre of data.cena || []) {
-        await client.execute({
-          sql: "INSERT INTO beneficiarios (nombre, carrera, ciclo_grupo, turno) VALUES (?, ?, ?, ?)",
-          args: [nombre.trim(), "INGENIERÍA DE SISTEMAS", "BENEFICIARIO", "cena"],
-        });
-      }
-    }
-  }
-
-  // Return a wrapper that looks like better-sqlite3
-  db = {
-    prepare(sql: string) {
-      return {
-        get(...args: any[]) {
-          return client.execute({ sql, args }).then((r: any) => r.rows[0] || null);
-        },
-        all(...args: any[]) {
-          return client.execute({ sql, args }).then((r: any) => r.rows);
-        },
-        run(...args: any[]) {
-          return client.execute({ sql, args }).then((r: any) => ({
-            changes: r.rowsAffected,
-            lastInsertRowid: Number(r.lastInsertRowid),
-          }));
-        },
-      };
-    },
-    exec(sql: string) {
-      return client.executeMultiple(sql);
-    },
-    transaction(fn: () => void) {
-      return async () => {
-        await client.execute("BEGIN TRANSACTION");
-        try {
-          await fn();
-          await client.execute("COMMIT");
-        } catch (e) {
-          await client.execute("ROLLBACK");
-          throw e;
-        }
-      };
-    },
-  };
-
-  return db;
-}
-
-// ─── EXPORT ──────────────────────────────────────────────────────────────
+// ─── EXPORTS ─────────────────────────────────────────────────────────────
 function getDb(): any {
-  if (IS_VERCEL) {
-    throw new Error("Use getDbAsync() on Vercel");
-  }
   return getDbLocal();
 }
 
 async function getDbAsync(): Promise<any> {
   if (IS_VERCEL) {
-    return await getDbTurso();
+    const client = await getDbTurso();
+    // Return a wrapper that mimics better-sqlite3 API
+    return {
+      prepare(sql: string) {
+        return {
+          get(...args: any[]) {
+            return client.execute({ sql, args }).then((r: any) => r.rows[0] || null);
+          },
+          all(...args: any[]) {
+            return client.execute({ sql, args }).then((r: any) => r.rows);
+          },
+          run(...args: any[]) {
+            return client.execute({ sql, args }).then((r: any) => ({
+              changes: r.rowsAffected,
+              lastInsertRowid: Number(r.lastInsertRowid),
+            }));
+          },
+        };
+      },
+      exec(sql: string) {
+        return client.executeMultiple(sql);
+      },
+      transaction(fn: () => void) {
+        return async () => {
+          await client.execute("BEGIN TRANSACTION");
+          try {
+            await fn();
+            await client.execute("COMMIT");
+          } catch (e) {
+            await client.execute("ROLLBACK");
+            throw e;
+          }
+        };
+      },
+    };
   }
   return getDbLocal();
 }
@@ -291,14 +292,14 @@ function esBeneficiario(database: any, nombre: string, turno: string): boolean {
   const normalizar = (str: string): string => {
     return str.trim().toUpperCase()
       .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-      .replace(/[Ññ]/g, "N")
+      .replace(/[ñÑ]/g, "N")
       .replace(/[^A-Z\s]/g, "")
       .replace(/\s+/g, " ")
       .trim();
   };
 
   const nombreNorm = normalizar(nombre);
-  const todos = database.prepare("SELECT nombre FROM beneficiarios WHERE turno = ?").all(turno) as any[];
+  const todos = database.prepare("SELECT nombre FROM beneficiarios WHERE turno = ?").all(turno);
 
   for (const b of todos) {
     const nombreBD = normalizar(b.nombre as string);
