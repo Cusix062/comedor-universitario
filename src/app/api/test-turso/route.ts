@@ -6,7 +6,17 @@ export async function GET() {
     const TURSO_TOKEN = process.env.TURSO_AUTH_TOKEN;
 
     if (!TURSO_URL) {
-      return NextResponse.json({ error: "TURSO_DATABASE_URL not set" });
+      return NextResponse.json({
+        error: "TURSO_DATABASE_URL no está configurada",
+        hint: "Ve a Vercel > Settings > Environment Variables",
+      });
+    }
+
+    if (!TURSO_TOKEN) {
+      return NextResponse.json({
+        error: "TURSO_AUTH_TOKEN no está configurado",
+        hint: "Ve a Vercel > Settings > Environment Variables",
+      });
     }
 
     const { createClient } = await import("@libsql/client");
@@ -15,40 +25,17 @@ export async function GET() {
       authToken: TURSO_TOKEN,
     });
 
-    // Test connection
     const result = await client.execute("SELECT 1 as test");
-
-    // Test table creation
-    await client.execute(`
-      CREATE TABLE IF NOT EXISTS test_table (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT
-      )
-    `);
-
-    // Test insert
-    await client.execute({
-      sql: "INSERT INTO test_table (name) VALUES (?)",
-      args: ["test"],
-    });
-
-    // Test select
-    const rows = await client.execute("SELECT * FROM test_table");
-
-    // Cleanup
-    await client.execute("DROP TABLE test_table");
 
     return NextResponse.json({
       ok: true,
-      url: TURSO_URL.substring(0, 30) + "...",
+      message: "Turso conectado correctamente",
       test: result.rows[0],
-      rows: rows.rows.length,
     });
   } catch (error: any) {
     return NextResponse.json({
       error: error.message,
-      code: error.code,
-      stack: error.stack,
+      hint: "Verifica que TURSO_DATABASE_URL y TURSO_AUTH_TOKEN sean correctos",
     }, { status: 500 });
   }
 }
