@@ -35,6 +35,10 @@ export default function AdminTurnosPage() {
   const [modalCrear, setModalCrear] = useState<string | null>(null);
   const [nuevoAlmuerzo, setNuevoAlmuerzo] = useState(30);
   const [nuevoCena, setNuevoCena] = useState(30);
+  const [modalGenerar, setModalGenerar] = useState(false);
+  const [diasAGenerar, setDiasAGenerar] = useState(7);
+  const [capAlmuerzoGen, setCapAlmuerzoGen] = useState(30);
+  const [capCenaGen, setCapCenaGen] = useState(30);
   const router = useRouter();
 
   useEffect(() => {
@@ -168,11 +172,11 @@ export default function AdminTurnosPage() {
     }
   };
 
-  const generarSemana = async () => {
+  const generarMultiplesDias = async () => {
     const hoy = new Date();
     const promesas = [];
 
-    for (let i = 0; i < 7; i++) {
+    for (let i = 0; i < diasAGenerar; i++) {
       const fecha = new Date(hoy);
       fecha.setDate(hoy.getDate() + i);
       const fechaStr = fecha.toISOString().split("T")[0];
@@ -183,15 +187,16 @@ export default function AdminTurnosPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             fecha: fechaStr,
-            almuerzo_capacidad: 30,
-            cena_capacidad: 30,
+            almuerzo_capacidad: capAlmuerzoGen,
+            cena_capacidad: capCenaGen,
           }),
         })
       );
     }
 
     await Promise.all(promesas);
-    setMensaje("✅ Cupos generados para los próximos 7 días");
+    setMensaje(`✅ Cupos generados para los próximos ${diasAGenerar} días`);
+    setModalGenerar(false);
     fetchCupos();
   };
 
@@ -251,10 +256,10 @@ export default function AdminTurnosPage() {
                 Siguiente →
               </button>
               <button
-                onClick={generarSemana}
+                onClick={() => setModalGenerar(true)}
                 className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium transition"
               >
-                📅 Generar 7 días
+                📅 Generar Múltiples Días
               </button>
             </div>
           </div>
@@ -517,6 +522,93 @@ export default function AdminTurnosPage() {
                 style={{ background: "linear-gradient(135deg, #2563eb, #1d4ed8)" }}
               >
                 {cargando ? "Creando..." : "Crear"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Generar Múltiples Días */}
+      {modalGenerar && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+            <h3 className="text-lg font-bold text-gray-800 mb-4">📅 Generar Cupos Múltiples</h3>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Número de días</label>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setDiasAGenerar(Math.max(1, diasAGenerar - 1))}
+                    className="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-xl font-bold text-lg transition"
+                  >
+                    -
+                  </button>
+                  <input
+                    type="number"
+                    value={diasAGenerar}
+                    onChange={(e) => setDiasAGenerar(Math.max(1, parseInt(e.target.value) || 1))}
+                    min="1"
+                    max="30"
+                    className="flex-1 text-center border-2 border-gray-200 rounded-xl px-4 py-3 text-lg font-bold focus:ring-2 focus:ring-blue-500 outline-none"
+                  />
+                  <button
+                    onClick={() => setDiasAGenerar(Math.min(30, diasAGenerar + 1))}
+                    className="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-xl font-bold text-lg transition"
+                  >
+                    +
+                  </button>
+                </div>
+                <p className="text-xs text-gray-400 mt-1">Máximo 30 días</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+                  <label className="block text-sm font-semibold text-green-800 mb-2">🥗 Almuerzo</label>
+                  <input
+                    type="number"
+                    value={capAlmuerzoGen}
+                    onChange={(e) => setCapAlmuerzoGen(parseInt(e.target.value) || 0)}
+                    min="1"
+                    className="w-full border-2 border-green-200 rounded-xl px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-green-500 outline-none"
+                  />
+                </div>
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                  <label className="block text-sm font-semibold text-amber-800 mb-2">🌙 Cena</label>
+                  <input
+                    type="number"
+                    value={capCenaGen}
+                    onChange={(e) => setCapCenaGen(parseInt(e.target.value) || 0)}
+                    min="1"
+                    className="w-full border-2 border-amber-200 rounded-xl px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-amber-500 outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                <p className="text-sm text-blue-700">
+                  Se generarán <strong>{diasAGenerar} días</strong> comenzando desde hoy con:
+                </p>
+                <ul className="text-xs text-blue-600 mt-2 space-y-1">
+                  <li>• Almuerzo: <strong>{capAlmuerzoGen}</strong> cupos/día</li>
+                  <li>• Cena: <strong>{capCenaGen}</strong> cupos/día</li>
+                </ul>
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setModalGenerar(false)}
+                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-xl font-semibold text-sm transition"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={generarMultiplesDias}
+                disabled={cargando}
+                className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-xl font-semibold text-sm transition disabled:opacity-50"
+              >
+                {cargando ? "Generando..." : `Generar ${diasAGenerar} días`}
               </button>
             </div>
           </div>
