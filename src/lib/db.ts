@@ -270,7 +270,7 @@ async function getDbAsync(): Promise<any> {
       },
       transaction(fn: (...args: any[]) => any) {
         return async (...args: any[]) => {
-          await client.execute("BEGIN TRANSACTION");
+          await client.execute("BEGIN");
           try {
             const result = await fn(...args);
             await client.execute("COMMIT");
@@ -286,7 +286,7 @@ async function getDbAsync(): Promise<any> {
   return getDbLocal();
 }
 
-function esBeneficiario(database: any, nombre: string, turno: string): boolean {
+async function esBeneficiario(database: any, nombre: string, turno: string): Promise<boolean> {
   if (!nombre || !turno) return false;
 
   const normalizar = (str: string): string => {
@@ -299,7 +299,7 @@ function esBeneficiario(database: any, nombre: string, turno: string): boolean {
   };
 
   const nombreNorm = normalizar(nombre);
-  const todos = database.prepare("SELECT nombre FROM beneficiarios WHERE turno = ?").all(turno);
+  const todos = await database.prepare("SELECT nombre FROM beneficiarios WHERE turno = ?").all(turno);
 
   for (const b of todos) {
     const nombreBD = normalizar(b.nombre as string);
