@@ -9,7 +9,7 @@ function ErrorContent() {
   const error = searchParams.get("error");
 
   const getErrorMessage = () => {
-    if (error === "AccessDenied") {
+    if (error === "AccessDenied" || error === "access_denied") {
       return {
         title: "¡ACCESO DENEGADO!",
         message: "SOLO ENTRAN CUSISTAS",
