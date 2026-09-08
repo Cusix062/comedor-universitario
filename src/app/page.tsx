@@ -18,7 +18,7 @@ export default function LoginPage() {
     setError("");
     setCargando(true);
     try {
-      await signIn("google-student", { callbackUrl: "/registro" });
+      await signIn("google", { callbackUrl: "/registro" });
     } catch {
       setError("Error de conexión");
     } finally {
@@ -30,7 +30,7 @@ export default function LoginPage() {
     setError("");
     setCargando(true);
     try {
-      await signIn("google-admin", { callbackUrl: "/admin" });
+      await signIn("google", { callbackUrl: "/admin" });
     } catch {
       setError("Error de conexión");
     } finally {

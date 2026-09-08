@@ -10,7 +10,6 @@ export async function middleware(req: NextRequest) {
   if (token && token.email) {
     const email = token.email;
     const isAdmin = email === ADMIN_EMAIL;
-    const isUndc = email.endsWith("@undc.edu.pe");
 
     // Admin pages: solo el admin
     if (path.startsWith("/admin")) {
@@ -22,9 +21,9 @@ export async function middleware(req: NextRequest) {
       }
     }
 
-    // Student pages: solo @undc.edu.pe, NO el admin
+    // Student pages: admin no puede entrar
     if (path.startsWith("/registro") || path.startsWith("/dashboard")) {
-      if (!isUndc || isAdmin) {
+      if (isAdmin) {
         const res = NextResponse.redirect(new URL("/auth/error?error=access_denied", req.url));
         res.cookies.set("next-auth.session-token", "", { maxAge: 0 });
         res.cookies.set("__Secure-next-auth.session-token", "", { maxAge: 0 });

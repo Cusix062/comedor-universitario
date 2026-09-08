@@ -8,12 +8,6 @@ const ADMIN_EMAIL = "jairecusi@gmail.com";
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
     Google({
-      id: "google-student",
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    }),
-    Google({
-      id: "google-admin",
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
@@ -22,19 +16,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async signIn({ user, account }) {
       if (!user.email) return false;
 
-      // Admin solo por google-admin
-      if (account?.provider === "google-admin") {
-        return user.email === ADMIN_EMAIL;
-      }
+      // Permitir admin
+      if (user.email === ADMIN_EMAIL) return true;
 
-      // Estudiantes solo @undc.edu.pe, NO el admin
-      if (account?.provider === "google-student") {
-        if (user.email === ADMIN_EMAIL) return false;
-
-        const allowed = user.email.endsWith("@undc.edu.pe");
-        if (!allowed) return false;
-
-        // Crear o actualizar estudiante en BD con ciclo calculado
+      // Permitir correos institucionales UNDC
+      if (user.email.endsWith("@undc.edu.pe")) {
+        // Auto-crear estudiante en BD
         try {
           const codigo = user.email.split("@")[0];
           const db = await getDbAsync();
@@ -49,7 +36,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         } catch (e) {
           console.error("Error creando estudiante:", e);
         }
-
         return true;
       }
 
