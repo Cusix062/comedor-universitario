@@ -69,3 +69,67 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Error interno" }, { status: 500 });
   }
 }
+
+// PUT: Editar un cupo específico
+export async function PUT(req: NextRequest) {
+  try {
+    const { id, capacidad, estado } = await req.json();
+
+    if (!id) {
+      return NextResponse.json({ error: "ID requerido" }, { status: 400 });
+    }
+
+    const db = getDb();
+
+    const cupo = db.prepare("SELECT * FROM cupos WHERE id = ?").get(id) as any;
+    if (!cupo) {
+      return NextResponse.json({ error: "Cupo no encontrado" }, { status: 404 });
+    }
+
+    // No bajar capacidad por debajo de ocupados
+    const nuevaCapacidad = capacidad !== undefined ? Math.max(capacidad, cupo.ocupados) : cupo.capacidad;
+    const nuevoEstado = estado || (nuevaCapacidad > cupo.ocupados ? "abierto" : "cerrado");
+
+    db.prepare("UPDATE cupos SET capacidad = ?, estado = ? WHERE id = ?").run(
+      nuevaCapacidad,
+      nuevoEstado,
+      id
+    );
+
+    return NextResponse.json({ success: true, mensaje: "Cupo actualizado" });
+  } catch (error) {
+    return NextResponse.json({ error: "Error interno" }, { status: 500 });
+  }
+}
+
+// DELETE: Eliminar un cupo
+export async function DELETE(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json({ error: "ID requerido" }, { status: 400 });
+    }
+
+    const db = getDb();
+
+    const cupo = db.prepare("SELECT * FROM cupos WHERE id = ?").get(id) as any;
+    if (!cupo) {
+      return NextResponse.json({ error: "Cupo no encontrado" }, { status: 404 });
+    }
+
+    if (cupo.ocupados > 0) {
+      return NextResponse.json(
+        { error: "No se puede eliminar: hay inscripciones activas" },
+        { status: 400 }
+      );
+    }
+
+    db.prepare("DELETE FROM cupos WHERE id = ?").run(id);
+
+    return NextResponse.json({ success: true, mensaje: "Cupo eliminado" });
+  } catch (error) {
+    return NextResponse.json({ error: "Error interno" }, { status: 500 });
+  }
+}
