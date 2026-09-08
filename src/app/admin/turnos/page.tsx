@@ -36,7 +36,8 @@ export default function AdminTurnosPage() {
   const [nuevoAlmuerzo, setNuevoAlmuerzo] = useState(30);
   const [nuevoCena, setNuevoCena] = useState(30);
   const [modalGenerar, setModalGenerar] = useState(false);
-  const [diasAGenerar, setDiasAGenerar] = useState(7);
+  const [fechasSeleccionadas, setFechasSeleccionadas] = useState<string[]>([]);
+  const [mesCalendario, setMesCalendario] = useState(new Date());
   const [capAlmuerzoGen, setCapAlmuerzoGen] = useState(30);
   const [capCenaGen, setCapCenaGen] = useState(30);
   const router = useRouter();
@@ -173,31 +174,70 @@ export default function AdminTurnosPage() {
   };
 
   const generarMultiplesDias = async () => {
-    const hoy = new Date();
-    const promesas = [];
-
-    for (let i = 0; i < diasAGenerar; i++) {
-      const fecha = new Date(hoy);
-      fecha.setDate(hoy.getDate() + i);
-      const fechaStr = fecha.toISOString().split("T")[0];
-
-      promesas.push(
-        fetch("/api/admin/turnos", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            fecha: fechaStr,
-            almuerzo_capacidad: capAlmuerzoGen,
-            cena_capacidad: capCenaGen,
-          }),
-        })
-      );
+    if (fechasSeleccionadas.length === 0) {
+      setMensaje("❌ Selecciona al menos una fecha");
+      return;
     }
 
+    const promesas = fechasSeleccionadas.map(fecha =>
+      fetch("/api/admin/turnos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fecha,
+          almuerzo_capacidad: capAlmuerzoGen,
+          cena_capacidad: capCenaGen,
+        }),
+      })
+    );
+
     await Promise.all(promesas);
-    setMensaje(`✅ Cupos generados para los próximos ${diasAGenerar} días`);
+    setMensaje(`✅ Cupos generados para ${fechasSeleccionadas.length} día(s)`);
     setModalGenerar(false);
+    setFechasSeleccionadas([]);
     fetchCupos();
+  };
+
+  const toggleFecha = (fecha: string) => {
+    setFechasSeleccionadas(prev =>
+      prev.includes(fecha)
+        ? prev.filter(f => f !== fecha)
+        : [...prev, fecha]
+    );
+  };
+
+  const seleccionarRango = (dias: number) => {
+    const hoy = new Date();
+    const fechas: string[] = [];
+    for (let i = 0; i < dias; i++) {
+      const fecha = new Date(hoy);
+      fecha.setDate(hoy.getDate() + i);
+      fechas.push(fecha.toISOString().split("T")[0]);
+    }
+    setFechasSeleccionadas(fechas);
+  };
+
+  const generarCalendarioModal = () => {
+    const anio = mesCalendario.getFullYear();
+    const mes = mesCalendario.getMonth();
+    const primerDia = new Date(anio, mes, 1).getDay();
+    const diasEnMes = new Date(anio, mes + 1, 0).getDate();
+    const dias: { fecha: string; dia: number; esHoy: boolean; yaExiste: boolean }[] = [];
+
+    for (let i = 1; i <= diasEnMes; i++) {
+      const fecha = new Date(anio, mes, i);
+      const fechaStr = fecha.toISOString().split("T")[0];
+      const hoy = new Date().toISOString().split("T")[0];
+      const yaExiste = cupos.some(c => c.fecha === fechaStr);
+      dias.push({
+        fecha: fechaStr,
+        dia: i,
+        esHoy: fechaStr === hoy,
+        yaExiste,
+      });
+    }
+
+    return { primerDia, dias };
   };
 
   const semanaLabels = ["Esta semana", "Próxima semana", "En 2 semanas"];
@@ -528,87 +568,179 @@ export default function AdminTurnosPage() {
         </div>
       )}
 
-      {/* Modal Generar Múltiples Días */}
+      {/* Modal Generar con Calendario */}
       {modalGenerar && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
-            <h3 className="text-lg font-bold text-gray-800 mb-4">📅 Generar Cupos Múltiples</h3>
+          <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto">
+            <h3 className="text-lg font-bold text-gray-800 mb-4">📅 Seleccionar Fechas</h3>
 
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Número de días</label>
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => setDiasAGenerar(Math.max(1, diasAGenerar - 1))}
-                    className="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-xl font-bold text-lg transition"
-                  >
-                    -
-                  </button>
-                  <input
-                    type="number"
-                    value={diasAGenerar}
-                    onChange={(e) => setDiasAGenerar(Math.max(1, parseInt(e.target.value) || 1))}
-                    min="1"
-                    max="30"
-                    className="flex-1 text-center border-2 border-gray-200 rounded-xl px-4 py-3 text-lg font-bold focus:ring-2 focus:ring-blue-500 outline-none"
-                  />
-                  <button
-                    onClick={() => setDiasAGenerar(Math.min(30, diasAGenerar + 1))}
-                    className="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-xl font-bold text-lg transition"
-                  >
-                    +
-                  </button>
-                </div>
-                <p className="text-xs text-gray-400 mt-1">Máximo 30 días</p>
+            {/* Atajos de selección */}
+            <div className="flex gap-2 mb-4 flex-wrap">
+              <button
+                onClick={() => seleccionarRango(7)}
+                className="px-3 py-1.5 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg text-xs font-medium transition"
+              >
+                Próx. 7 días
+              </button>
+              <button
+                onClick={() => seleccionarRango(14)}
+                className="px-3 py-1.5 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg text-xs font-medium transition"
+              >
+                Próx. 14 días
+              </button>
+              <button
+                onClick={() => seleccionarRango(30)}
+                className="px-3 py-1.5 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg text-xs font-medium transition"
+              >
+                Próx. 30 días
+              </button>
+              <button
+                onClick={() => setFechasSeleccionadas([])}
+                className="px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg text-xs font-medium transition"
+              >
+                Limpiar
+              </button>
+            </div>
+
+            {/* Calendario */}
+            <div className="border border-gray-200 rounded-xl p-4 mb-4">
+              {/* Navegación del mes */}
+              <div className="flex items-center justify-between mb-4">
+                <button
+                  onClick={() => {
+                    const nuevo = new Date(mesCalendario);
+                    nuevo.setMonth(nuevo.getMonth() - 1);
+                    setMesCalendario(nuevo);
+                  }}
+                  className="w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center justify-center transition"
+                >
+                  ←
+                </button>
+                <h4 className="font-bold text-gray-800">
+                  {mesCalendario.toLocaleDateString("es-PE", { month: "long", year: "numeric" })}
+                </h4>
+                <button
+                  onClick={() => {
+                    const nuevo = new Date(mesCalendario);
+                    nuevo.setMonth(nuevo.getMonth() + 1);
+                    setMesCalendario(nuevo);
+                  }}
+                  className="w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center justify-center transition"
+                >
+                  →
+                </button>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-green-50 border border-green-200 rounded-xl p-4">
-                  <label className="block text-sm font-semibold text-green-800 mb-2">🥗 Almuerzo</label>
-                  <input
-                    type="number"
-                    value={capAlmuerzoGen}
-                    onChange={(e) => setCapAlmuerzoGen(parseInt(e.target.value) || 0)}
-                    min="1"
-                    className="w-full border-2 border-green-200 rounded-xl px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-green-500 outline-none"
-                  />
-                </div>
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-                  <label className="block text-sm font-semibold text-amber-800 mb-2">🌙 Cena</label>
-                  <input
-                    type="number"
-                    value={capCenaGen}
-                    onChange={(e) => setCapCenaGen(parseInt(e.target.value) || 0)}
-                    min="1"
-                    className="w-full border-2 border-amber-200 rounded-xl px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-amber-500 outline-none"
-                  />
-                </div>
+              {/* Días de la semana */}
+              <div className="grid grid-cols-7 gap-1 mb-2">
+                {["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"].map(dia => (
+                  <div key={dia} className="text-center text-xs font-semibold text-gray-400 py-1">
+                    {dia}
+                  </div>
+                ))}
               </div>
 
-              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                <p className="text-sm text-blue-700">
-                  Se generarán <strong>{diasAGenerar} días</strong> comenzando desde hoy con:
-                </p>
-                <ul className="text-xs text-blue-600 mt-2 space-y-1">
-                  <li>• Almuerzo: <strong>{capAlmuerzoGen}</strong> cupos/día</li>
-                  <li>• Cena: <strong>{capCenaGen}</strong> cupos/día</li>
-                </ul>
+              {/* Días del mes */}
+              {(() => {
+                const { primerDia, dias } = generarCalendarioModal();
+                const celdas = [];
+                for (let i = 0; i < primerDia; i++) {
+                  celdas.push(<div key={`empty-${i}`} />);
+                }
+                dias.forEach(({ fecha, dia, esHoy, yaExiste }) => {
+                  const seleccionada = fechasSeleccionadas.includes(fecha);
+                  celdas.push(
+                    <button
+                      key={fecha}
+                      onClick={() => toggleFecha(fecha)}
+                      disabled={yaExiste}
+                      className={`aspect-square rounded-lg text-sm font-medium transition relative ${
+                        yaExiste
+                          ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                          : seleccionada
+                          ? "bg-blue-500 text-white shadow-lg"
+                          : esHoy
+                          ? "bg-green-100 text-green-700 hover:bg-green-200"
+                          : "bg-gray-50 text-gray-700 hover:bg-blue-100"
+                      }`}
+                    >
+                      {dia}
+                      {yaExiste && (
+                        <span className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full" />
+                      )}
+                      {seleccionada && !yaExiste && (
+                        <span className="absolute -top-1 -right-1 w-2 h-2 bg-white rounded-full" />
+                      )}
+                    </button>
+                  );
+                });
+                return <div className="grid grid-cols-7 gap-1">{celdas}</div>;
+              })()}
+
+              {/* Leyenda */}
+              <div className="flex gap-4 mt-3 text-xs text-gray-500">
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 bg-green-500 rounded-full" /> Ya existe
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 bg-blue-500 rounded-full" /> Seleccionado
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 bg-gray-300 rounded-full" /> Hoy
+                </span>
               </div>
             </div>
 
-            <div className="flex gap-3 mt-6">
+            {/* Capacidades */}
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+                <label className="block text-sm font-semibold text-green-800 mb-2">🥗 Almuerzo</label>
+                <input
+                  type="number"
+                  value={capAlmuerzoGen}
+                  onChange={(e) => setCapAlmuerzoGen(parseInt(e.target.value) || 0)}
+                  min="1"
+                  className="w-full border-2 border-green-200 rounded-xl px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-green-500 outline-none"
+                />
+              </div>
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                <label className="block text-sm font-semibold text-amber-800 mb-2">🌙 Cena</label>
+                <input
+                  type="number"
+                  value={capCenaGen}
+                  onChange={(e) => setCapCenaGen(parseInt(e.target.value) || 0)}
+                  min="1"
+                  className="w-full border-2 border-amber-200 rounded-xl px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-amber-500 outline-none"
+                />
+              </div>
+            </div>
+
+            {/* Resumen */}
+            {fechasSeleccionadas.length > 0 && (
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
+                <p className="text-sm text-blue-700">
+                  Se generarán cupos en <strong>{fechasSeleccionadas.length} fecha(s)</strong> seleccionada(s)
+                </p>
+              </div>
+            )}
+
+            {/* Botones */}
+            <div className="flex gap-3">
               <button
-                onClick={() => setModalGenerar(false)}
+                onClick={() => {
+                  setModalGenerar(false);
+                  setFechasSeleccionadas([]);
+                }}
                 className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-xl font-semibold text-sm transition"
               >
                 Cancelar
               </button>
               <button
                 onClick={generarMultiplesDias}
-                disabled={cargando}
-                className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-xl font-semibold text-sm transition disabled:opacity-50"
+                disabled={cargando || fechasSeleccionadas.length === 0}
+                className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-xl font-semibold text-sm transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {cargando ? "Generando..." : `Generar ${diasAGenerar} días`}
+                {cargando ? "Generando..." : `Generar (${fechasSeleccionadas.length})`}
               </button>
             </div>
           </div>
