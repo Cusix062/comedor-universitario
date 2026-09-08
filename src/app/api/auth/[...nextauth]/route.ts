@@ -1,5 +1,7 @@
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
+import { getDbAsync } from "@/lib/db";
+import { getCicloNumero } from "@/lib/ciclos";
 
 const ADMIN_EMAIL = "jairecusi@gmail.com";
 
@@ -28,7 +30,27 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       // Estudiantes solo @undc.edu.pe, NO el admin
       if (account?.provider === "google-student") {
         if (user.email === ADMIN_EMAIL) return false;
-        return user.email.endsWith("@undc.edu.pe");
+
+        const allowed = user.email.endsWith("@undc.edu.pe");
+        if (!allowed) return false;
+
+        // Crear o actualizar estudiante en BD con ciclo calculado
+        try {
+          const codigo = user.email.split("@")[0];
+          const db = await getDbAsync();
+          const existente = await db.prepare("SELECT id FROM estudiantes WHERE codigo = ?").get(codigo);
+
+          if (!existente) {
+            const cicloCalculado = getCicloNumero(codigo);
+            await db.prepare(
+              "INSERT INTO estudiantes (codigo, nombre, correo, ciclo, telefono) VALUES (?, ?, ?, ?, ?)"
+            ).run(codigo, user.name || codigo, user.email, cicloCalculado, "");
+          }
+        } catch (e) {
+          console.error("Error creando estudiante:", e);
+        }
+
+        return true;
       }
 
       return false;
