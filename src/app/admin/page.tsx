@@ -17,8 +17,16 @@ export default function AdminPage() {
 
   useEffect(() => {
     const adminSession = localStorage.getItem("admin_session");
-    if (!adminSession) {
-      router.push("/");
+    const googleAdmin = localStorage.getItem("google_admin_session");
+    if (!adminSession && !googleAdmin) {
+      fetch("/api/auth/session").then(r => r.json()).then(session => {
+        if (session?.user?.isAdmin) {
+          localStorage.setItem("google_admin_session", "true");
+          fetchInscritos();
+        } else {
+          router.push("/");
+        }
+      }).catch(() => router.push("/"));
       return;
     }
     fetchInscritos();
@@ -74,6 +82,7 @@ export default function AdminPage() {
 
   const cerrarSesion = () => {
     localStorage.removeItem("admin_session");
+    localStorage.removeItem("google_admin_session");
     router.push("/");
   };
 
