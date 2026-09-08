@@ -270,15 +270,7 @@ async function getDbAsync(): Promise<any> {
       },
       transaction(fn: (...args: any[]) => any) {
         return async (...args: any[]) => {
-          await client.execute("BEGIN");
-          try {
-            const result = await fn(...args);
-            await client.execute("COMMIT");
-            return result;
-          } catch (e) {
-            await client.execute("ROLLBACK");
-            throw e;
-          }
+          return await fn(...args);
         };
       },
     };
