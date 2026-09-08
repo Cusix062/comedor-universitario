@@ -5,19 +5,31 @@ const ADMIN_EMAIL = "jairecusi@gmail.com";
 
 export async function middleware(req: NextRequest) {
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+  const path = req.nextUrl.pathname;
 
-  // Si tiene sesión de Google, verificar que sea permitido
   if (token && token.email) {
     const email = token.email;
-    if (email !== ADMIN_EMAIL && !email.endsWith("@undc.edu.pe")) {
-      // No tiene permiso - cerrar sesión y redirigir al error
-      const errorUrl = new URL("/auth/error", req.url);
-      errorUrl.searchParams.set("error", "access_denied");
-      const response = NextResponse.redirect(errorUrl);
-      // Limpiar la cookie de sesión
-      response.cookies.set("next-auth.session-token", "", { maxAge: 0 });
-      response.cookies.set("__Secure-next-auth.session-token", "", { maxAge: 0 });
-      return response;
+    const isAdmin = email === ADMIN_EMAIL;
+    const isUndc = email.endsWith("@undc.edu.pe");
+
+    // Admin pages: solo el admin
+    if (path.startsWith("/admin")) {
+      if (!isAdmin) {
+        const res = NextResponse.redirect(new URL("/auth/error?error=access_denied", req.url));
+        res.cookies.set("next-auth.session-token", "", { maxAge: 0 });
+        res.cookies.set("__Secure-next-auth.session-token", "", { maxAge: 0 });
+        return res;
+      }
+    }
+
+    // Student pages: solo @undc.edu.pe, NO el admin
+    if (path.startsWith("/registro") || path.startsWith("/dashboard")) {
+      if (!isUndc || isAdmin) {
+        const res = NextResponse.redirect(new URL("/auth/error?error=access_denied", req.url));
+        res.cookies.set("next-auth.session-token", "", { maxAge: 0 });
+        res.cookies.set("__Secure-next-auth.session-token", "", { maxAge: 0 });
+        return res;
+      }
     }
   }
 
