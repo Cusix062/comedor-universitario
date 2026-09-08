@@ -1,9 +1,31 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
-export default function AuthErrorPage() {
+function ErrorContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const error = searchParams.get("error");
+
+  const getErrorMessage = () => {
+    if (error === "AccessDenied") {
+      return {
+        title: "¡ACCESO DENEGADO!",
+        message: "SOLO ENTRAN CUSISTAS",
+        detail: "Tu correo no tiene permisos para acceder al comedor universitario.",
+        color: "from-red-500 to-orange-500",
+      };
+    }
+    return {
+      title: "Error de Autenticación",
+      message: "Algo salió mal",
+      detail: "Hubo un problema al intentar iniciar sesión.",
+      color: "from-red-500 to-red-600",
+    };
+  };
+
+  const errorInfo = getErrorMessage();
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4" style={{ background: "linear-gradient(135deg, #1e3a5f 0%, #2563eb 50%, #3b82f6 100%)" }}>
@@ -13,15 +35,15 @@ export default function AuthErrorPage() {
             🚫
           </div>
           <h1 className="text-3xl font-black text-gray-800 tracking-tight">
-            ¡ACCESO DENEGADO!
+            {errorInfo.title}
           </h1>
-          <div className="mt-4 bg-gradient-to-r from-red-500 to-orange-500 text-white px-6 py-3 rounded-xl inline-block">
+          <div className={`mt-4 bg-gradient-to-r ${errorInfo.color} text-white px-6 py-3 rounded-xl inline-block`}>
             <p className="text-xl font-black tracking-wider">
-              SOLO ENTRAN CUSISTAS
+              {errorInfo.message}
             </p>
           </div>
           <p className="text-gray-500 mt-5 text-sm leading-relaxed">
-            Tu correo <span className="font-semibold text-red-600">no tiene permisos</span> para acceder al comedor universitario.
+            <span className="font-semibold text-red-600">{errorInfo.detail}</span>
           </p>
           <p className="text-gray-400 mt-2 text-xs">
             Se permiten correos <span className="font-mono bg-gray-100 px-2 py-0.5 rounded">@undc.edu.pe</span> y el admin autorizado
@@ -43,5 +65,17 @@ export default function AuthErrorPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AuthErrorPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "linear-gradient(135deg, #1e3a5f 0%, #2563eb 50%, #3b82f6 100%)" }}>
+        <div className="text-white text-xl">Cargando...</div>
+      </div>
+    }>
+      <ErrorContent />
+    </Suspense>
   );
 }
