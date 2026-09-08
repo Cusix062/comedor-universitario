@@ -1,18 +1,36 @@
 import { NextResponse } from "next/server";
 
 export async function GET() {
-  // Show ALL env vars related to turso (masked)
-  const url = process.env.TURSO_DATABASE_URL || "NOT_SET";
-  const token = process.env.TURSO_AUTH_TOKEN || "NOT_SET";
+  try {
+    const TURSO_URL = process.env.TURSO_DATABASE_URL!;
+    const TURSO_TOKEN = process.env.TURSO_AUTH_TOKEN!;
 
-  return NextResponse.json({
-    turso_url: url,
-    turso_url_length: url.length,
-    turso_token_present: token !== "NOT_SET",
-    turso_token_length: token.length,
-    turso_token_start: token.substring(0, 20),
-    all_env_keys: Object.keys(process.env).filter(k =>
-      k.includes("TURSO") || k.includes("turso") || k.includes("NEXTAUTH") || k.includes("GOOGLE")
-    ),
-  });
+    // Try both URL formats
+    const url1 = TURSO_URL;
+    const url2 = TURSO_URL.replace("libsql://", "https://");
+
+    let client;
+    let usedUrl = url1;
+
+    const { createClient } = await import("@libsql/client");
+
+    try {
+      client = createClient({ url: url1, authToken: TURSO_TOKEN });
+      await client.execute("SELECT 1");
+    } catch {
+      usedUrl = url2;
+      client = createClient({ url: url2, authToken: TURSO_TOKEN });
+      await client.execute("SELECT 1");
+    }
+
+    return NextResponse.json({
+      ok: true,
+      usedUrl: usedUrl,
+      message: "Turso conectado!",
+    });
+  } catch (error: any) {
+    return NextResponse.json({
+      error: error.message,
+    }, { status: 500 });
+  }
 }
