@@ -1,41 +1,18 @@
 import { NextResponse } from "next/server";
 
 export async function GET() {
-  try {
-    const TURSO_URL = process.env.TURSO_DATABASE_URL;
-    const TURSO_TOKEN = process.env.TURSO_AUTH_TOKEN;
+  // Show ALL env vars related to turso (masked)
+  const url = process.env.TURSO_DATABASE_URL || "NOT_SET";
+  const token = process.env.TURSO_AUTH_TOKEN || "NOT_SET";
 
-    if (!TURSO_URL) {
-      return NextResponse.json({
-        error: "TURSO_DATABASE_URL no está configurada",
-        hint: "Ve a Vercel > Settings > Environment Variables",
-      });
-    }
-
-    if (!TURSO_TOKEN) {
-      return NextResponse.json({
-        error: "TURSO_AUTH_TOKEN no está configurado",
-        hint: "Ve a Vercel > Settings > Environment Variables",
-      });
-    }
-
-    const { createClient } = await import("@libsql/client");
-    const client = createClient({
-      url: TURSO_URL,
-      authToken: TURSO_TOKEN,
-    });
-
-    const result = await client.execute("SELECT 1 as test");
-
-    return NextResponse.json({
-      ok: true,
-      message: "Turso conectado correctamente",
-      test: result.rows[0],
-    });
-  } catch (error: any) {
-    return NextResponse.json({
-      error: error.message,
-      hint: "Verifica que TURSO_DATABASE_URL y TURSO_AUTH_TOKEN sean correctos",
-    }, { status: 500 });
-  }
+  return NextResponse.json({
+    turso_url: url,
+    turso_url_length: url.length,
+    turso_token_present: token !== "NOT_SET",
+    turso_token_length: token.length,
+    turso_token_start: token.substring(0, 20),
+    all_env_keys: Object.keys(process.env).filter(k =>
+      k.includes("TURSO") || k.includes("turso") || k.includes("NEXTAUTH") || k.includes("GOOGLE")
+    ),
+  });
 }
