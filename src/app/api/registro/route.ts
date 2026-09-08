@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import getDb, { esBeneficiario } from "@/lib/db";
+import getDb, { esBeneficiario, getDbAsync } from "@/lib/db";
 import { getCicloNumero } from "@/lib/ciclos";
 
 export async function POST(req: NextRequest) {
@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Faltan datos requeridos" }, { status: 400 });
     }
 
-    const db = getDb();
+    const db = await getDbAsync();
 
     // Si es usuario de Google (sin estudiante_id), crear o buscar estudiante
     let idEstudiante = estudiante_id;

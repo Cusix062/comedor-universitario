@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { buscarEstudiante } from "@/lib/academic-api";
-import getDb from "@/lib/db";
+import getDb, { getDbAsync } from "@/lib/db";
 import { createSession, authenticateEstudiante } from "@/lib/auth";
 import { getCicloNumero } from "@/lib/ciclos";
 
@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "El código de estudiante es obligatorio" }, { status: 400 });
     }
 
-    const db = getDb();
+    const db = await getDbAsync();
 
     // Buscar en la API académica
     const apiResult = await buscarEstudiante(codigo);

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import getDb from "@/lib/db";
+import getDb, { getDbAsync } from "@/lib/db";
 
 // GET: Obtener formatos guardados
 export async function GET(req: NextRequest) {
@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
     const fecha = searchParams.get("fecha");
     const tipo = searchParams.get("tipo");
 
-    const db = getDb();
+    const db = await getDbAsync();
 
     if (fecha && tipo) {
       const formato = db.prepare(
@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Faltan datos" }, { status: 400 });
     }
 
-    const db = getDb();
+    const db = await getDbAsync();
 
     db.prepare(`
       INSERT INTO formatos_guardados (fecha, tipo, capacidad, cantidad_inscritos, inscritos_json)
@@ -63,7 +63,7 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: "ID requerido" }, { status: 400 });
     }
 
-    const db = getDb();
+    const db = await getDbAsync();
     const result = db.prepare("DELETE FROM formatos_guardados WHERE id = ?").run(id);
 
     if (result.changes === 0) {

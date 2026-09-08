@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import getDb from "@/lib/db";
+import getDb, { getDbAsync } from "@/lib/db";
 
 // GET: Obtener inscritos de un cupo
 export async function GET(req: NextRequest) {
@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
     const cupo_id = searchParams.get("cupo_id");
     const fecha = searchParams.get("fecha") || new Date().toISOString().split("T")[0];
 
-    const db = getDb();
+    const db = await getDbAsync();
 
     let inscritos;
     if (cupo_id) {
@@ -46,7 +46,7 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: "Faltan datos" }, { status: 400 });
     }
 
-    const db = getDb();
+    const db = await getDbAsync();
 
     if (accion === "atender") {
       db.prepare("UPDATE inscripciones SET estado = 'atendido' WHERE id = ?").run(inscripcion_id);
@@ -82,7 +82,7 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: "ID requerido" }, { status: 400 });
     }
 
-    const db = getDb();
+    const db = await getDbAsync();
 
     const inscripcion = db.prepare("SELECT cupo_id FROM inscripciones WHERE id = ?").get(inscripcion_id) as any;
     if (!inscripcion) {

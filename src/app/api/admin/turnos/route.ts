@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import getDb from "@/lib/db";
+import getDb, { getDbAsync } from "@/lib/db";
 
 // GET: Obtener todos los cupos (admin)
 export async function GET() {
   try {
-    const db = getDb();
+    const db = await getDbAsync();
     const cupos = db.prepare(
       "SELECT * FROM cupos ORDER BY fecha DESC, tipo"
     ).all();
@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "La fecha es obligatoria" }, { status: 400 });
     }
 
-    const db = getDb();
+    const db = await getDbAsync();
 
     const resultado = db.transaction(() => {
       // Upsert almuerzo
@@ -79,7 +79,7 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: "ID requerido" }, { status: 400 });
     }
 
-    const db = getDb();
+    const db = await getDbAsync();
 
     const cupo = db.prepare("SELECT * FROM cupos WHERE id = ?").get(id) as any;
     if (!cupo) {
@@ -112,7 +112,7 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: "ID requerido" }, { status: 400 });
     }
 
-    const db = getDb();
+    const db = await getDbAsync();
 
     const cupo = db.prepare("SELECT * FROM cupos WHERE id = ?").get(id) as any;
     if (!cupo) {

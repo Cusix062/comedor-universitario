@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import getDb from "@/lib/db";
+import getDb, { getDbAsync } from "@/lib/db";
 import { calcularCiclo } from "@/lib/ciclos";
 
 export async function POST() {
   try {
-    const db = getDb();
+    const db = await getDbAsync();
 
     // Obtener todos los estudiantes
     const estudiantes = db.prepare("SELECT id, codigo, nombre FROM estudiantes").all() as any[];
@@ -53,7 +53,7 @@ export async function POST() {
 
 export async function GET() {
   try {
-    const db = getDb();
+    const db = await getDbAsync();
 
     // Obtener todos los estudiantes con su ciclo actual
     const estudiantes = db.prepare(

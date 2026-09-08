@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import getDb from "@/lib/db";
+import getDb, { getDbAsync } from "@/lib/db";
 
 // GET: Buscar estudiantes o listar suspendidos
 export async function GET(req: NextRequest) {
@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
     const busqueda = searchParams.get("q") || "";
     const soloActivas = searchParams.get("activas") === "true";
 
-    const db = getDb();
+    const db = await getDbAsync();
     const hoy = new Date().toISOString().split("T")[0];
 
     // Modo: listar todos los suspendidos
@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "La fecha de inicio debe ser anterior a la fecha fin" }, { status: 400 });
     }
 
-    const db = getDb();
+    const db = await getDbAsync();
 
     const superpuesta = db.prepare(
       `SELECT id FROM suspenciones 
@@ -133,7 +133,7 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: "La fecha de inicio debe ser anterior a la fecha fin" }, { status: 400 });
     }
 
-    const db = getDb();
+    const db = await getDbAsync();
 
     const actual = db.prepare("SELECT * FROM suspenciones WHERE id = ?").get(id) as any;
     if (!actual) {
@@ -177,7 +177,7 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: "ID requerido" }, { status: 400 });
     }
 
-    const db = getDb();
+    const db = await getDbAsync();
     db.prepare("DELETE FROM suspenciones WHERE id = ?").run(id);
 
     return NextResponse.json({ success: true, mensaje: "Suspensión eliminada" });

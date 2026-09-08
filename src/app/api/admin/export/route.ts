@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import getDb from "@/lib/db";
+import getDb, { getDbAsync } from "@/lib/db";
 import * as XLSX from "xlsx";
 
 export async function GET(req: NextRequest) {
@@ -7,7 +7,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const fecha = searchParams.get("fecha") || new Date().toISOString().split("T")[0];
 
-    const db = getDb();
+    const db = await getDbAsync();
 
     const inscritos = db.prepare(`
       SELECT 

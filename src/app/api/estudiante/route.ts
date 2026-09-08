@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import getDb from "@/lib/db";
+import getDb, { getDbAsync } from "@/lib/db";
 import { calcularCiclo } from "@/lib/ciclos";
 
 export async function GET(req: NextRequest) {
@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Código requerido" }, { status: 400 });
     }
 
-    const db = getDb();
+    const db = await getDbAsync();
 
     // Buscar estudiante
     const estudiante = db.prepare("SELECT * FROM estudiantes WHERE codigo = ?").get(codigo) as any;
