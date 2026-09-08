@@ -1,6 +1,8 @@
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 
+const ADMIN_EMAIL = "jairecusi@gmail.com";
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
     Google({
@@ -10,14 +12,23 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   ],
   callbacks: {
     async signIn({ user }) {
-      if (user.email && user.email.endsWith("@undc.edu.pe")) {
-        return true;
+      if (user.email) {
+        // Permitir correo admin
+        if (user.email === ADMIN_EMAIL) {
+          return true;
+        }
+        // Permitir correos institucionales UNDC
+        if (user.email.endsWith("@undc.edu.pe")) {
+          return true;
+        }
       }
       return false;
     },
     async session({ session, token }) {
       if (session.user) {
         (session.user as any).id = token.sub;
+        // Marcar si es admin
+        (session.user as any).isAdmin = session.user.email === ADMIN_EMAIL;
       }
       return session;
     },
