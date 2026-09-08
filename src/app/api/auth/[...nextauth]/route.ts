@@ -13,33 +13,32 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
   ],
   callbacks: {
-    async signIn({ user, account }) {
+    async signIn({ user }) {
       if (!user.email) return false;
 
-      // Permitir admin
-      if (user.email === ADMIN_EMAIL) return true;
+      // Admin NO puede entrar como estudiante por Google
+      if (user.email === ADMIN_EMAIL) return false;
 
-      // Permitir correos institucionales UNDC
-      if (user.email.endsWith("@undc.edu.pe")) {
-        // Auto-crear estudiante en BD
-        try {
-          const codigo = user.email.split("@")[0];
-          const db = await getDbAsync();
-          const existente = await db.prepare("SELECT id FROM estudiantes WHERE codigo = ?").get(codigo);
+      // Solo correos institucionales UNDC
+      if (!user.email.endsWith("@undc.edu.pe")) return false;
 
-          if (!existente) {
-            const cicloCalculado = getCicloNumero(codigo);
-            await db.prepare(
-              "INSERT INTO estudiantes (codigo, nombre, correo, ciclo, telefono) VALUES (?, ?, ?, ?, ?)"
-            ).run(codigo, user.name || codigo, user.email, cicloCalculado, "");
-          }
-        } catch (e) {
-          console.error("Error creando estudiante:", e);
+      // Auto-crear estudiante en BD
+      try {
+        const codigo = user.email.split("@")[0];
+        const db = await getDbAsync();
+        const existente = await db.prepare("SELECT id FROM estudiantes WHERE codigo = ?").get(codigo);
+
+        if (!existente) {
+          const cicloCalculado = getCicloNumero(codigo);
+          await db.prepare(
+            "INSERT INTO estudiantes (codigo, nombre, correo, ciclo, telefono) VALUES (?, ?, ?, ?, ?)"
+          ).run(codigo, user.name || codigo, user.email, cicloCalculado, "");
         }
-        return true;
+      } catch (e) {
+        console.error("Error creando estudiante:", e);
       }
 
-      return false;
+      return true;
     },
     async session({ session, token }) {
       if (session.user) {
