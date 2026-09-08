@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { cicloARomano } from "@/lib/ciclos";
 
 interface FormatoGuardado {
   id: number;
@@ -248,7 +249,7 @@ export default function HistorialPage() {
                                 ING. DE SISTEMAS
                               </td>
                               <td className="border border-gray-300 py-2 px-2 text-center text-gray-700">
-                                {insc?.ciclo ? `${insc.ciclo}°` : ""}
+                                {insc?.ciclo ? cicloARomano(insc.ciclo) : ""}
                               </td>
                               <td className="border border-gray-300 py-2 px-2"></td>
                             </tr>

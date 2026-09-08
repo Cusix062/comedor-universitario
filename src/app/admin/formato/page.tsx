@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { cicloARomano } from "@/lib/ciclos";
 
 interface Inscripcion {
   numero_orden: number;
@@ -98,7 +99,7 @@ export default function FormatoPage() {
     return {
       numero: String(i + 1).padStart(2, "0"),
       nombre: insc?.nombre || "",
-      ciclo: insc?.ciclo ? `${insc.ciclo}°` : "",
+      ciclo: insc?.ciclo ? cicloARomano(insc.ciclo) : "",
     };
   });
 
@@ -213,7 +214,7 @@ export default function FormatoPage() {
                       </span>
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-semibold text-gray-800 truncate">{insc.nombre}</p>
-                        <p className="text-[10px] text-gray-400">{insc.ciclo}° ciclo</p>
+                        <p className="text-[10px] text-gray-400">{cicloARomano(insc.ciclo)} ciclo</p>
                       </div>
                       <span className={`text-[10px] px-1.5 py-0.5 rounded font-semibold ${
                         insc.estado === "atendido" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"

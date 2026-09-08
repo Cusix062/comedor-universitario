@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { cicloARomano } from "@/lib/ciclos";
 
 interface Estudiante {
   id: number;
@@ -322,14 +323,37 @@ export default function RegistroPage() {
     setHoraActual(getHoraActual());
 
     if (session?.user) {
-      setEstudiante({
-        id: 0,
-        codigo: session.user.email?.split("@")[0] || "",
-        nombre: session.user.name || "",
-        correo: session.user.email || "",
-        ciclo: 1,
-        telefono: "",
-      });
+      const codigo = session.user.email?.split("@")[0] || "";
+      const userName = session.user.name || "";
+      const userEmail = session.user.email || "";
+      // Obtener datos reales del estudiante desde la API
+      fetch(`/api/estudiante?codigo=${codigo}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.id) {
+            setEstudiante(data);
+          } else {
+            // Fallback si no existe en la DB
+            setEstudiante({
+              id: 0,
+              codigo: codigo,
+              nombre: userName,
+              correo: userEmail,
+              ciclo: 1,
+              telefono: "",
+            });
+          }
+        })
+        .catch(() => {
+          setEstudiante({
+            id: 0,
+            codigo: codigo,
+            nombre: userName,
+            correo: userEmail,
+            ciclo: 1,
+            telefono: "",
+          });
+        });
       const timer = setInterval(() => setHoraActual(getHoraActual()), 1000);
       return () => clearInterval(timer);
     }
@@ -588,7 +612,7 @@ export default function RegistroPage() {
             </div>
             <div className="bg-gray-50 rounded-xl p-3">
               <p className="text-xs text-gray-400 font-medium">Ciclo</p>
-              <p className="font-semibold text-gray-800 text-sm mt-1">{estudiante.ciclo}°</p>
+              <p className="font-semibold text-gray-800 text-sm mt-1">{cicloARomano(estudiante.ciclo)}</p>
             </div>
           </div>
         </div>

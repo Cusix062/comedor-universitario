@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import getDb, { esBeneficiario } from "@/lib/db";
+import { getCicloNumero } from "@/lib/ciclos";
 
 export async function POST(req: NextRequest) {
   try {
@@ -21,9 +22,10 @@ export async function POST(req: NextRequest) {
         idEstudiante = existente.id;
       } else {
         // Crear nuevo estudiante
+        const cicloCalculado = getCicloNumero(codigo);
         const result = db.prepare(
           "INSERT INTO estudiantes (codigo, nombre, correo, ciclo, telefono) VALUES (?, ?, ?, ?, ?)"
-        ).run(codigo, nombre, correo || `${codigo}@undc.edu.pe`, 1, "");
+        ).run(codigo, nombre, correo || `${codigo}@undc.edu.pe`, cicloCalculado, "");
         idEstudiante = result.lastInsertRowid;
       }
     }

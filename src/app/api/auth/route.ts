@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { buscarEstudiante } from "@/lib/academic-api";
 import getDb from "@/lib/db";
 import { createSession, authenticateEstudiante } from "@/lib/auth";
+import { getCicloNumero } from "@/lib/ciclos";
 
 export async function POST(req: NextRequest) {
   try {
@@ -26,9 +27,10 @@ export async function POST(req: NextRequest) {
     if (!estudiante) {
       // Crear nuevo estudiante con datos de la API
       const correoInstitucional = correo || `${codigo}@undc.edu.pe`;
+      const cicloCalculado = getCicloNumero(codigo);
       const result = db.prepare(
         "INSERT INTO estudiantes (codigo, nombre, correo, ciclo, telefono) VALUES (?, ?, ?, ?, ?)"
-      ).run(codigo, apiResult.estudiante, correoInstitucional, parseInt(apiResult.nivel) || 1, "");
+      ).run(codigo, apiResult.estudiante, correoInstitucional, cicloCalculado, "");
 
       estudiante = db.prepare("SELECT * FROM estudiantes WHERE id = ?").get(result.lastInsertRowid);
     }

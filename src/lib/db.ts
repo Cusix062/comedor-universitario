@@ -33,6 +33,9 @@ function initDb(database: Database.Database) {
       correo TEXT NOT NULL,
       ciclo INTEGER NOT NULL,
       telefono TEXT NOT NULL DEFAULT '',
+      id_externo TEXT DEFAULT '',
+      fecha_egreso TEXT DEFAULT NULL,
+      carrera TEXT DEFAULT 'INGENIERÍA DE SISTEMAS',
       fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP
     );
 
