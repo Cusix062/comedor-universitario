@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDbAsync } from "@/lib/db";
+import { getCicloNumero } from "@/lib/ciclos";
+
+const API_URL = "https://sivireno.undc.edu.pe/tiger/consulta/con_searchEstudiante.php";
 
 export async function GET(req: NextRequest) {
   try {
@@ -29,7 +32,7 @@ export async function GET(req: NextRequest) {
     const normalizar = (str: string): string => {
       return str.trim().toUpperCase()
         .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-        .replace(/[Ññ]/g, "N")
+        .replace(/[ñÑ]/g, "N")
         .replace(/[^A-Z\s]/g, "")
         .replace(/\s+/g, " ")
         .trim();
@@ -37,6 +40,7 @@ export async function GET(req: NextRequest) {
 
     const busquedaNorm = normalizar(busqueda);
 
+    // 1. Buscar en BD local
     const porCodigo = await db.prepare(
       "SELECT * FROM estudiantes WHERE codigo = ?"
     ).all(busqueda);
@@ -56,8 +60,51 @@ export async function GET(req: NextRequest) {
         const suspensiones = await db.prepare(
           "SELECT * FROM suspenciones WHERE estudiante_id = ? AND fecha_fin >= ? ORDER BY fecha_inicio DESC"
         ).all(e.id, hoy);
-        resultados.push({ ...e, suspensiones });
+        resultados.push({ ...e, suspensiones, fuente: "local" });
       }
+    }
+
+    // 2. Buscar en API externa UNDC
+    try {
+      const response = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ opcion: 7, buscador: busqueda }),
+      });
+
+      if (response.ok) {
+        const apiData = await response.json();
+        if (Array.isArray(apiData)) {
+          for (const est of apiData) {
+            const codigo = est.cod_estu;
+            if (ids.has(parseInt(codigo))) continue;
+
+            // Auto-crear en BD local
+            const existente = await db.prepare("SELECT id FROM estudiantes WHERE codigo = ?").get(codigo) as any;
+            let estudianteId: number;
+
+            if (existente) {
+              estudianteId = existente.id;
+            } else {
+              const cicloCalculado = getCicloNumero(codigo);
+              const result = await db.prepare(
+                "INSERT INTO estudiantes (codigo, nombre, correo, ciclo, telefono) VALUES (?, ?, ?, ?, ?)"
+              ).run(codigo, est.estudiante, `${codigo}@undc.edu.pe`, cicloCalculado, "");
+              estudianteId = Number(result.lastInsertRowid);
+            }
+
+            ids.add(estudianteId);
+            const suspensiones = await db.prepare(
+              "SELECT * FROM suspenciones WHERE estudiante_id = ? AND fecha_fin >= ? ORDER BY fecha_inicio DESC"
+            ).all(estudianteId, hoy);
+
+            const estLocal = await db.prepare("SELECT * FROM estudiantes WHERE id = ?").get(estudianteId);
+            resultados.push({ ...estLocal, suspensiones, fuente: "api" });
+          }
+        }
+      }
+    } catch (e) {
+      console.error("Error API externa:", e);
     }
 
     return NextResponse.json(resultados);
