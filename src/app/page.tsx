@@ -164,7 +164,7 @@ export default function LoginPage() {
                       type="text"
                       value={usuario}
                       onChange={(e) => setUsuario(e.target.value)}
-                      placeholder="admin"
+                      placeholder="Usuario"
                       className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm text-gray-800 placeholder-gray-400 transition-all"
                       required
                     />
@@ -177,7 +177,7 @@ export default function LoginPage() {
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      placeholder="••••••"
+                      placeholder="Contraseña"
                       className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm text-gray-800 placeholder-gray-400 transition-all"
                       required
                     />
