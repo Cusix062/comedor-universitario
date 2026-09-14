@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDbAsync } from "@/lib/db";
+import { logAccion } from "@/lib/audit";
 
 // Renumerar inscripciones de un cupo (sin huecos)
 async function renumerar(db: any, cupo_id: number) {
@@ -60,6 +61,7 @@ export async function PUT(req: NextRequest) {
 
     if (accion === "atender") {
       await db.prepare("UPDATE inscripciones SET estado = 'atendido' WHERE id = ?").run(inscripcion_id);
+      await logAccion("atender", `Inscripción #${inscripcion_id} marcada como atendida`, "admin");
     } else if (accion === "cancelar") {
       const inscripcion = await db.prepare("SELECT cupo_id FROM inscripciones WHERE id = ?").get(inscripcion_id) as any;
       if (inscripcion) {
@@ -74,6 +76,7 @@ export async function PUT(req: NextRequest) {
         if (cupo && cupo.estado === "cerrado" && cupo.ocupados < cupo.capacidad) {
           await db.prepare("UPDATE cupos SET estado = 'abierto' WHERE id = ?").run(inscripcion.cupo_id);
         }
+        await logAccion("cancelar", `Inscripción #${inscripcion_id} cancelada`, "admin");
       }
     }
 
@@ -110,6 +113,8 @@ export async function DELETE(req: NextRequest) {
     if (cupo && cupo.estado === "cerrado" && cupo.ocupados < cupo.capacidad) {
       await db.prepare("UPDATE cupos SET estado = 'abierto' WHERE id = ?").run(inscripcion.cupo_id);
     }
+
+    await logAccion("eliminar", `Inscripción #${inscripcion_id} eliminada`, "admin");
 
     return NextResponse.json({ success: true, mensaje: "Inscripción eliminada" });
   } catch (error) {

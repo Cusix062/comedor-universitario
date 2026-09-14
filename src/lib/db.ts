@@ -93,6 +93,14 @@ async function getDbTurso(): Promise<any> {
       motivo TEXT NOT NULL DEFAULT '',
       creado_en DATETIME DEFAULT CURRENT_TIMESTAMP
     );
+    CREATE TABLE IF NOT EXISTS audit_logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      accion TEXT NOT NULL,
+      detalle TEXT NOT NULL DEFAULT '',
+      usuario TEXT NOT NULL DEFAULT '',
+      ip TEXT NOT NULL DEFAULT '',
+      fecha_hora DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
   `);
 
   const adminResult = await client.execute({ sql: "SELECT id FROM admins WHERE usuario = ?", args: ["admin"] });
@@ -195,6 +203,14 @@ function initSchemaSync(database: any) {
       motivo TEXT NOT NULL DEFAULT '',
       creado_en DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (estudiante_id) REFERENCES estudiantes(id)
+    );
+    CREATE TABLE IF NOT EXISTS audit_logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      accion TEXT NOT NULL,
+      detalle TEXT NOT NULL DEFAULT '',
+      usuario TEXT NOT NULL DEFAULT '',
+      ip TEXT NOT NULL DEFAULT '',
+      fecha_hora DATETIME DEFAULT CURRENT_TIMESTAMP
     );
     CREATE INDEX IF NOT EXISTS idx_cupos_fecha ON cupos(fecha);
     CREATE INDEX IF NOT EXISTS idx_inscripciones_cupo ON inscripciones(cupo_id);

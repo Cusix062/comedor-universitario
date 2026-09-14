@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDbAsync } from "@/lib/db";
+import { logAccion } from "@/lib/audit";
 
 export async function GET() {
   try {
@@ -59,6 +60,8 @@ export async function POST(req: NextRequest) {
       }
     })();
 
+    await logAccion("crear_cupo", `Cupos creados/modificados para fecha: ${fecha}`, "admin");
+
     return NextResponse.json({ success: true, mensaje: "Cupos actualizados correctamente" });
   } catch (error: any) {
     console.error("TURNOS POST ERROR:", error?.message, error?.cause?.message);
@@ -90,6 +93,8 @@ export async function PUT(req: NextRequest) {
       id
     );
 
+    await logAccion("modificar_cupo", `Cupo #${id} modificado: capacidad=${nuevaCapacidad}, estado=${nuevoEstado}`, "admin");
+
     return NextResponse.json({ success: true, mensaje: "Cupo actualizado" });
   } catch (error) {
     return NextResponse.json({ error: "Error interno" }, { status: 500 });
@@ -120,6 +125,8 @@ export async function DELETE(req: NextRequest) {
     }
 
     await db.prepare("DELETE FROM cupos WHERE id = ?").run(id);
+
+    await logAccion("eliminar_cupo", `Cupo #${id} eliminado (fecha: ${cupo.fecha}, tipo: ${cupo.tipo})`, "admin");
 
     return NextResponse.json({ success: true, mensaje: "Cupo eliminado" });
   } catch (error) {

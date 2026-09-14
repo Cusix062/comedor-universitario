@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import PDFReport from "@/components/PDFReport";
 
 export default function AdminPage() {
   const [fecha, setFecha] = useState(new Date().toISOString().split("T")[0]);
@@ -173,10 +174,16 @@ export default function AdminPage() {
               📚 Historial
             </button>
             <button
+              onClick={() => router.push("/admin/dashboard")}
+              className="bg-cyan-600 hover:bg-cyan-700 px-4 py-2 rounded-xl transition text-sm font-medium"
+            >
+              📊 Dashboard
+            </button>
+            <button
               onClick={() => router.push("/admin/monitoreo")}
               className="bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded-xl transition text-sm font-medium"
             >
-              📊 Monitoreo
+              📈 Monitoreo
             </button>
             <button
               onClick={() => router.push("/admin/validar")}
@@ -218,6 +225,7 @@ export default function AdminPage() {
           >
             📥 Exportar Excel
           </a>
+          <PDFReport inscripciones={inscritos} fecha={fecha} />
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

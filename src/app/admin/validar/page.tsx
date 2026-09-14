@@ -10,6 +10,9 @@ export default function ValidarPage() {
   const [mensaje, setMensaje] = useState("");
   const [fecha, setFecha] = useState(new Date().toISOString().split("T")[0]);
   const [inscritos, setInscritos] = useState<any[]>([]);
+  const [filtroTurno, setFiltroTurno] = useState("todos");
+  const [filtroCiclo, setFiltroCiclo] = useState("todos");
+  const [filtroEstado, setFiltroEstado] = useState("todos");
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
@@ -220,8 +223,58 @@ export default function ValidarPage() {
               className="border-2 border-gray-200 rounded-xl px-3 py-1.5 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none"
             />
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
-            {inscritos.map((insc) => (
+
+          <div className="flex flex-wrap gap-3 mb-4 p-3 bg-gray-50 rounded-xl">
+            <input
+              type="text"
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              placeholder="Buscar por nombre o código..."
+              className="flex-1 min-w-[180px] border-2 border-gray-200 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none"
+            />
+            <select
+              value={filtroTurno}
+              onChange={(e) => setFiltroTurno(e.target.value)}
+              className="border-2 border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none"
+            >
+              <option value="todos">Todos los turnos</option>
+              <option value="almuerzo">Almuerzo</option>
+              <option value="cena">Cena</option>
+            </select>
+            <select
+              value={filtroCiclo}
+              onChange={(e) => setFiltroCiclo(e.target.value)}
+              className="border-2 border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none"
+            >
+              <option value="todos">Todos los ciclos</option>
+              {[...new Set(inscritos.map((i) => i.ciclo))].sort((a, b) => a - b).map((c) => (
+                <option key={c} value={c}>Ciclo {c}</option>
+              ))}
+            </select>
+            <select
+              value={filtroEstado}
+              onChange={(e) => setFiltroEstado(e.target.value)}
+              className="border-2 border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none"
+            >
+              <option value="todos">Todos los estados</option>
+              <option value="reservado">Reservado</option>
+              <option value="atendido">Atendido</option>
+              <option value="cancelado">Cancelado</option>
+            </select>
+          </div>
+
+          {(() => {
+            const termino = busqueda.toLowerCase().trim();
+            const filtrados = inscritos.filter((insc) => {
+              if (termino && !insc.nombre.toLowerCase().includes(termino) && !insc.codigo.toLowerCase().includes(termino)) return false;
+              if (filtroTurno !== "todos" && insc.turno !== filtroTurno) return false;
+              if (filtroCiclo !== "todos" && String(insc.ciclo) !== filtroCiclo) return false;
+              if (filtroEstado !== "todos" && insc.estado !== filtroEstado) return false;
+              return true;
+            });
+            return filtrados.length > 0 ? (
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
+                {filtrados.map((insc) => (
               <button
                 key={insc.id}
                 onClick={() => {
@@ -242,14 +295,15 @@ export default function ValidarPage() {
                 <p className="text-xs text-gray-600 truncate mt-1">{insc.nombre}</p>
                 <p className="text-xs text-gray-400 font-mono mt-0.5">{insc.codigo}</p>
               </button>
-            ))}
-          </div>
-          {inscritos.length === 0 && (
-            <div className="text-center py-8">
-              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center text-3xl mx-auto mb-3">📭</div>
-              <p className="text-gray-400">No hay inscritos hoy</p>
-            </div>
-          )}
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center text-3xl mx-auto mb-3">📭</div>
+                <p className="text-gray-400">No se encontraron registros con esos filtros</p>
+              </div>
+            );
+          })()}
         </div>
       </main>
     </div>

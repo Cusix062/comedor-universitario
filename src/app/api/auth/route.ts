@@ -3,8 +3,9 @@ import { buscarEstudiante } from "@/lib/academic-api";
 import { getDbAsync } from "@/lib/db";
 import { createSession } from "@/lib/auth";
 import { getCicloNumero } from "@/lib/ciclos";
+import { withRateLimit } from "@/lib/api-helpers";
 
-export async function POST(req: NextRequest) {
+export const POST = withRateLimit(async (req: NextRequest) => {
   try {
     const { codigo, correo } = await req.json();
 
@@ -54,4 +55,4 @@ export async function POST(req: NextRequest) {
     console.error("Error en autenticación:", error);
     return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
   }
-}
+}, 5, 15 * 60 * 1000);
