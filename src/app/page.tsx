@@ -69,7 +69,7 @@ export default function LoginPage() {
               className={`flex-1 py-4 text-sm font-semibold transition-all ${
                 modo === "estudiante"
                   ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50/50"
-                  : "text-gray-400 hover:text-gray-600 hover:bg-gray-50"
+                   : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
               }`}
             >
               🎓 Estudiante
@@ -79,7 +79,7 @@ export default function LoginPage() {
               className={`flex-1 py-4 text-sm font-semibold transition-all ${
                 modo === "admin"
                   ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50/50"
-                  : "text-gray-400 hover:text-gray-600 hover:bg-gray-50"
+                   : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
               }`}
             >
               👨‍💼 Administrador
@@ -122,11 +122,11 @@ export default function LoginPage() {
                     <div className="w-full border-t border-gray-200" />
                   </div>
                   <div className="relative flex justify-center text-xs">
-                    <span className="bg-white px-3 text-gray-400">Solo correos @undc.edu.pe</span>
+                    <span className="bg-white px-3 text-gray-500 font-medium">Solo correos @undc.edu.pe</span>
                   </div>
                 </div>
 
-                <p className="text-xs text-gray-400 text-center">
+                <p className="text-xs text-gray-500 text-center">
                   Usa tu correo institucional de la UNDC para acceder
                 </p>
               </div>
@@ -151,7 +151,7 @@ export default function LoginPage() {
                     <div className="w-full border-t border-gray-200" />
                   </div>
                   <div className="relative flex justify-center text-xs">
-                    <span className="bg-white px-3 text-gray-400">Solo correo de administrador</span>
+                    <span className="bg-white px-3 text-gray-500 font-medium">Solo correo de administrador</span>
                   </div>
                 </div>
 
@@ -195,7 +195,7 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <p className="text-center text-blue-200/60 text-xs mt-6">
+        <p className="text-center text-blue-100 text-xs mt-6">
           Sistema de Registro de Adicionales v1.0
         </p>
       </div>
