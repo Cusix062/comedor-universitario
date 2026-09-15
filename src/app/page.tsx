@@ -99,10 +99,10 @@ export default function LoginPage() {
                 <button
                   onClick={handleLoginGoogle}
                   disabled={cargando}
-                  className="w-full flex items-center justify-center gap-3 border-2 border-gray-200 py-3.5 rounded-xl font-semibold text-base transition-all hover:bg-gray-50 hover:border-gray-300 active:scale-[0.98] disabled:opacity-50"
+                  className="w-full flex items-center justify-center gap-3 border-2 border-gray-200 py-3.5 rounded-xl font-semibold text-base text-gray-700 transition-all hover:bg-gray-50 hover:border-gray-300 active:scale-[0.98] disabled:opacity-50"
                 >
                   {cargando ? (
-                    <svg className="animate-spin h-5 w-5 text-gray-400" viewBox="0 0 24 24" fill="none">
+                    <svg className="animate-spin h-5 w-5 text-blue-500" viewBox="0 0 24 24" fill="none">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                     </svg>
@@ -135,7 +135,7 @@ export default function LoginPage() {
                 <button
                   onClick={handleLoginGoogleAdmin}
                   disabled={cargando}
-                  className="w-full flex items-center justify-center gap-3 border-2 border-gray-200 py-3.5 rounded-xl font-semibold text-base transition-all hover:bg-gray-50 hover:border-gray-300 active:scale-[0.98] disabled:opacity-50"
+                  className="w-full flex items-center justify-center gap-3 border-2 border-gray-200 py-3.5 rounded-xl font-semibold text-base text-gray-700 transition-all hover:bg-gray-50 hover:border-gray-300 active:scale-[0.98] disabled:opacity-50"
                 >
                   <svg className="w-5 h-5" viewBox="0 0 24 24">
                     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" />
