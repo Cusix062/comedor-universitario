@@ -11,7 +11,7 @@ export default function ValidarPage() {
   const [mensaje, setMensaje] = useState("");
   const [fecha, setFecha] = useState(new Date().toISOString().split("T")[0]);
   const [inscritos, setInscritos] = useState<any[]>([]);
-  const [filtroTurno, setFiltroTurno] = useState("todos");
+  const [filtroTurno, setFiltroTurno] = useState("almuerzo");
   const [filtroCiclo, setFiltroCiclo] = useState("todos");
   const [filtroEstado, setFiltroEstado] = useState("todos");
   const inputRef = useRef<HTMLInputElement>(null);
