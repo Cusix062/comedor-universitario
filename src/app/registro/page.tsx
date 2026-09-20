@@ -137,10 +137,87 @@ export default function RegistroPage() {
     const tipos: ("puzzle" | "numeros" | "letras" | "mixto")[] = ["puzzle", "numeros", "letras", "mixto"];
     const tipo = tipos[Math.floor(Math.random() * tipos.length)];
     setCaptchaTipo(tipo);
+    if (tipo !== "puzzle") {
+      const texto = generarTextoCaptcha(tipo);
+      setCaptchaTexto(texto);
+    }
+    setCaptchaVerificado(false);
+    setCaptchaError("");
+    setCaptchaInput("");
+    setCaptchaIntentos(0);
+  }, []);
 
-    if (tipo === "puzzle") {
-      // Generar puzzle visual
-      setTimeout(() => {
+  const verificarTextoCaptcha = () => {
+    if (captchaInput.toUpperCase() === captchaTexto) {
+      setCaptchaVerificado(true);
+      setCaptchaError("");
+    } else {
+      const nuevos = captchaIntentos + 1;
+      setCaptchaIntentos(nuevos);
+      if (nuevos >= 3) {
+        setCaptchaError("Demasiados intentos. Se genera un nuevo captcha.");
+        setTimeout(() => generarCaptcha(), 1200);
+      } else {
+        setCaptchaError(`Código incorrecto. Intento ${nuevos}/3`);
+        setCaptchaInput("");
+        // Regenerar captcha con nuevo tipo
+        const tipos: ("puzzle" | "numeros" | "letras" | "mixto")[] = ["puzzle", "numeros", "letras", "mixto"];
+        const tipo = tipos[Math.floor(Math.random() * tipos.length)];
+        setCaptchaTipo(tipo);
+        if (tipo !== "puzzle") {
+          const texto = generarTextoCaptcha(tipo);
+          setCaptchaTexto(texto);
+        }
+      }
+    }
+  };
+
+  const manejarClickCanvas = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (captchaVerificado || captchaTipo !== "puzzle") return;
+
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const clickX = (e.clientX - rect.left) * scaleX;
+    const clickY = (e.clientY - rect.top) * scaleY;
+
+    const { x, y, size } = captchaPieza;
+    const tolerancia = 15;
+
+    if (
+      clickX >= x - tolerancia && clickX <= x + size + tolerancia &&
+      clickY >= y - tolerancia && clickY <= y + size + tolerancia
+    ) {
+      setCaptchaVerificado(true);
+      setCaptchaError("");
+      const ctx = canvas.getContext("2d");
+      if (ctx && piezaCanvasRef.current) {
+        ctx.drawImage(piezaCanvasRef.current, 5, 5, size, size, x, y, size, size);
+      }
+    } else {
+      const nuevos = captchaIntentos + 1;
+      setCaptchaIntentos(nuevos);
+      if (nuevos >= 3) {
+        setCaptchaError("Demasiados intentos. Se genera un nuevo captcha.");
+        setTimeout(() => generarCaptcha(), 1200);
+      } else {
+        setCaptchaError(`Posición incorrecta. Intento ${nuevos}/3`);
+      }
+    }
+  };
+
+  useEffect(() => {
+    generarCaptcha();
+  }, [generarCaptcha]);
+
+  // Dibujar captcha cuando el canvas esté disponible
+  useEffect(() => {
+    if (captchaVerificado) return;
+    const timer = setTimeout(() => {
+      if (captchaTipo === "puzzle") {
         const canvas = canvasRef.current;
         const piezaCanvas = piezaCanvasRef.current;
         if (!canvas || !piezaCanvas) return;
@@ -166,13 +243,13 @@ export default function RegistroPage() {
         ctx.fillRect(0, 0, W, H);
 
         for (let i = 0; i < 10; i++) {
-          const tipo = Math.random() > 0.5 ? "circulo" : "rect";
+          const shape = Math.random() > 0.5 ? "circulo" : "rect";
           const x = Math.random() * W;
           const y = Math.random() * H;
           const size = 15 + Math.random() * 40;
           ctx.globalAlpha = 0.4 + Math.random() * 0.5;
           ctx.fillStyle = `hsl(${Math.random() * 360}, 70%, 55%)`;
-          if (tipo === "circulo") {
+          if (shape === "circulo") {
             ctx.beginPath();
             ctx.arc(x, y, size / 2, 0, Math.PI * 2);
             ctx.fill();
@@ -225,85 +302,15 @@ export default function RegistroPage() {
         ctx.fillText("?", px + piezaSize / 2, py + piezaSize / 2);
         ctx.textAlign = "start";
         ctx.textBaseline = "alphabetic";
-      }, 50);
-    } else {
-      // Generar texto (numeros, letras, mixto)
-      const texto = generarTextoCaptcha(tipo);
-      setCaptchaTexto(texto);
-      setTimeout(() => {
-        const canvas = canvasRef.current;
-        if (canvas) dibujarTextoCaptcha(canvas, texto);
-      }, 50);
-    }
-
-    setCaptchaVerificado(false);
-    setCaptchaError("");
-    setCaptchaInput("");
-    setCaptchaIntentos(0);
-  }, []);
-
-  const verificarTextoCaptcha = () => {
-    if (captchaInput.toUpperCase() === captchaTexto) {
-      setCaptchaVerificado(true);
-      setCaptchaError("");
-    } else {
-      const nuevos = captchaIntentos + 1;
-      setCaptchaIntentos(nuevos);
-      if (nuevos >= 3) {
-        setCaptchaError("Demasiados intentos. Se genera un nuevo captcha.");
-        setTimeout(() => generarCaptcha(), 1200);
       } else {
-        setCaptchaError(`Código incorrecto. Intento ${nuevos}/3`);
-        setCaptchaInput("");
-        // Regenerarcanvas con nuevo texto
-        const texto = generarTextoCaptcha(captchaTipo);
-        setCaptchaTexto(texto);
         const canvas = canvasRef.current;
-        if (canvas) dibujarTextoCaptcha(canvas, texto);
+        if (canvas && captchaTexto) {
+          dibujarTextoCaptcha(canvas, captchaTexto);
+        }
       }
-    }
-  };
-
-  const manejarClickCanvas = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (captchaVerificado || captchaTipo !== "puzzle") return;
-
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    const clickX = (e.clientX - rect.left) * scaleX;
-    const clickY = (e.clientY - rect.top) * scaleY;
-
-    const { x, y, size } = captchaPieza;
-    const tolerancia = 15;
-
-    if (
-      clickX >= x - tolerancia && clickX <= x + size + tolerancia &&
-      clickY >= y - tolerancia && clickY <= y + size + tolerancia
-    ) {
-      setCaptchaVerificado(true);
-      setCaptchaError("");
-      const ctx = canvas.getContext("2d");
-      if (ctx && piezaCanvasRef.current) {
-        ctx.drawImage(piezaCanvasRef.current, 5, 5, size, size, x, y, size, size);
-      }
-    } else {
-      const nuevos = captchaIntentos + 1;
-      setCaptchaIntentos(nuevos);
-      if (nuevos >= 3) {
-        setCaptchaError("Demasiados intentos. Se genera un nuevo captcha.");
-        setTimeout(() => generarCaptcha(), 1200);
-      } else {
-        setCaptchaError(`Posición incorrecta. Intento ${nuevos}/3`);
-      }
-    }
-  };
-
-  useEffect(() => {
-    generarCaptcha();
-  }, [generarCaptcha]);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [captchaTipo, captchaVerificado, captchaTexto]);
 
   useEffect(() => {
     if (status === "loading") return;
