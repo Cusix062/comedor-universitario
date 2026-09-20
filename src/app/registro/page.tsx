@@ -41,6 +41,7 @@ export default function RegistroPage() {
   const [captchaTexto, setCaptchaTexto] = useState("");
   const [captchaInput, setCaptchaInput] = useState("");
   const [captchaPieza, setCaptchaPieza] = useState({ x: 0, y: 0, size: 0 });
+  const [captchaKey, setCaptchaKey] = useState(0);
 
   const generarTextoCaptcha = (tipo: string): string => {
     if (tipo === "numeros") {
@@ -138,13 +139,13 @@ export default function RegistroPage() {
     const tipo = tipos[Math.floor(Math.random() * tipos.length)];
     setCaptchaTipo(tipo);
     if (tipo !== "puzzle") {
-      const texto = generarTextoCaptcha(tipo);
-      setCaptchaTexto(texto);
+      setCaptchaTexto(generarTextoCaptcha(tipo));
     }
     setCaptchaVerificado(false);
     setCaptchaError("");
     setCaptchaInput("");
     setCaptchaIntentos(0);
+    setCaptchaKey(k => k + 1);
   }, []);
 
   const verificarTextoCaptcha = () => {
@@ -213,18 +214,21 @@ export default function RegistroPage() {
     generarCaptcha();
   }, [generarCaptcha]);
 
-  // Dibujar captcha cuando el canvas esté disponible
+  // Dibujar captcha cuando el canvas se monta (captchaKey fuerza re-mount)
   useEffect(() => {
     if (captchaVerificado) return;
-    const timer = setTimeout(() => {
-      if (captchaTipo === "puzzle") {
-        const canvas = canvasRef.current;
-        const piezaCanvas = piezaCanvasRef.current;
-        if (!canvas || !piezaCanvas) return;
+    let cancelled = false;
+    const tryDraw = (attempts: number) => {
+      if (cancelled || attempts <= 0) return;
+      const canvas = canvasRef.current;
+      if (!canvas) { setTimeout(() => tryDraw(attempts - 1), 50); return; }
 
+      if (captchaTipo === "puzzle") {
+        const piezaCanvas = piezaCanvasRef.current;
+        if (!piezaCanvas) { setTimeout(() => tryDraw(attempts - 1), 50); return; }
         const ctx = canvas.getContext("2d");
         const piezaCtx = piezaCanvas.getContext("2d");
-        if (!ctx || !piezaCtx) return;
+        if (!ctx || !piezaCtx) { setTimeout(() => tryDraw(attempts - 1), 50); return; }
 
         const W = 280;
         const H = 160;
@@ -303,14 +307,12 @@ export default function RegistroPage() {
         ctx.textAlign = "start";
         ctx.textBaseline = "alphabetic";
       } else {
-        const canvas = canvasRef.current;
-        if (canvas && captchaTexto) {
-          dibujarTextoCaptcha(canvas, captchaTexto);
-        }
+        if (captchaTexto) dibujarTextoCaptcha(canvas, captchaTexto);
       }
-    }, 100);
-    return () => clearTimeout(timer);
-  }, [captchaTipo, captchaVerificado, captchaTexto]);
+    };
+    tryDraw(20);
+    return () => { cancelled = true; };
+  }, [captchaKey, captchaVerificado, captchaTipo, captchaTexto]);
 
   useEffect(() => {
     if (status === "loading") return;
@@ -682,6 +684,7 @@ export default function RegistroPage() {
                 <div className="flex items-start gap-6">
                   <div className="relative">
                     <canvas
+                      key={`main-${captchaKey}`}
                       ref={canvasRef}
                       onClick={manejarClickCanvas}
                       className="rounded-xl border-2 border-gray-200 cursor-crosshair hover:border-purple-400 transition-colors"
@@ -692,6 +695,7 @@ export default function RegistroPage() {
                   <div className="flex flex-col items-center">
                     <div className="bg-gradient-to-br from-purple-100 to-indigo-100 border-2 border-dashed border-purple-300 rounded-xl p-2">
                       <canvas
+                        key={`pieza-${captchaKey}`}
                         ref={piezaCanvasRef}
                         className="rounded-lg"
                         style={{ maxWidth: "80px", maxHeight: "80px" }}
@@ -708,6 +712,7 @@ export default function RegistroPage() {
                 <div className="flex flex-col items-center gap-3">
                   <div className="relative">
                     <canvas
+                      key={`texto-${captchaKey}`}
                       ref={canvasRef}
                       className="rounded-xl border-2 border-gray-200"
                       style={{ maxWidth: "260px", maxHeight: "90px" }}
