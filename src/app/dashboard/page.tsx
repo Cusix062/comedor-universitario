@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import QRCode from "qrcode";
 
 interface Inscripcion {
@@ -89,12 +89,8 @@ export default function DashboardPage() {
   const cerrarSesion = async () => {
     localStorage.removeItem("session");
     localStorage.removeItem("estudiante");
-    if (session) {
-      const { signOut } = await import("next-auth/react");
-      await signOut({ callbackUrl: "/" });
-    } else {
-      router.push("/");
-    }
+    await signOut({ redirect: false });
+    router.push("/");
   };
 
   if (status === "loading" || !estudiante) return (

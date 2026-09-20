@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { cicloARomano } from "@/lib/ciclos";
 
 interface Estudiante {
@@ -535,12 +535,8 @@ export default function RegistroPage() {
   const cerrarSesion = async () => {
     localStorage.removeItem("session");
     localStorage.removeItem("estudiante");
-    if (session) {
-      const { signOut } = await import("next-auth/react");
-      await signOut({ callbackUrl: "/" });
-    } else {
-      router.push("/");
-    }
+    await signOut({ redirect: false });
+    router.push("/");
   };
 
   const porcentajeAlmuerzo = cupos?.almuerzo && cupos.almuerzo.capacidad > 0
