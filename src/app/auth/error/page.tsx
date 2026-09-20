@@ -2,6 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
+import { signOut } from "next-auth/react";
 
 function ErrorContent() {
   const router = useRouter();
@@ -12,7 +13,7 @@ function ErrorContent() {
     if (error === "AccessDenied" || error === "access_denied") {
       return {
         title: "¡ACCESO DENEGADO!",
-        message: "SOLO ENTRAN CUSISTAS",
+        message: "Correo no autorizado",
         detail: "Tu correo no tiene permisos para acceder al comedor universitario.",
         color: "from-red-500 to-orange-500",
       };
@@ -26,6 +27,11 @@ function ErrorContent() {
   };
 
   const errorInfo = getErrorMessage();
+
+  const handleVolver = async () => {
+    await signOut({ redirect: false });
+    router.push("/");
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4" style={{ background: "linear-gradient(135deg, #1e3a5f 0%, #2563eb 50%, #3b82f6 100%)" }}>
@@ -56,7 +62,7 @@ function ErrorContent() {
           </div>
 
           <button
-            onClick={() => router.push("/")}
+            onClick={handleVolver}
             className="mt-6 w-full text-white py-3 rounded-xl font-semibold transition-all shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:scale-[1.02] active:scale-[0.98]"
             style={{ background: "linear-gradient(135deg, #2563eb, #1d4ed8)" }}
           >

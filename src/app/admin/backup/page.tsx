@@ -54,9 +54,11 @@ export default function BackupPage() {
     }
   };
 
-  const cerrarSesion = () => {
+  const cerrarSesion = async () => {
     localStorage.removeItem("admin_session");
     localStorage.removeItem("google_admin_session");
+    const { signOut } = await import("next-auth/react");
+    await signOut({ redirect: false });
     router.push("/");
   };
 

@@ -26,7 +26,7 @@ export default function LoginPage() {
     setError("");
     setCargando(true);
     try {
-      await signIn("google", { callbackUrl: "/" });
+      await signIn("google", { callbackUrl: "/", prompt: "select_account" });
     } catch {
       setError("Error de conexión");
     } finally {

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useSession, signOut } from "next-auth/react";
 import PDFReport from "@/components/PDFReport";
 
 export default function AdminPage() {
@@ -81,9 +82,10 @@ export default function AdminPage() {
     }
   };
 
-  const cerrarSesion = () => {
+  const cerrarSesion = async () => {
     localStorage.removeItem("admin_session");
     localStorage.removeItem("google_admin_session");
+    await signOut({ redirect: false });
     router.push("/");
   };
 
