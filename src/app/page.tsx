@@ -50,31 +50,70 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-3 sm:p-4" style={{ background: "linear-gradient(135deg, #1e3a5f 0%, #2563eb 50%, #3b82f6 100%)" }}>
-      <div className="w-full max-w-md">
-        <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
-          <div className="px-5 sm:px-8 pt-7 sm:pt-10 pb-6 sm:pb-8 text-center" style={{ background: "linear-gradient(135deg, #1e3a5f, #2563eb)" }}>
-            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4 text-3xl sm:text-4xl shadow-lg">
-              🍽️
-            </div>
-            <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">Comedor Universitario</h1>
-            <p className="text-blue-200 text-xs sm:text-sm mt-2">Escuela Profesional de Ingeniería de Sistemas</p>
-            <p className="text-blue-300 text-[10px] sm:text-xs mt-1">Universidad Nacional de Cañete</p>
-          </div>
+    <div className="min-h-screen flex flex-col lg:flex-row">
+      <div
+        className="relative w-full lg:w-[60%] flex items-center justify-center p-8 sm:p-12 lg:p-16 overflow-hidden"
+        style={{ background: "linear-gradient(135deg, #0f172a 0%, #1e3a5f 40%, #2563eb 100%)" }}
+      >
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-20 left-10 w-72 h-72 bg-white rounded-full blur-3xl" />
+          <div className="absolute bottom-20 right-10 w-96 h-96 bg-blue-300 rounded-full blur-3xl" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] border border-white/20 rounded-full" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] border border-white/10 rounded-full" />
+        </div>
+        <div className="absolute top-0 left-0 w-full h-full">
+          <div className="absolute top-8 right-8 w-2 h-2 bg-white/30 rounded-full" />
+          <div className="absolute top-24 left-16 w-1.5 h-1.5 bg-white/20 rounded-full" />
+          <div className="absolute bottom-32 right-24 w-1 h-1 bg-white/40 rounded-full" />
+          <div className="absolute top-1/3 right-1/4 w-1 h-1 bg-white/25 rounded-full" />
+          <div className="absolute bottom-1/4 left-1/3 w-2 h-2 bg-white/15 rounded-full" />
+        </div>
 
-          <div className="p-5 sm:p-8">
+        <div className="relative z-10 text-center max-w-lg">
+          <div className="w-24 h-24 sm:w-28 sm:h-28 bg-white/15 backdrop-blur-md rounded-3xl flex items-center justify-center mx-auto mb-8 text-5xl sm:text-6xl shadow-2xl border border-white/20">
+            🍽️
+          </div>
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-tight leading-tight">
+            Comedor
+            <br />
+            Universitario
+          </h1>
+          <div className="mt-6 sm:mt-8 space-y-2">
+            <p className="text-blue-200 text-sm sm:text-base font-medium">
+              Escuela Profesional de Ingeniería de Sistemas
+            </p>
+            <p className="text-blue-300/80 text-xs sm:text-sm">
+              Universidad Nacional de Cañete
+            </p>
+          </div>
+          <div className="mt-8 sm:mt-12 flex justify-center gap-3">
+            <div className="w-12 h-1 bg-white/40 rounded-full" />
+            <div className="w-8 h-1 bg-white/25 rounded-full" />
+            <div className="w-4 h-1 bg-white/15 rounded-full" />
+          </div>
+        </div>
+      </div>
+
+      <div className="w-full lg:w-[40%] flex items-center justify-center p-6 sm:p-8 bg-gray-50 min-h-[50vh] lg:min-h-screen">
+        <div className="w-full max-w-sm">
+          <div className="bg-white rounded-3xl shadow-xl p-8 sm:p-10 border border-gray-100">
+            <div className="mb-8">
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">Bienvenido</h2>
+              <p className="text-gray-500 text-sm mt-2">Inicia sesión para continuar</p>
+            </div>
+
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl mb-4 sm:mb-6 text-xs sm:text-sm flex items-center gap-2">
-                <span className="text-sm sm:text-base">⚠️</span>
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-2xl mb-6 text-sm flex items-center gap-2">
+                <span className="text-base">⚠️</span>
                 {error}
               </div>
             )}
 
-            <div className="space-y-5">
+            <div className="space-y-6">
               <button
                 onClick={handleLoginGoogle}
                 disabled={cargando}
-                className="w-full flex items-center justify-center gap-2 sm:gap-3 border-2 border-gray-200 py-3 sm:py-3.5 rounded-xl font-semibold text-sm sm:text-base text-gray-700 transition-all hover:bg-gray-50 hover:border-gray-300 active:scale-[0.98] disabled:opacity-50"
+                className="w-full flex items-center justify-center gap-3 bg-white border-2 border-gray-200 py-3.5 rounded-2xl font-semibold text-sm text-gray-700 transition-all hover:shadow-lg hover:border-gray-300 hover:bg-gray-50 active:scale-[0.98] disabled:opacity-50"
               >
                 {cargando ? (
                   <svg className="animate-spin h-5 w-5 text-blue-500" viewBox="0 0 24 24" fill="none">
@@ -97,20 +136,20 @@ export default function LoginPage() {
                   <div className="w-full border-t border-gray-200" />
                 </div>
                 <div className="relative flex justify-center text-xs">
-                  <span className="bg-white px-3 text-gray-500 font-medium">Solo correos institucionales</span>
+                  <span className="bg-gray-50 px-4 text-gray-400 font-medium">Solo correos institucionales</span>
                 </div>
               </div>
 
-              <p className="text-xs text-gray-500 text-center">
+              <p className="text-xs text-gray-400 text-center leading-relaxed">
                 Usa tu correo institucional de la UNDC para acceder
               </p>
             </div>
           </div>
-        </div>
 
-        <p className="text-center text-blue-100 text-xs mt-6">
-          Sistema de Registro de Adicionales v1.0
-        </p>
+          <p className="text-center text-gray-400 text-xs mt-8">
+            Sistema de Registro de Adicionales v1.0
+          </p>
+        </div>
       </div>
     </div>
   );

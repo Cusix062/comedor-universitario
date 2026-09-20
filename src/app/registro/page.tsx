@@ -554,469 +554,466 @@ export default function RegistroPage() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      {/* Header */}
       <header className="text-white shadow-lg" style={{ background: "linear-gradient(135deg, #1e3a5f, #2563eb)" }}>
-        <div className="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center text-lg">🍽️</div>
             <div>
-              <h1 className="text-lg font-bold">Comedor Universitario</h1>
-              <p className="text-blue-200 text-xs">Registro de Adicionales</p>
+              <h1 className="text-base sm:text-lg font-bold">Comedor Universitario</h1>
+              <p className="text-blue-200 text-[11px]">Registro de Adicionales</p>
             </div>
           </div>
-          <div className="text-right">
-            <p className="font-semibold text-sm">{estudiante.nombre}</p>
-            <p className="text-blue-200 text-xs">Código: {estudiante.codigo}</p>
+          <div className="flex items-center gap-3">
+            <div className="text-right hidden sm:block">
+              <p className="font-semibold text-sm">{estudiante.nombre}</p>
+              <p className="text-blue-200 text-xs">{estudiante.codigo}</p>
+            </div>
+            <button onClick={cerrarSesion} className="px-3 py-1.5 bg-white/15 hover:bg-white/25 rounded-lg text-xs font-medium transition-colors">Cerrar Sesión</button>
           </div>
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto p-4 space-y-5">
-        {/* Indicador de simulación */}
-        {typeof window !== "undefined" && localStorage.getItem("simulacion_activo") === "true" && (
-          <div className="bg-yellow-50 border-2 border-yellow-300 rounded-2xl p-4 flex items-center gap-3">
-            <span className="text-2xl">⚠️</span>
+      {/* Simulación */}
+      {typeof window !== "undefined" && localStorage.getItem("simulacion_activo") === "true" && (
+        <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 mt-4">
+          <div className="bg-yellow-50 border border-yellow-300 rounded-xl px-4 py-2.5 flex items-center gap-2">
+            <span className="text-lg">⚠️</span>
             <div>
-              <p className="font-bold text-yellow-800">Modo Simulación Activo</p>
-              <p className="text-sm text-yellow-600">
-                Hora simulada: {localStorage.getItem("simulacion_hora")}:{localStorage.getItem("simulacion_minuto")}
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Reloj */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex items-center justify-between">
-          <div>
-            <p className="text-xs text-gray-400 uppercase tracking-wider font-medium">Hora actual</p>
-            <p className="text-3xl font-bold text-gray-800 font-mono tracking-wider mt-1">
-              {horaActual.toLocaleTimeString("es-PE", { hour12: true })}
-            </p>
-          </div>
-          <div className="text-right">
-            <p className="text-xs text-gray-400 uppercase tracking-wider font-medium">Fecha</p>
-            <p className="text-sm font-semibold text-gray-600 mt-1">
-              {horaActual.toLocaleDateString("es-PE", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
-            </p>
-          </div>
-        </div>
-
-        {/* Mensajes */}
-        {mensaje && (
-          <div className="bg-green-50 border border-green-200 text-green-700 px-5 py-4 rounded-xl flex items-center gap-3">
-            <span className="text-xl">✅</span>
-            <span className="font-medium">{mensaje}</span>
-          </div>
-        )}
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-5 py-4 rounded-xl flex items-center gap-3">
-            <span className="text-xl">⚠️</span>
-            <span className="font-medium">{error}</span>
-          </div>
-        )}
-
-        {/* Datos del estudiante */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-          <h2 className="text-base font-bold text-gray-800 mb-4 flex items-center gap-2">
-            <span className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center text-sm">📋</span>
-            Tus Datos
-          </h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-gray-50 rounded-xl p-3">
-              <p className="text-xs text-gray-400 font-medium">Nombre</p>
-              <p className="font-semibold text-gray-800 text-sm mt-1">{estudiante.nombre}</p>
-            </div>
-            <div className="bg-gray-50 rounded-xl p-3">
-              <p className="text-xs text-gray-400 font-medium">Código</p>
-              <p className="font-semibold text-gray-800 text-sm mt-1">{estudiante.codigo}</p>
-            </div>
-            <div className="bg-gray-50 rounded-xl p-3">
-              <p className="text-xs text-gray-400 font-medium">Correo</p>
-              <p className="font-semibold text-gray-800 text-sm mt-1 truncate">{estudiante.correo}</p>
-            </div>
-            <div className="bg-gray-50 rounded-xl p-3">
-              <p className="text-xs text-gray-400 font-medium">Ciclo</p>
-              <p className="font-semibold text-gray-800 text-sm mt-1">{cicloARomano(estudiante.ciclo)}</p>
+              <p className="font-bold text-yellow-800 text-sm">Modo Simulación</p>
+              <p className="text-xs text-yellow-600">Hora simulada: {localStorage.getItem("simulacion_hora")}:{localStorage.getItem("simulacion_minuto")}</p>
             </div>
           </div>
         </div>
+      )}
 
-        {/* Registro solo disponible en horario */}
-        {!hayHorarioActivo ? (
-          <div className="bg-gray-100 border-2 border-gray-200 rounded-2xl p-8 text-center">
-            <div className="text-4xl mb-3">⏰</div>
-            <h3 className="text-lg font-bold text-gray-700 mb-2">Fuera de Horario de Registro</h3>
-            <p className="text-gray-500 text-sm mb-4">Los horarios de inscripción son:</p>
-            <div className="flex justify-center gap-6">
-              <div className="bg-white rounded-xl px-5 py-3 border border-gray-200">
-                <p className="text-sm font-bold text-gray-800">🥗 Almuerzo</p>
-                <p className="text-xs text-gray-500">10:30 AM - 12:00 PM</p>
-              </div>
-              <div className="bg-white rounded-xl px-5 py-3 border border-gray-200">
-                <p className="text-sm font-bold text-gray-800">🌙 Cena</p>
-                <p className="text-xs text-gray-500">3:30 PM - 5:00 PM</p>
-              </div>
+      {/* Mensajes globales */}
+      {(mensaje || error) && (
+        <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 mt-4">
+          {mensaje && (
+            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl flex items-center gap-2 text-sm">
+              <span>✅</span>
+              <span className="font-medium">{mensaje}</span>
             </div>
-            <p className="text-xs text-gray-400 mt-4">Vuelva dentro del horario establecido para registrarse</p>
-          </div>
-        ) : (
-          <>
-            {/* CAPTCHA */}
-            {!captchaVerificado ? (
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-            <h2 className="text-base font-bold text-gray-800 mb-3 flex items-center gap-2">
-              <span className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center text-sm">
-                {captchaTipo === "puzzle" ? "🧩" : "🔐"}
-              </span>
-              Verificación Anti-Bot
-            </h2>
-
-            {/* Instrucciones según tipo */}
-            {captchaTipo === "puzzle" && (
-              <p className="text-sm text-gray-500 mb-4">
-                Haz clic en el espacio vacío <span className="font-bold text-purple-600">?</span> donde falta la pieza del puzzle
-              </p>
-            )}
-            {captchaTipo === "numeros" && (
-              <p className="text-sm text-gray-500 mb-4">
-                Escribe los <span className="font-bold text-blue-600">números</span> que ves en la imagen
-              </p>
-            )}
-            {captchaTipo === "letras" && (
-              <p className="text-sm text-gray-500 mb-4">
-                Escribe las <span className="font-bold text-green-600">letras</span> que ves en la imagen (sin espacios)
-              </p>
-            )}
-            {captchaTipo === "mixto" && (
-              <p className="text-sm text-gray-500 mb-4">
-                Escribe el <span className="font-bold text-orange-600">código</span> (letras y números) que ves en la imagen
-              </p>
-            )}
-
-            <div className="flex flex-col items-center gap-4">
-              {/* Tipo PUZZLE */}
-              {captchaTipo === "puzzle" && (
-                <div className="flex items-start gap-6">
-                  <div className="relative">
-                    <canvas
-                      key={`main-${captchaKey}`}
-                      ref={canvasRef}
-                      onClick={manejarClickCanvas}
-                      className="rounded-xl border-2 border-gray-200 cursor-crosshair hover:border-purple-400 transition-colors"
-                      style={{ maxWidth: "280px", maxHeight: "160px" }}
-                    />
-                    <p className="text-xs text-center text-gray-400 mt-1">Imagen con pieza faltante</p>
-                  </div>
-                  <div className="flex flex-col items-center">
-                    <div className="bg-gradient-to-br from-purple-100 to-indigo-100 border-2 border-dashed border-purple-300 rounded-xl p-2">
-                      <canvas
-                        key={`pieza-${captchaKey}`}
-                        ref={piezaCanvasRef}
-                        className="rounded-lg"
-                        style={{ maxWidth: "80px", maxHeight: "80px" }}
-                      />
-                    </div>
-                    <p className="text-xs text-center text-gray-400 mt-1 font-semibold">Pieza</p>
-                    <p className="text-xs text-center text-purple-600">👆 Colócala aquí</p>
-                  </div>
-                </div>
-              )}
-
-              {/* Tipo TEXTO (numeros, letras, mixto) */}
-              {captchaTipo !== "puzzle" && (
-                <div className="flex flex-col items-center gap-3">
-                  <div className="relative">
-                    <canvas
-                      key={`texto-${captchaKey}`}
-                      ref={canvasRef}
-                      className="rounded-xl border-2 border-gray-200"
-                      style={{ maxWidth: "260px", maxHeight: "90px" }}
-                    />
-                  </div>
-                  <div className="flex gap-2 w-full max-w-xs">
-                    <input
-                      type="text"
-                      value={captchaInput}
-                      onChange={(e) => setCaptchaInput(e.target.value.toUpperCase())}
-                      onKeyDown={(e) => e.key === "Enter" && verificarTextoCaptcha()}
-                      placeholder={captchaTipo === "numeros" ? "Solo números..." : captchaTipo === "letras" ? "Solo letras..." : "Código..."}
-                      maxLength={8}
-                      className="flex-1 border-2 border-gray-200 rounded-xl px-4 py-3 text-center text-lg font-bold font-mono tracking-[0.3em] focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none uppercase"
-                      autoFocus
-                    />
-                    <button
-                      onClick={verificarTextoCaptcha}
-                      disabled={!captchaInput}
-                      className="px-5 py-3 rounded-xl font-semibold text-sm text-white transition-all shadow-lg disabled:opacity-50"
-                      style={{ background: "linear-gradient(135deg, #7c3aed, #6366f1)" }}
-                    >
-                      ✓
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={generarCaptcha}
-                  className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl text-sm font-medium transition"
-                >
-                  🔄 {captchaTipo === "puzzle" ? "Nuevo puzzle" : "Otro código"}
-                </button>
-                {captchaIntentos > 0 && (
-                  <span className="text-xs text-gray-400">Intentos: {captchaIntentos}/3</span>
-                )}
-                <span className="text-xs px-2 py-1 bg-purple-50 text-purple-600 rounded-lg font-medium">
-                  {captchaTipo === "puzzle" && "🧩 Puzzle"}
-                  {captchaTipo === "numeros" && "🔢 Números"}
-                  {captchaTipo === "letras" && "🔤 Letras"}
-                  {captchaTipo === "mixto" && "🔐 Mixto"}
-                </span>
-              </div>
-            </div>
-
-            {captchaError && (
-              <p className="text-red-500 text-sm mt-3 font-medium text-center">❌ {captchaError}</p>
-            )}
-
-            <p className="text-xs text-gray-400 mt-3 text-center">
-              ⚠️ Debe resolver el captcha antes de registrarse
-            </p>
-          </div>
-        ) : (
-          <div className="bg-green-50 border border-green-200 rounded-2xl p-4 flex items-center gap-3">
-            <span className="text-2xl">✅</span>
-            <div>
-              <p className="font-bold text-green-700">Verificación completada</p>
-              <p className="text-sm text-green-600">Ahora puedes solicitar tu cupo</p>
-            </div>
-            <button
-              onClick={generarCaptcha}
-              className="ml-auto text-green-600 hover:text-green-800 text-xs font-semibold underline"
-            >
-              Otro captcha
-            </button>
-          </div>
-        )}
-
-        {/* Turnos */}
-        <div className="grid md:grid-cols-2 gap-5">
-          {/* ALMUERZO */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="p-6">
-              <div className="flex items-center gap-3 mb-5">
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl" style={{ background: "linear-gradient(135deg, #dcfce7, #bbf7d0)" }}>🥗</div>
-                <div>
-                  <h3 className="text-lg font-bold text-gray-800">Almuerzo</h3>
-                  <p className="text-xs text-gray-400">10:30 AM - 12:00 PM</p>
-                </div>
-              </div>
-
-              {cupos?.almuerzo && cupos.almuerzo.capacidad > 0 ? (
-                <>
-                  {/* Barra de progreso */}
-                  <div className="mb-4">
-                    <div className="flex justify-between items-end mb-2">
-                      <span className="text-sm text-gray-500">Cupos</span>
-                      <span className="text-lg font-bold text-gray-800">
-                        {cupos.almuerzo.ocupados}/{cupos.almuerzo.capacidad}
-                      </span>
-                    </div>
-                    <div className="w-full bg-gray-100 rounded-full h-3">
-                      <div
-                        className="h-3 rounded-full transition-all duration-500"
-                        style={{
-                          width: `${porcentajeAlmuerzo}%`,
-                          background: porcentajeAlmuerzo >= 80
-                            ? "linear-gradient(90deg, #f97316, #dc2626)"
-                            : "linear-gradient(90deg, #22c55e, #16a34a)",
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Botón */}
-                  {estaLleno("almuerzo") ? (
-                    <div className="w-full py-4 rounded-xl text-center bg-red-50 border-2 border-red-200">
-                      <p className="text-red-700 font-bold text-lg">🔒 CUPOS LLENOS</p>
-                      <p className="text-red-500 text-sm mt-1">Vuelva mañana</p>
-                    </div>
-                  ) : horaActual.getHours() * 60 + horaActual.getMinutes() < 630 ? (
-                    <div className="w-full py-4 rounded-xl text-center bg-amber-50 border-2 border-amber-200">
-                      <p className="text-amber-700 font-bold text-lg">⏰ Horario No Disponible</p>
-                      <p className="text-amber-500 text-sm mt-1">
-                        Abre en {getMinutosRestantes(630)} minutos (10:30 AM)
-                      </p>
-                    </div>
-                  ) : horaActual.getHours() * 60 + horaActual.getMinutes() > 720 ? (
-                    <div className="w-full py-4 rounded-xl text-center bg-gray-100 border-2 border-gray-200">
-                      <p className="text-gray-600 font-bold text-lg">⛔ Horario Finalizado</p>
-                      <p className="text-gray-500 text-sm mt-1">Horario: 10:30 AM - 12:00 PM</p>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => registrarEnTurno("almuerzo")}
-                      disabled={cargando}
-                      className="w-full py-3.5 rounded-xl font-semibold text-base text-white transition-all shadow-lg shadow-green-500/25 hover:shadow-green-500/40 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
-                      style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)" }}
-                    >
-                      {cargando ? "Registrando..." : "🍽️ Solicitar Almuerzo"}
-                    </button>
-                  )}
-                </>
-              ) : (
-                <div className="text-center py-6">
-                  <p className="text-gray-400 text-sm">Sin cupos configurados</p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* CENA */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="p-6">
-              <div className="flex items-center gap-3 mb-5">
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl" style={{ background: "linear-gradient(135deg, #fef3c7, #fde68a)" }}>🌙</div>
-                <div>
-                  <h3 className="text-lg font-bold text-gray-800">Cena</h3>
-                  <p className="text-xs text-gray-400">3:30 PM - 5:00 PM</p>
-                </div>
-              </div>
-
-              {cupos?.cena && cupos.cena.capacidad > 0 ? (
-                <>
-                  <div className="mb-4">
-                    <div className="flex justify-between items-end mb-2">
-                      <span className="text-sm text-gray-500">Cupos</span>
-                      <span className="text-lg font-bold text-gray-800">
-                        {cupos.cena.ocupados}/{cupos.cena.capacidad}
-                      </span>
-                    </div>
-                    <div className="w-full bg-gray-100 rounded-full h-3">
-                      <div
-                        className="h-3 rounded-full transition-all duration-500"
-                        style={{
-                          width: `${porcentajeCena}%`,
-                          background: porcentajeCena >= 80
-                            ? "linear-gradient(90deg, #f97316, #dc2626)"
-                            : "linear-gradient(90deg, #f59e0b, #d97706)",
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  {estaLleno("cena") ? (
-                    <div className="w-full py-4 rounded-xl text-center bg-red-50 border-2 border-red-200">
-                      <p className="text-red-700 font-bold text-lg">🔒 CUPOS LLENOS</p>
-                      <p className="text-red-500 text-sm mt-1">Vuelva mañana</p>
-                    </div>
-                  ) : horaActual.getHours() * 60 + horaActual.getMinutes() < 930 ? (
-                    <div className="w-full py-4 rounded-xl text-center bg-amber-50 border-2 border-amber-200">
-                      <p className="text-amber-700 font-bold text-lg">⏰ Horario No Disponible</p>
-                      <p className="text-amber-500 text-sm mt-1">
-                        Abre en {getMinutosRestantes(930)} minutos (3:30 PM)
-                      </p>
-                    </div>
-                  ) : horaActual.getHours() * 60 + horaActual.getMinutes() > 1020 ? (
-                    <div className="w-full py-4 rounded-xl text-center bg-gray-100 border-2 border-gray-200">
-                      <p className="text-gray-600 font-bold text-lg">⛔ Horario Finalizado</p>
-                      <p className="text-gray-500 text-sm mt-1">Horario: 3:30 PM - 5:00 PM</p>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => registrarEnTurno("cena")}
-                      disabled={cargando}
-                      className="w-full py-3.5 rounded-xl font-semibold text-base text-white transition-all shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
-                      style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)" }}
-                    >
-                      {cargando ? "Registrando..." : "🌙 Solicitar Cena"}
-                    </button>
-                  )}
-                </>
-              ) : (
-                <div className="text-center py-6">
-                  <p className="text-gray-400 text-sm">Sin cupos configurados</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-          </>
-        )}
-
-        {/* Lista en vivo de inscritos */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
-              <h3 className="text-sm font-bold text-gray-800">Lista en Vivo</h3>
-            </div>
-            <span className="text-xs text-gray-400">{listaEnVivo.length} inscritos hoy</span>
-          </div>
-
-          {listaEnVivo.length === 0 ? (
-            <div className="px-5 py-8 text-center">
-              <p className="text-gray-400 text-sm">Aún no hay inscritos hoy</p>
-              <p className="text-gray-300 text-xs mt-1">Los inscritos aparecerán aquí en tiempo real</p>
-            </div>
-          ) : (
-            <div className="divide-y divide-gray-50 max-h-80 overflow-y-auto">
-              {listaEnVivo.map((inscrito, idx) => (
-                <div key={idx} className="px-5 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <span className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold text-white" style={{
-                      background: inscrito.turno === "almuerzo"
-                        ? "linear-gradient(135deg, #22c55e, #16a34a)"
-                        : "linear-gradient(135deg, #f59e0b, #d97706)"
-                    }}>
-                      {inscrito.numero_orden}
-                    </span>
-                    <div>
-                      <p className="text-sm font-semibold text-gray-800">{inscrito.nombre}</p>
-                      <p className="text-[10px] text-gray-400">{inscrito.codigo}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
-                      inscrito.turno === "almuerzo"
-                        ? "bg-green-50 text-green-600"
-                        : "bg-amber-50 text-amber-600"
-                    }`}>
-                      {inscrito.turno === "almuerzo" ? "Almuerzo" : "Cena"}
-                    </span>
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
-                      inscrito.estado === "reservado"
-                        ? "bg-blue-50 text-blue-600"
-                        : inscrito.estado === "atendido"
-                        ? "bg-green-50 text-green-600"
-                        : "bg-red-50 text-red-600"
-                    }`}>
-                      {inscrito.estado === "reservado" ? "Reservado" : inscrito.estado === "atendido" ? "Atendido" : "Cancelado"}
-                    </span>
-                  </div>
-                </div>
-              ))}
+          )}
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl flex items-center gap-2 text-sm">
+              <span>⚠️</span>
+              <span className="font-medium">{error}</span>
             </div>
           )}
         </div>
+      )}
 
-        {/* Botones */}
-        <div className="flex gap-4">
-          <button
-            onClick={() => router.push("/dashboard")}
-            className="flex-1 text-white py-3.5 rounded-xl font-semibold text-sm transition-all shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:scale-[1.02] active:scale-[0.98]"
-            style={{ background: "linear-gradient(135deg, #2563eb, #1d4ed8)" }}
-          >
-            🎫 Ver Mi Ticket
-          </button>
-          <button
-            onClick={cerrarSesion}
-            className="flex-1 bg-white border-2 border-gray-200 text-gray-600 py-3.5 rounded-xl font-semibold text-sm transition-all hover:bg-gray-50 hover:border-gray-300"
-          >
-            🚪 Cerrar Sesión
-          </button>
+      {/* Main content */}
+      <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 py-5">
+        {/* Reloj compacto */}
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-400 uppercase tracking-wider font-medium">Hora</span>
+            <span className="text-xl font-bold text-gray-800 font-mono">{horaActual.toLocaleTimeString("es-PE", { hour12: true })}</span>
+          </div>
+          <p className="text-xs text-gray-500">{horaActual.toLocaleDateString("es-PE", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</p>
         </div>
+
+        {!hayHorarioActivo ? (
+          /* Fuera de horario */
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-10 text-center">
+            <div className="text-5xl mb-4">⏰</div>
+            <h3 className="text-lg font-bold text-gray-700 mb-2">Fuera de Horario de Registro</h3>
+            <p className="text-gray-500 text-sm mb-5">Los horarios de inscripción son:</p>
+            <div className="flex justify-center gap-4">
+              <div className="bg-green-50 rounded-xl px-5 py-3 border border-green-100">
+                <p className="text-sm font-bold text-green-700">🥗 Almuerzo</p>
+                <p className="text-xs text-green-600">10:30 AM - 12:00 PM</p>
+              </div>
+              <div className="bg-amber-50 rounded-xl px-5 py-3 border border-amber-100">
+                <p className="text-sm font-bold text-amber-700">🌙 Cena</p>
+                <p className="text-xs text-amber-600">3:30 PM - 5:00 PM</p>
+              </div>
+            </div>
+            <p className="text-xs text-gray-400 mt-5">Vuelva dentro del horario establecido para registrarse</p>
+          </div>
+        ) : (
+          /* Two column layout */
+          <div className="flex flex-col lg:flex-row gap-5">
+            {/* LEFT COLUMN - 60% */}
+            <div className="w-full lg:w-[60%] space-y-5">
+              {/* Datos del estudiante */}
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+                <h2 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
+                  <span className="w-7 h-7 bg-blue-100 rounded-lg flex items-center justify-center text-xs">📋</span>
+                  Tus Datos
+                </h2>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div className="bg-gray-50 rounded-xl p-3">
+                    <p className="text-[10px] text-gray-400 uppercase font-medium tracking-wider">Nombre</p>
+                    <p className="font-semibold text-gray-800 text-sm mt-0.5 truncate">{estudiante.nombre}</p>
+                  </div>
+                  <div className="bg-gray-50 rounded-xl p-3">
+                    <p className="text-[10px] text-gray-400 uppercase font-medium tracking-wider">Código</p>
+                    <p className="font-semibold text-gray-800 text-sm mt-0.5">{estudiante.codigo}</p>
+                  </div>
+                  <div className="bg-gray-50 rounded-xl p-3">
+                    <p className="text-[10px] text-gray-400 uppercase font-medium tracking-wider">Correo</p>
+                    <p className="font-semibold text-gray-800 text-sm mt-0.5 truncate">{estudiante.correo}</p>
+                  </div>
+                  <div className="bg-gray-50 rounded-xl p-3">
+                    <p className="text-[10px] text-gray-400 uppercase font-medium tracking-wider">Ciclo</p>
+                    <p className="font-semibold text-gray-800 text-sm mt-0.5">{cicloARomano(estudiante.ciclo)}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Turnos */}
+              <div className="grid sm:grid-cols-2 gap-5">
+                {/* ALMUERZO */}
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-11 h-11 rounded-xl flex items-center justify-center text-xl" style={{ background: "linear-gradient(135deg, #dcfce7, #bbf7d0)" }}>🥗</div>
+                    <div>
+                      <h3 className="text-base font-bold text-gray-800">Almuerzo</h3>
+                      <p className="text-[11px] text-gray-400">10:30 AM - 12:00 PM</p>
+                    </div>
+                  </div>
+
+                  {cupos?.almuerzo && cupos.almuerzo.capacidad > 0 ? (
+                    <>
+                      <div className="mb-4">
+                        <div className="flex justify-between items-end mb-1.5">
+                          <span className="text-xs text-gray-500">Cupos</span>
+                          <span className="text-base font-bold text-gray-800">{cupos.almuerzo.ocupados}/{cupos.almuerzo.capacidad}</span>
+                        </div>
+                        <div className="w-full bg-gray-100 rounded-full h-2.5">
+                          <div
+                            className="h-2.5 rounded-full transition-all duration-500"
+                            style={{
+                              width: `${porcentajeAlmuerzo}%`,
+                              background: porcentajeAlmuerzo >= 80
+                                ? "linear-gradient(90deg, #f97316, #dc2626)"
+                                : "linear-gradient(90deg, #22c55e, #16a34a)",
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      {estaLleno("almuerzo") ? (
+                        <div className="w-full py-3 rounded-xl text-center bg-red-50 border border-red-200">
+                          <p className="text-red-700 font-bold text-sm">🔒 CUPOS LLENOS</p>
+                          <p className="text-red-500 text-xs mt-0.5">Vuelva mañana</p>
+                        </div>
+                      ) : horaActual.getHours() * 60 + horaActual.getMinutes() < 630 ? (
+                        <div className="w-full py-3 rounded-xl text-center bg-amber-50 border border-amber-200">
+                          <p className="text-amber-700 font-bold text-sm">⏰ No disponible</p>
+                          <p className="text-amber-500 text-xs mt-0.5">Abre en {getMinutosRestantes(630)} min</p>
+                        </div>
+                      ) : horaActual.getHours() * 60 + horaActual.getMinutes() > 720 ? (
+                        <div className="w-full py-3 rounded-xl text-center bg-gray-100 border border-gray-200">
+                          <p className="text-gray-600 font-bold text-sm">⛔ Finalizado</p>
+                          <p className="text-gray-500 text-xs mt-0.5">10:30 AM - 12:00 PM</p>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => registrarEnTurno("almuerzo")}
+                          disabled={cargando}
+                          className="w-full py-3 rounded-xl font-semibold text-sm text-white transition-all shadow-lg shadow-green-500/25 hover:shadow-green-500/40 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+                          style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)" }}
+                        >
+                          {cargando ? "Registrando..." : "🍽️ Solicitar Almuerzo"}
+                        </button>
+                      )}
+                    </>
+                  ) : (
+                    <div className="text-center py-5">
+                      <p className="text-gray-400 text-xs">Sin cupos configurados</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* CENA */}
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-11 h-11 rounded-xl flex items-center justify-center text-xl" style={{ background: "linear-gradient(135deg, #fef3c7, #fde68a)" }}>🌙</div>
+                    <div>
+                      <h3 className="text-base font-bold text-gray-800">Cena</h3>
+                      <p className="text-[11px] text-gray-400">3:30 PM - 5:00 PM</p>
+                    </div>
+                  </div>
+
+                  {cupos?.cena && cupos.cena.capacidad > 0 ? (
+                    <>
+                      <div className="mb-4">
+                        <div className="flex justify-between items-end mb-1.5">
+                          <span className="text-xs text-gray-500">Cupos</span>
+                          <span className="text-base font-bold text-gray-800">{cupos.cena.ocupados}/{cupos.cena.capacidad}</span>
+                        </div>
+                        <div className="w-full bg-gray-100 rounded-full h-2.5">
+                          <div
+                            className="h-2.5 rounded-full transition-all duration-500"
+                            style={{
+                              width: `${porcentajeCena}%`,
+                              background: porcentajeCena >= 80
+                                ? "linear-gradient(90deg, #f97316, #dc2626)"
+                                : "linear-gradient(90deg, #f59e0b, #d97706)",
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      {estaLleno("cena") ? (
+                        <div className="w-full py-3 rounded-xl text-center bg-red-50 border border-red-200">
+                          <p className="text-red-700 font-bold text-sm">🔒 CUPOS LLENOS</p>
+                          <p className="text-red-500 text-xs mt-0.5">Vuelva mañana</p>
+                        </div>
+                      ) : horaActual.getHours() * 60 + horaActual.getMinutes() < 930 ? (
+                        <div className="w-full py-3 rounded-xl text-center bg-amber-50 border border-amber-200">
+                          <p className="text-amber-700 font-bold text-sm">⏰ No disponible</p>
+                          <p className="text-amber-500 text-xs mt-0.5">Abre en {getMinutosRestantes(930)} min</p>
+                        </div>
+                      ) : horaActual.getHours() * 60 + horaActual.getMinutes() > 1020 ? (
+                        <div className="w-full py-3 rounded-xl text-center bg-gray-100 border border-gray-200">
+                          <p className="text-gray-600 font-bold text-sm">⛔ Finalizado</p>
+                          <p className="text-gray-500 text-xs mt-0.5">3:30 PM - 5:00 PM</p>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => registrarEnTurno("cena")}
+                          disabled={cargando}
+                          className="w-full py-3 rounded-xl font-semibold text-sm text-white transition-all shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+                          style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)" }}
+                        >
+                          {cargando ? "Registrando..." : "🌙 Solicitar Cena"}
+                        </button>
+                      )}
+                    </>
+                  ) : (
+                    <div className="text-center py-5">
+                      <p className="text-gray-400 text-xs">Sin cupos configurados</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* RIGHT COLUMN - 40% */}
+            <div className="w-full lg:w-[40%] space-y-5">
+              {/* Captcha */}
+              {!captchaVerificado ? (
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+                  <h2 className="text-sm font-bold text-gray-800 mb-2 flex items-center gap-2">
+                    <span className="w-7 h-7 bg-purple-100 rounded-lg flex items-center justify-center text-xs">
+                      {captchaTipo === "puzzle" ? "🧩" : "🔐"}
+                    </span>
+                    Verificación Anti-Bot
+                  </h2>
+
+                  {captchaTipo === "puzzle" && (
+                    <p className="text-xs text-gray-500 mb-3">
+                      Haz clic en el espacio vacío <span className="font-bold text-purple-600">?</span> donde falta la pieza
+                    </p>
+                  )}
+                  {captchaTipo === "numeros" && (
+                    <p className="text-xs text-gray-500 mb-3">
+                      Escribe los <span className="font-bold text-blue-600">números</span> que ves en la imagen
+                    </p>
+                  )}
+                  {captchaTipo === "letras" && (
+                    <p className="text-xs text-gray-500 mb-3">
+                      Escribe las <span className="font-bold text-green-600">letras</span> que ves en la imagen
+                    </p>
+                  )}
+                  {captchaTipo === "mixto" && (
+                    <p className="text-xs text-gray-500 mb-3">
+                      Escribe el <span className="font-bold text-orange-600">código</span> (letras y números)
+                    </p>
+                  )}
+
+                  <div className="flex flex-col items-center gap-3">
+                    {captchaTipo === "puzzle" && (
+                      <div className="flex items-start gap-4">
+                        <div>
+                          <canvas
+                            key={`main-${captchaKey}`}
+                            ref={canvasRef}
+                            onClick={manejarClickCanvas}
+                            className="rounded-xl border-2 border-gray-200 cursor-crosshair hover:border-purple-400 transition-colors"
+                            style={{ maxWidth: "240px", maxHeight: "140px" }}
+                          />
+                        </div>
+                        <div className="flex flex-col items-center">
+                          <div className="bg-gradient-to-br from-purple-100 to-indigo-100 border-2 border-dashed border-purple-300 rounded-lg p-1.5">
+                            <canvas
+                              key={`pieza-${captchaKey}`}
+                              ref={piezaCanvasRef}
+                              className="rounded"
+                              style={{ maxWidth: "64px", maxHeight: "64px" }}
+                            />
+                          </div>
+                          <p className="text-[10px] text-center text-gray-400 mt-1 font-semibold">Pieza</p>
+                          <p className="text-[10px] text-center text-purple-600">👆 Colócala</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {captchaTipo !== "puzzle" && (
+                      <div className="flex flex-col items-center gap-2 w-full">
+                        <canvas
+                          key={`texto-${captchaKey}`}
+                          ref={canvasRef}
+                          className="rounded-xl border-2 border-gray-200"
+                          style={{ maxWidth: "240px", maxHeight: "80px" }}
+                        />
+                        <div className="flex gap-2 w-full max-w-[260px]">
+                          <input
+                            type="text"
+                            value={captchaInput}
+                            onChange={(e) => setCaptchaInput(e.target.value.toUpperCase())}
+                            onKeyDown={(e) => e.key === "Enter" && verificarTextoCaptcha()}
+                            placeholder={captchaTipo === "numeros" ? "Solo números..." : captchaTipo === "letras" ? "Solo letras..." : "Código..."}
+                            maxLength={8}
+                            className="flex-1 border-2 border-gray-200 rounded-xl px-3 py-2.5 text-center text-base font-bold font-mono tracking-[0.3em] focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none uppercase"
+                            autoFocus
+                          />
+                          <button
+                            onClick={verificarTextoCaptcha}
+                            disabled={!captchaInput}
+                            className="px-4 py-2.5 rounded-xl font-semibold text-sm text-white transition-all shadow-lg disabled:opacity-50"
+                            style={{ background: "linear-gradient(135deg, #7c3aed, #6366f1)" }}
+                          >
+                            ✓
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={generarCaptcha}
+                        className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-xs font-medium transition"
+                      >
+                        🔄 {captchaTipo === "puzzle" ? "Nuevo puzzle" : "Otro código"}
+                      </button>
+                      {captchaIntentos > 0 && (
+                        <span className="text-[10px] text-gray-400">{captchaIntentos}/3</span>
+                      )}
+                      <span className="text-[10px] px-2 py-0.5 bg-purple-50 text-purple-600 rounded-lg font-medium">
+                        {captchaTipo === "puzzle" && "🧩 Puzzle"}
+                        {captchaTipo === "numeros" && "🔢 Números"}
+                        {captchaTipo === "letras" && "🔤 Letras"}
+                        {captchaTipo === "mixto" && "🔐 Mixto"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {captchaError && (
+                    <p className="text-red-500 text-xs mt-2 font-medium text-center">❌ {captchaError}</p>
+                  )}
+
+                  <p className="text-[10px] text-gray-400 mt-2 text-center">
+                    ⚠️ Debe resolver el captcha antes de registrarse
+                  </p>
+                </div>
+              ) : (
+                <div className="bg-green-50 border border-green-200 rounded-2xl p-4 flex items-center gap-3">
+                  <span className="text-xl">✅</span>
+                  <div>
+                    <p className="font-bold text-green-700 text-sm">Verificación completada</p>
+                    <p className="text-xs text-green-600">Ahora puedes solicitar tu cupo</p>
+                  </div>
+                  <button
+                    onClick={generarCaptcha}
+                    className="ml-auto text-green-600 hover:text-green-800 text-xs font-semibold underline"
+                  >
+                    Otro
+                  </button>
+                </div>
+              )}
+
+              {/* Lista en vivo */}
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse" />
+                    <h3 className="text-xs font-bold text-gray-800">Lista en Vivo</h3>
+                  </div>
+                  <span className="text-[10px] text-gray-400">{listaEnVivo.length} hoy</span>
+                </div>
+
+                {listaEnVivo.length === 0 ? (
+                  <div className="px-4 py-6 text-center">
+                    <p className="text-gray-400 text-xs">Aún no hay inscritos hoy</p>
+                    <p className="text-gray-300 text-[10px] mt-1">Aparecerán aquí en tiempo real</p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-gray-50 max-h-64 overflow-y-auto">
+                    {listaEnVivo.map((inscrito, idx) => (
+                      <div key={idx} className="px-4 py-2.5 flex items-center justify-between hover:bg-gray-50 transition-colors">
+                        <div className="flex items-center gap-2.5">
+                          <span className="w-6 h-6 rounded-md flex items-center justify-center text-[10px] font-bold text-white" style={{
+                            background: inscrito.turno === "almuerzo"
+                              ? "linear-gradient(135deg, #22c55e, #16a34a)"
+                              : "linear-gradient(135deg, #f59e0b, #d97706)"
+                          }}>
+                            {inscrito.numero_orden}
+                          </span>
+                          <div>
+                            <p className="text-xs font-semibold text-gray-800 leading-tight">{inscrito.nombre}</p>
+                            <p className="text-[9px] text-gray-400">{inscrito.codigo}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium ${
+                            inscrito.turno === "almuerzo"
+                              ? "bg-green-50 text-green-600"
+                              : "bg-amber-50 text-amber-600"
+                          }`}>
+                            {inscrito.turno === "almuerzo" ? "Alm" : "Ce"}
+                          </span>
+                          <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium ${
+                            inscrito.estado === "reservado"
+                              ? "bg-blue-50 text-blue-600"
+                              : inscrito.estado === "atendido"
+                              ? "bg-green-50 text-green-600"
+                              : "bg-red-50 text-red-600"
+                          }`}>
+                            {inscrito.estado === "reservado" ? "Res" : inscrito.estado === "atendido" ? "At" : "Can"}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Quick actions */}
+              <div className="flex gap-3">
+                <button
+                  onClick={() => router.push("/dashboard")}
+                  className="flex-1 text-white py-3 rounded-xl font-semibold text-xs transition-all shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:scale-[1.02] active:scale-[0.98]"
+                  style={{ background: "linear-gradient(135deg, #2563eb, #1d4ed8)" }}
+                >
+                  🎫 Ver Mi Ticket
+                </button>
+                <button
+                  onClick={cerrarSesion}
+                  className="flex-1 bg-white border-2 border-gray-200 text-gray-600 py-3 rounded-xl font-semibold text-xs transition-all hover:bg-gray-50 hover:border-gray-300"
+                >
+                  🚪 Cerrar Sesión
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
+
+      {/* Footer */}
+      <footer className="border-t border-gray-100 bg-white/60 mt-auto">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
+          <p className="text-[10px] text-gray-400">🍽️ Comedor Universitario</p>
+          <p className="text-[10px] text-gray-400">v1.0.0</p>
+        </div>
+      </footer>
     </div>
   );
 }
