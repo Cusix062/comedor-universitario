@@ -82,6 +82,9 @@ export default function HistorialPage() {
     });
   };
 
+  const totalInscritos = formatos.reduce((sum, f) => sum + f.cantidad_inscritos, 0);
+  const totalCapacidad = formatos.reduce((sum, f) => sum + f.capacidad, 0);
+
   return (
     <>
       <style>{`
@@ -105,77 +108,88 @@ export default function HistorialPage() {
       `}</style>
 
       <AdminLayout>
-        <div className="space-y-5 max-w-6xl">
-          <div className="grid md:grid-cols-3 gap-5">
-            {/* Lista de formatos */}
-            <div className="md:col-span-1 space-y-3">
-              <h2 className="text-sm font-bold text-gray-700 uppercase tracking-wider">Formatos Guardados</h2>
+        <div className="space-y-6 max-w-6xl">
+          <div className="grid grid-cols-3 gap-4">
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 text-center">
+              <p className="text-2xl font-bold text-slate-900">{formatos.length}</p>
+              <p className="text-xs text-slate-500 mt-1">Formatos guardados</p>
+            </div>
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 text-center">
+              <p className="text-2xl font-bold text-slate-900">{totalInscritos}</p>
+              <p className="text-xs text-slate-500 mt-1">Total inscritos</p>
+            </div>
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 text-center">
+              <p className="text-2xl font-bold text-slate-900">{totalCapacidad}</p>
+              <p className="text-xs text-slate-500 mt-1">Capacidad total</p>
+            </div>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            <div className="md:col-span-1">
+              <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Formatos Guardados</h2>
               {formatos.length === 0 ? (
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center">
-                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center text-3xl mx-auto mb-3">📭</div>
-                  <p className="text-gray-400 text-sm">Sin formatos guardados</p>
+                <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8 text-center">
+                  <svg className="w-10 h-10 text-slate-300 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" /></svg>
+                  <p className="text-sm text-slate-500">Sin formatos guardados</p>
                 </div>
               ) : (
-                formatos.map((formato) => (
-                  <div
-                    key={formato.id}
-                    className={`flex items-center gap-2 p-2 rounded-xl border-2 transition-all ${
-                      seleccionado?.id === formato.id
-                        ? "border-blue-500 bg-blue-50"
-                        : "border-gray-100 bg-white hover:border-gray-200 hover:bg-gray-50"
-                    }`}
-                  >
-                    <button
-                      onClick={() => verFormato(formato)}
-                      className="flex-1 text-left"
+                <div className="space-y-2">
+                  {formatos.map((formato) => (
+                    <div
+                      key={formato.id}
+                      className={`flex items-center gap-2 p-3 rounded-lg border transition ${
+                        seleccionado?.id === formato.id
+                          ? "border-indigo-400 bg-indigo-50"
+                          : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
+                      }`}
                     >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-bold text-gray-800 text-sm">{fechaFormateada(formato.fecha)}</p>
-                          <p className={`text-xs font-semibold mt-1 ${
-                            formato.tipo === "almuerzo" ? "text-green-600" : "text-amber-600"
+                      <button
+                        onClick={() => verFormato(formato)}
+                        className="flex-1 text-left min-w-0"
+                      >
+                        <p className="text-sm font-semibold text-slate-900 truncate">{fechaFormateada(formato.fecha)}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className={`text-xs font-medium ${
+                            formato.tipo === "almuerzo" ? "text-emerald-600" : "text-amber-600"
                           }`}>
-                            {formato.tipo === "almuerzo" ? "🥗 Almuerzo" : "🌙 Cena"}
-                          </p>
+                            {formato.tipo === "almuerzo" ? "Almuerzo" : "Cena"}
+                          </span>
+                          <span className="text-xs text-slate-400">|</span>
+                          <span className="text-xs text-slate-500">{formato.cantidad_inscritos}/{formato.capacidad}</span>
                         </div>
-                        <div className="text-right">
-                          <p className="font-bold text-gray-800">{formato.cantidad_inscritos}/{formato.capacidad}</p>
-                          <p className="text-xs text-gray-400">inscritos</p>
-                        </div>
-                      </div>
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        eliminarFormato(formato.id);
-                      }}
-                      className="bg-red-100 hover:bg-red-200 text-red-600 w-9 h-9 rounded-lg flex items-center justify-center transition flex-shrink-0"
-                      title="Eliminar formato"
-                    >
-                      🗑️
-                    </button>
-                  </div>
-                ))
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          eliminarFormato(formato.id);
+                        }}
+                        className="text-slate-400 hover:text-red-500 hover:bg-red-50 w-8 h-8 rounded-lg flex items-center justify-center transition flex-shrink-0"
+                        title="Eliminar formato"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                      </button>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
 
-            {/* Vista del formato */}
             <div className="md:col-span-2">
               {seleccionado ? (
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                  <div className="p-5 border-b border-gray-100 flex justify-between items-center">
+                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                  <div className="p-5 border-b border-slate-100 flex justify-between items-center no-print">
                     <div>
-                      <h3 className="font-bold text-gray-800">{fechaFormateada(seleccionado.fecha)}</h3>
-                      <p className="text-sm text-gray-500">
-                        {seleccionado.tipo === "almuerzo" ? "🥗 Almuerzo" : "🌙 Cena"} —
-                        Guardado: {new Date(seleccionado.guardado_en).toLocaleString("es-PE")}
+                      <h3 className="font-semibold text-slate-900">{fechaFormateada(seleccionado.fecha)}</h3>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        {seleccionado.tipo === "almuerzo" ? "Almuerzo" : "Cena"} &mdash; Guardado: {new Date(seleccionado.guardado_en).toLocaleString("es-PE")}
                       </p>
                     </div>
                     <button
                       onClick={() => window.print()}
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl text-sm font-semibold transition"
+                      className="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2"
                     >
-                      🖨️ Imprimir
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                      Imprimir
                     </button>
                   </div>
 
@@ -184,9 +198,9 @@ export default function HistorialPage() {
                       <div className="flex items-center gap-3 flex-1">
                         <img src="/UNDC_logo.jpg" alt="UNDC" className="w-20 h-20 object-contain rounded-full" />
                         <div className="text-center flex-1">
-                          <p className="text-xs text-gray-500 italic">Ley de Org. N° 29498</p>
-                          <p className="text-[10px] text-gray-400">Licenciada según Res. del Consejo Universitario N° 116-2019-SUNEDU/CD</p>
-                          <p className="font-bold text-xs mt-1">DIRECCIÓN DE BIENESTAR UNIVERSITARIO</p>
+                          <p className="text-xs text-slate-500 italic">Ley de Org. N° 29498</p>
+                          <p className="text-[10px] text-slate-400">Licenciada segun Res. del Consejo Universitario N° 116-2019-SUNEDU/CD</p>
+                          <p className="font-bold text-xs mt-1">DIRECCION DE BIENESTAR UNIVERSITARIO</p>
                           <p className="font-bold text-sm">SERVICIO DE COMEDOR UNIVERSITARIO</p>
                         </div>
                       </div>
@@ -194,15 +208,15 @@ export default function HistorialPage() {
                     </div>
 
                     <div className="text-center mb-3">
-                      <p className="text-[10px] text-gray-400 italic">
-                        &quot;Año del Bicentenario, de la consolidación de nuestra independencia, y de la<br />
-                        conmemoración de las heroicas batallas de Junín y Ayacucho&quot;
+                      <p className="text-[10px] text-slate-400 italic">
+                        &quot;Ano del Bicentenario, de la consolidacion de nuestra independencia, y de la<br />
+                        conmemoracion de las heroicas batallas de Junin y Ayacucho&quot;
                       </p>
                     </div>
 
                     <div className="bg-[#1a5c3a] text-white px-4 py-2 rounded text-xs flex justify-between mb-4">
-                      <span>Código: F-A03.04-BU-016 &nbsp;&nbsp; Fecha: 06/09/2024</span>
-                      <span className="bg-white text-[#1a5c3a] px-3 py-0.5 rounded font-bold">Versión: 02</span>
+                      <span>Codigo: F-A03.04-BU-016 &nbsp;&nbsp; Fecha: 06/09/2024</span>
+                      <span className="bg-white text-[#1a5c3a] px-3 py-0.5 rounded font-bold">Version: 02</span>
                     </div>
 
                     <h2 className="text-center font-bold text-lg mb-4">
@@ -216,47 +230,47 @@ export default function HistorialPage() {
                     <table className="w-full border-collapse text-sm">
                       <thead>
                         <tr className="bg-[#1a5c3a] text-white">
-                          <th className="border border-gray-400 py-2 px-2 w-12 font-semibold">N°</th>
-                          <th className="border border-gray-400 py-2 px-3 text-left font-semibold">APELLIDOS Y NOMBRES</th>
-                          <th className="border border-gray-400 py-2 px-3 text-left font-semibold">ESCUELA PROFESIONAL</th>
-                          <th className="border border-gray-400 py-2 px-2 w-16 font-semibold">CICLO</th>
-                          <th className="border border-gray-400 py-2 px-2 w-20 font-semibold">FIRMA</th>
+                          <th className="border border-slate-400 py-2 px-2 w-12 font-semibold">N°</th>
+                          <th className="border border-slate-400 py-2 px-3 text-left font-semibold">APELLIDOS Y NOMBRES</th>
+                          <th className="border border-slate-400 py-2 px-3 text-left font-semibold">ESCUELA PROFESIONAL</th>
+                          <th className="border border-slate-400 py-2 px-2 w-16 font-semibold">CICLO</th>
+                          <th className="border border-slate-400 py-2 px-2 w-20 font-semibold">FIRMA</th>
                         </tr>
                       </thead>
                       <tbody>
                         {Array.from({ length: seleccionado.capacidad }, (_, i) => {
                           const insc = inscritos.find((insc) => insc.numero_orden === i + 1);
                           return (
-                            <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-gray-50"}>
-                              <td className="border border-gray-300 py-2 px-2 text-center font-semibold text-gray-700">
+                            <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-slate-50"}>
+                              <td className="border border-slate-300 py-2 px-2 text-center font-semibold text-slate-700">
                                 {String(i + 1).padStart(2, "0")}
                               </td>
-                              <td className="border border-gray-300 py-2 px-3 text-gray-800">
+                              <td className="border border-slate-300 py-2 px-3 text-slate-900">
                                 {insc?.nombre || ""}
                               </td>
-                              <td className="border border-gray-300 py-2 px-3 text-gray-600">
+                              <td className="border border-slate-300 py-2 px-3 text-slate-600">
                                 ING. DE SISTEMAS
                               </td>
-                              <td className="border border-gray-300 py-2 px-2 text-center text-gray-700">
+                              <td className="border border-slate-300 py-2 px-2 text-center text-slate-700">
                                 {insc?.ciclo ? cicloARomano(insc.ciclo) : ""}
                               </td>
-                              <td className="border border-gray-300 py-2 px-2"></td>
+                              <td className="border border-slate-300 py-2 px-2"></td>
                             </tr>
                           );
                         })}
                       </tbody>
                     </table>
 
-                    <p className="text-[9px] text-gray-400 text-center mt-4 italic">
-                      Toda copia de este documento, sea del entorno virtual o del documento original en físico es considerada &quot;copia no controlada&quot;.
+                    <p className="text-[9px] text-slate-400 text-center mt-4 italic">
+                      Toda copia de este documento, sea del entorno virtual o del documento original en fisico es considerada &quot;copia no controlada&quot;.
                     </p>
                   </div>
                 </div>
               ) : (
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center">
-                  <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center text-4xl mx-auto mb-4">📄</div>
-                  <h3 className="text-xl font-bold text-gray-800">Selecciona un formato</h3>
-                  <p className="text-gray-500 mt-2 text-sm">Haz clic en un formato del historial para verlo</p>
+                <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-12 text-center">
+                  <svg className="w-12 h-12 text-slate-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                  <h3 className="text-lg font-semibold text-slate-900">Selecciona un formato</h3>
+                  <p className="text-sm text-slate-500 mt-1">Haz clic en un formato del historial para verlo</p>
                 </div>
               )}
             </div>

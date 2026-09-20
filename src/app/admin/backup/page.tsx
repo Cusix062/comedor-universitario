@@ -57,25 +57,21 @@ export default function BackupPage() {
 
   return (
     <AdminLayout>
-      <div className="max-w-3xl space-y-5">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-          <h2 className="text-base font-bold text-gray-800 mb-4 flex items-center gap-2">
-            <span className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center text-sm">
-              💾
-            </span>
-            Descargar Backup
-          </h2>
+      <div className="max-w-lg mx-auto mt-8">
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8 text-center">
+          <div className="w-16 h-16 bg-slate-100 rounded-xl flex items-center justify-center mx-auto mb-5">
+            <svg className="w-8 h-8 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+          </div>
 
-          <p className="text-gray-600 text-sm mb-6">
-            Exporta todas las tablas de la base de datos en un archivo JSON. Las tablas
-            incluidas son: estudiantes, cupos, inscripciones, beneficiarios, suspenciones
-            y audit_logs.
+          <h2 className="text-lg font-semibold text-slate-900 mb-2">Descargar Backup</h2>
+          <p className="text-sm text-slate-500 mb-6 max-w-sm mx-auto">
+            Exporta todas las tablas de la base de datos en un archivo JSON.
           </p>
 
           {lastBackup && (
-            <div className="mb-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
-              <p className="text-sm text-gray-600">
-                <span className="font-semibold">Último backup:</span> {lastBackup}
+            <div className="mb-6 p-3 bg-slate-50 rounded-lg border border-slate-200">
+              <p className="text-xs text-slate-500">
+                Ultimo backup: <span className="font-medium text-slate-700">{lastBackup}</span>
               </p>
             </div>
           )}
@@ -83,16 +79,18 @@ export default function BackupPage() {
           <button
             onClick={descargarBackup}
             disabled={descargando}
-            className="w-full text-white py-3 rounded-xl font-semibold transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{ background: "linear-gradient(135deg, #2563eb, #1d4ed8)" }}
+            className="w-full bg-slate-900 hover:bg-slate-800 text-white py-3 rounded-lg font-medium text-sm transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {descargando ? (
-              <span className="flex items-center justify-center gap-2">
+              <>
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 Descargando...
-              </span>
+              </>
             ) : (
-              "📥 Descargar Backup"
+              <>
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                Descargar Backup
+              </>
             )}
           </button>
         </div>

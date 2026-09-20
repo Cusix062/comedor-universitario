@@ -59,99 +59,97 @@ export default function MonitoreoPage() {
 
   return (
     <AdminLayout>
-      <div className="space-y-5 max-w-7xl">
-        <div className="flex items-center gap-3 mb-2">
-          <input
-            type="date"
-            value={fecha}
-            onChange={(e) => setFecha(e.target.value)}
-            className="border-2 border-gray-200 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
-          />
+      <div className="space-y-6 max-w-7xl">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <input
+              type="date"
+              value={fecha}
+              onChange={(e) => setFecha(e.target.value)}
+              className="border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-700 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+            />
+          </div>
+          <div className="flex items-center gap-2 text-xs text-slate-500">
+            <span className={`w-2 h-2 rounded-full ${cargando ? "bg-emerald-500 animate-pulse" : "bg-slate-300"}`} />
+            Actualizacion cada 5s
+          </div>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="rounded-2xl p-6 text-center text-white" style={{ background: "linear-gradient(135deg, #166534, #15803d)" }}>
-            <p className="text-5xl font-bold">{almuerzos.length}</p>
-            <p className="text-green-200 mt-2 text-sm font-medium">🥗 Almuerzos</p>
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 text-center">
+            <p className="text-3xl font-bold text-emerald-600">{almuerzos.length}</p>
+            <p className="text-xs text-slate-500 mt-1">Almuerzos</p>
           </div>
-          <div className="rounded-2xl p-6 text-center text-white" style={{ background: "linear-gradient(135deg, #92400e, #b45309)" }}>
-            <p className="text-5xl font-bold">{cenas.length}</p>
-            <p className="text-amber-200 mt-2 text-sm font-medium">🌙 Cenas</p>
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 text-center">
+            <p className="text-3xl font-bold text-amber-600">{cenas.length}</p>
+            <p className="text-xs text-slate-500 mt-1">Cenas</p>
           </div>
-          <div className="rounded-2xl p-6 text-center text-white" style={{ background: "linear-gradient(135deg, #1e40af, #2563eb)" }}>
-            <p className="text-5xl font-bold">{atendidos}</p>
-            <p className="text-blue-200 mt-2 text-sm font-medium">✅ Atendidos</p>
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 text-center">
+            <p className="text-3xl font-bold text-indigo-600">{atendidos}</p>
+            <p className="text-xs text-slate-500 mt-1">Atendidos</p>
           </div>
-          <div className="rounded-2xl p-6 text-center text-white" style={{ background: "linear-gradient(135deg, #475569, #64748b)" }}>
-            <p className="text-5xl font-bold">{pendientes}</p>
-            <p className="text-gray-300 mt-2 text-sm font-medium">⏳ Pendientes</p>
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 text-center">
+            <p className="text-3xl font-bold text-slate-600">{pendientes}</p>
+            <p className="text-xs text-slate-500 mt-1">Pendientes</p>
           </div>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-5">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-            <h2 className="text-base font-bold text-gray-800 mb-4 flex items-center gap-2">
-              🥗 Almuerzos
-              <span className="bg-green-100 text-green-700 text-xs px-2.5 py-1 rounded-full font-semibold">{almuerzos.length}</span>
-            </h2>
+        <div className="grid md:grid-cols-2 gap-6">
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-semibold text-slate-900">Almuerzos</h2>
+              <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full font-medium">{almuerzos.length}</span>
+            </div>
             <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
               {almuerzos.map((insc) => (
                 <div
                   key={insc.id}
-                  className={`p-4 rounded-xl flex justify-between items-center transition-all ${
+                  className={`p-3 rounded-lg flex justify-between items-center border transition ${
                     insc.estado === "atendido"
-                      ? "bg-green-50 border border-green-200"
-                      : "bg-gray-50 border border-gray-200"
+                      ? "bg-emerald-50 border-emerald-200"
+                      : "bg-slate-50 border-slate-200"
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <span className="text-2xl font-bold text-gray-800">#{insc.numero_orden}</span>
-                    <span className="text-gray-700 font-medium text-sm">{insc.nombre}</span>
+                    <span className="text-lg font-bold text-slate-900">#{insc.numero_orden}</span>
+                    <span className="text-sm text-slate-700">{insc.nombre}</span>
                   </div>
-                  <span className={`text-lg ${
-                    insc.estado === "atendido" ? "text-green-500" : "text-amber-500"
-                  }`}>
-                    {insc.estado === "atendido" ? "✅" : "⏳"}
-                  </span>
+                  <span className={`w-2 h-2 rounded-full ${insc.estado === "atendido" ? "bg-emerald-500" : "bg-amber-400"}`} />
                 </div>
               ))}
               {almuerzos.length === 0 && (
                 <div className="text-center py-8">
-                  <p className="text-gray-400 text-sm">Sin inscripciones</p>
+                  <p className="text-sm text-slate-400">Sin inscripciones</p>
                 </div>
               )}
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-            <h2 className="text-base font-bold text-gray-800 mb-4 flex items-center gap-2">
-              🌙 Cenas
-              <span className="bg-amber-100 text-amber-700 text-xs px-2.5 py-1 rounded-full font-semibold">{cenas.length}</span>
-            </h2>
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-semibold text-slate-900">Cenas</h2>
+              <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full font-medium">{cenas.length}</span>
+            </div>
             <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
               {cenas.map((insc) => (
                 <div
                   key={insc.id}
-                  className={`p-4 rounded-xl flex justify-between items-center transition-all ${
+                  className={`p-3 rounded-lg flex justify-between items-center border transition ${
                     insc.estado === "atendido"
-                      ? "bg-green-50 border border-green-200"
-                      : "bg-gray-50 border border-gray-200"
+                      ? "bg-emerald-50 border-emerald-200"
+                      : "bg-slate-50 border-slate-200"
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <span className="text-2xl font-bold text-gray-800">#{insc.numero_orden}</span>
-                    <span className="text-gray-700 font-medium text-sm">{insc.nombre}</span>
+                    <span className="text-lg font-bold text-slate-900">#{insc.numero_orden}</span>
+                    <span className="text-sm text-slate-700">{insc.nombre}</span>
                   </div>
-                  <span className={`text-lg ${
-                    insc.estado === "atendido" ? "text-green-500" : "text-amber-500"
-                  }`}>
-                    {insc.estado === "atendido" ? "✅" : "⏳"}
-                  </span>
+                  <span className={`w-2 h-2 rounded-full ${insc.estado === "atendido" ? "bg-emerald-500" : "bg-amber-400"}`} />
                 </div>
               ))}
               {cenas.length === 0 && (
                 <div className="text-center py-8">
-                  <p className="text-gray-400 text-sm">Sin inscripciones</p>
+                  <p className="text-sm text-slate-400">Sin inscripciones</p>
                 </div>
               )}
             </div>

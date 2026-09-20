@@ -34,14 +34,12 @@ export default function SuspensionesPage() {
   const [error, setError] = useState("");
   const router = useRouter();
 
-  // Formulario
   const [estudianteSel, setEstudianteSel] = useState<Estudiante | null>(null);
   const [tipoSuspension, setTipoSuspension] = useState<"almuerzo" | "cena" | "ambos">("ambos");
   const [fechaInicio, setFechaInicio] = useState(new Date().toISOString().split("T")[0]);
   const [fechaFin, setFechaFin] = useState(new Date().toISOString().split("T")[0]);
   const [motivo, setMotivo] = useState("");
 
-  // Edición
   const [editando, setEditando] = useState<Suspension | null>(null);
   const [editTipo, setEditTipo] = useState<"almuerzo" | "cena" | "ambos">("ambos");
   const [editInicio, setEditInicio] = useState("");
@@ -121,13 +119,13 @@ export default function SuspensionesPage() {
         return;
       }
 
-      setMensaje(`Suspensión creada para ${estudianteSel.nombre}`);
+      setMensaje(`Suspension creada para ${estudianteSel.nombre}`);
       setEstudianteSel(null);
       resetForm();
       buscarEstudiantes();
       cargarSuspendidos();
     } catch {
-      setError("Error de conexión");
+      setError("Error de conexion");
     }
   };
 
@@ -163,21 +161,21 @@ export default function SuspensionesPage() {
         return;
       }
 
-      setMensaje("Suspensión actualizada");
+      setMensaje("Suspension actualizada");
       setEditando(null);
       cargarSuspendidos();
       if (busqueda.length >= 2) buscarEstudiantes();
     } catch {
-      setError("Error de conexión");
+      setError("Error de conexion");
     }
   };
 
   const eliminarSuspension = async (id: number) => {
-    if (!confirm("¿Eliminar esta suspensión?")) return;
+    if (!confirm("Eliminar esta suspension?")) return;
     try {
       const res = await fetch(`/api/admin/suspensiones?id=${id}`, { method: "DELETE" });
       if (res.ok) {
-        setMensaje("Suspensión eliminada");
+        setMensaje("Suspension eliminada");
         cargarSuspendidos();
         if (busqueda.length >= 2) buscarEstudiantes();
       }
@@ -206,9 +204,9 @@ export default function SuspensionesPage() {
   };
 
   const getTipoLabel = (tipo: string) => {
-    if (tipo === "ambos") return "🍽️ Ambos";
-    if (tipo === "almuerzo") return "🥗 Almuerzo";
-    return "🌙 Cena";
+    if (tipo === "ambos") return "Ambos";
+    if (tipo === "almuerzo") return "Almuerzo";
+    return "Cena";
   };
 
   const activos = suspendidos.filter((s) => s.fecha_inicio <= hoy && s.fecha_fin >= hoy);
@@ -216,84 +214,84 @@ export default function SuspensionesPage() {
 
   return (
     <AdminLayout>
-      <div className="space-y-5 max-w-7xl">
+      <div className="space-y-6 max-w-7xl">
         {mensaje && (
-          <div className="bg-green-50 border border-green-200 text-green-700 px-5 py-4 rounded-xl flex items-center gap-3">
-            <span className="text-xl">✅</span>
-            <span className="font-medium">{mensaje}</span>
+          <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-lg flex items-center gap-2">
+            <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+            <span className="text-sm font-medium">{mensaje}</span>
           </div>
         )}
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-5 py-4 rounded-xl flex items-center gap-3">
-            <span className="text-xl">⚠️</span>
-            <span className="font-medium">{error}</span>
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2">
+            <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <span className="text-sm font-medium">{error}</span>
           </div>
         )}
 
-        {/* Estadísticas */}
         <div className="grid grid-cols-3 gap-4">
-          <div className="rounded-2xl p-5 text-center text-white" style={{ background: "linear-gradient(135deg, #991b1b, #ef4444)" }}>
-            <p className="text-3xl font-bold">{activos.length}</p>
-            <p className="text-white/80 text-sm mt-1 font-medium">🔴 Activas hoy</p>
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 text-center">
+            <p className="text-3xl font-bold text-red-600">{activos.length}</p>
+            <p className="text-xs text-slate-500 mt-1">Activas hoy</p>
           </div>
-          <div className="rounded-2xl p-5 text-center text-white" style={{ background: "linear-gradient(135deg, #92400e, #f59e0b)" }}>
-            <p className="text-3xl font-bold">{programados.length}</p>
-            <p className="text-white/80 text-sm mt-1 font-medium">🟡 Programadas</p>
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 text-center">
+            <p className="text-3xl font-bold text-amber-600">{programados.length}</p>
+            <p className="text-xs text-slate-500 mt-1">Programadas</p>
           </div>
-          <div className="rounded-2xl p-5 text-center text-white" style={{ background: "linear-gradient(135deg, #475569, #94a3b8)" }}>
-            <p className="text-3xl font-bold">{suspendidos.length}</p>
-            <p className="text-white/80 text-sm mt-1 font-medium">📋 Total activas</p>
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 text-center">
+            <p className="text-3xl font-bold text-slate-700">{suspendidos.length}</p>
+            <p className="text-xs text-slate-500 mt-1">Total activas</p>
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-5">
-          {/* Lista de suspendidos */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-            <h2 className="text-base font-bold text-gray-800 mb-4 flex items-center gap-2">
-              <span className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center text-sm">📋</span>
-              Estudiantes Suspendidos ({suspendidos.length})
+        <div className="grid lg:grid-cols-2 gap-6">
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+            <h2 className="text-sm font-semibold text-slate-900 mb-4">
+              En sistema
+              <span className="ml-2 text-xs text-slate-400 font-normal">({suspendidos.length})</span>
             </h2>
 
             {suspendidos.length === 0 ? (
-              <div className="text-center py-10">
-                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center text-3xl mx-auto mb-3">✅</div>
-                <p className="text-gray-400">No hay suspensiones activas</p>
+              <div className="text-center py-12">
+                <svg className="w-10 h-10 text-emerald-400 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <p className="text-sm text-slate-500">No hay suspensiones activas</p>
               </div>
             ) : (
-              <div className="space-y-3 max-h-[600px] overflow-y-auto">
+              <div className="space-y-2 max-h-[600px] overflow-y-auto pr-1">
                 {suspendidos.map((s) => {
                   const estado = getEstado(s);
                   return (
-                    <div key={s.id} className={`border rounded-xl p-4 transition-all ${estado.color}`}>
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className={`px-2 py-0.5 rounded-full text-xs font-bold border ${estado.color}`}>
+                    <div key={s.id} className="border border-slate-200 rounded-lg p-4 hover:shadow-sm transition">
+                      <div className="flex justify-between items-start gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1.5">
+                            <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${
+                              estado.texto === "Activa" ? "bg-red-100 text-red-700" :
+                              estado.texto === "Programada" ? "bg-amber-100 text-amber-700" :
+                              "bg-slate-100 text-slate-500"
+                            }`}>
                               {estado.texto}
                             </span>
-                            <span className="text-xs font-semibold text-gray-700">{getTipoLabel(s.tipo)}</span>
+                            <span className="text-xs text-slate-500">{getTipoLabel(s.tipo)}</span>
                           </div>
-                          <p className="font-bold text-gray-800 text-sm">{s.nombre}</p>
-                          <p className="text-xs text-gray-500">Código: {s.codigo}</p>
-                          <p className="text-xs text-gray-500 mt-1">
-                            📅 {s.fecha_inicio} al {s.fecha_fin}
-                          </p>
+                          <p className="text-sm font-semibold text-slate-900 truncate">{s.nombre}</p>
+                          <p className="text-xs text-slate-500 mt-0.5">{s.codigo}</p>
+                          <p className="text-xs text-slate-400 mt-1">{s.fecha_inicio} al {s.fecha_fin}</p>
                           {s.motivo && (
-                            <p className="text-xs text-gray-400 italic mt-1">Motivo: {s.motivo}</p>
+                            <p className="text-xs text-slate-400 italic mt-1">Motivo: {s.motivo}</p>
                           )}
                         </div>
-                        <div className="flex flex-col gap-1 ml-2">
+                        <div className="flex flex-col gap-1.5 flex-shrink-0">
                           <button
                             onClick={() => abrirEdicion(s)}
-                            className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition"
+                            className="text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 px-3 py-1.5 rounded-lg text-xs font-medium transition border border-slate-200"
                           >
-                            ✏️ Editar
+                            Editar
                           </button>
                           <button
                             onClick={() => eliminarSuspension(s.id)}
-                            className="bg-gray-300 hover:bg-gray-400 text-gray-700 px-3 py-1.5 rounded-lg text-xs font-semibold transition"
+                            className="text-slate-500 hover:text-red-600 hover:bg-red-50 px-3 py-1.5 rounded-lg text-xs font-medium transition border border-slate-200"
                           >
-                            🗑️ Quitar
+                            Quitar
                           </button>
                         </div>
                       </div>
@@ -304,20 +302,15 @@ export default function SuspensionesPage() {
             )}
           </div>
 
-          {/* Buscador + Formulario */}
-          <div className="space-y-5">
-            {/* Buscador */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-              <h2 className="text-base font-bold text-gray-800 mb-4 flex items-center gap-2">
-                <span className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center text-sm">🔍</span>
-                Buscar Estudiante
-              </h2>
+          <div className="space-y-6">
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+              <h2 className="text-sm font-semibold text-slate-900 mb-4">Encontrados en API</h2>
               <input
                 type="text"
                 value={busqueda}
                 onChange={(e) => setBusqueda(e.target.value)}
-                placeholder="Código o nombre..."
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none"
+                placeholder="Codigo o nombre..."
+                className="w-full border border-slate-300 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"
               />
 
               {resultados.length > 0 && (
@@ -325,22 +318,26 @@ export default function SuspensionesPage() {
                   {resultados.map((est) => (
                     <div
                       key={est.id}
-                      className={`border rounded-xl p-3 cursor-pointer transition-all ${
+                      className={`border rounded-lg p-3 cursor-pointer transition ${
                         estudianteSel?.id === est.id
-                          ? "border-red-400 bg-red-50"
-                          : "border-gray-200 hover:border-gray-300"
+                          ? "border-indigo-400 bg-indigo-50"
+                          : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
                       }`}
                       onClick={() => setEstudianteSel(est)}
                     >
-                      <p className="font-bold text-gray-800 text-sm">{est.nombre}</p>
-                      <p className="text-xs text-gray-500">Código: {est.codigo}</p>
+                      <p className="text-sm font-semibold text-slate-900">{est.nombre}</p>
+                      <p className="text-xs text-slate-500 mt-0.5">{est.codigo}</p>
                       {est.suspensiones.length > 0 && (
-                        <div className="mt-1">
+                        <div className="flex flex-wrap gap-1 mt-2">
                           {est.suspensiones.map((s) => {
                             const e = getEstado(s);
                             return (
-                              <span key={s.id} className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold mr-1 border ${e.color}`}>
-                                {e.texto} - {getTipoLabel(s.tipo)}
+                              <span key={s.id} className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-medium ${
+                                e.texto === "Activa" ? "bg-red-100 text-red-700" :
+                                e.texto === "Programada" ? "bg-amber-100 text-amber-700" :
+                                "bg-slate-100 text-slate-500"
+                              }`}>
+                                {e.texto}
                               </span>
                             );
                           })}
@@ -352,70 +349,68 @@ export default function SuspensionesPage() {
               )}
 
               {busqueda.length >= 2 && !cargando && resultados.length === 0 && (
-                <p className="text-center text-gray-400 text-sm mt-4">No se encontraron estudiantes</p>
+                <p className="text-center text-slate-400 text-sm mt-4">No se encontraron estudiantes</p>
               )}
             </div>
 
-            {/* Formulario crear */}
             {estudianteSel && (
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <h2 className="text-base font-bold text-gray-800 mb-4 flex items-center gap-2">
-                  <span className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center text-sm">🚫</span>
-                  Suspender: {estudianteSel.nombre}
+              <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                <h2 className="text-sm font-semibold text-slate-900 mb-4">
+                  Suspender: <span className="text-red-600">{estudianteSel.nombre}</span>
                 </h2>
                 <div className="grid grid-cols-2 gap-3 mb-4">
                   <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">Turno</label>
+                    <label className="block text-xs font-medium text-slate-600 mb-1.5">Turno</label>
                     <select
                       value={tipoSuspension}
                       onChange={(e) => setTipoSuspension(e.target.value as any)}
-                      className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm"
+                      className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
                     >
-                      <option value="ambos">🍽️ Ambos</option>
-                      <option value="almuerzo">🥗 Almuerzo</option>
-                      <option value="cena">🌙 Cena</option>
+                      <option value="ambos">Ambos</option>
+                      <option value="almuerzo">Almuerzo</option>
+                      <option value="cena">Cena</option>
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">Motivo</label>
+                    <label className="block text-xs font-medium text-slate-600 mb-1.5">Motivo</label>
                     <input
                       type="text"
                       value={motivo}
                       onChange={(e) => setMotivo(e.target.value)}
                       placeholder="Opcional"
-                      className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm"
+                      className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">Desde</label>
+                    <label className="block text-xs font-medium text-slate-600 mb-1.5">Desde</label>
                     <input
                       type="date"
                       value={fechaInicio}
                       onChange={(e) => setFechaInicio(e.target.value)}
-                      className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm"
+                      className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">Hasta</label>
+                    <label className="block text-xs font-medium text-slate-600 mb-1.5">Hasta</label>
                     <input
                       type="date"
                       value={fechaFin}
                       onChange={(e) => setFechaFin(e.target.value)}
                       min={fechaInicio}
-                      className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm"
+                      className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
                     />
                   </div>
                 </div>
                 <div className="flex gap-2">
                   <button
                     onClick={crearSuspension}
-                    className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2.5 rounded-xl font-semibold text-sm transition"
+                    className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2.5 rounded-lg font-medium text-sm transition"
                   >
-                    🚫 Aplicar
+                    Aplicar
                   </button>
                   <button
                     onClick={() => setEstudianteSel(null)}
-                    className="px-4 bg-gray-200 hover:bg-gray-300 text-gray-700 py-2.5 rounded-xl font-semibold text-sm transition"
+                    className="px-4 border border-slate-300 hover:bg-slate-50 text-slate-700 py-2.5 rounded-lg font-medium text-sm transition"
                   >
                     Cancelar
                   </button>
@@ -426,68 +421,65 @@ export default function SuspensionesPage() {
         </div>
       </div>
 
-      {/* Modal de edición */}
       {editando && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
             <div className="flex items-center justify-between mb-5">
-              <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-                <span className="text-xl">✏️</span> Editar Suspensión
-              </h3>
+              <h3 className="text-lg font-semibold text-slate-900">Editar Suspension</h3>
               <button
                 onClick={() => setEditando(null)}
-                className="text-gray-400 hover:text-gray-600 text-2xl"
+                className="text-slate-400 hover:text-slate-600 p-1"
               >
-                ×
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
 
-            <div className="mb-3 p-3 bg-gray-50 rounded-xl">
-              <p className="text-sm font-bold text-gray-800">{editando.nombre}</p>
-              <p className="text-xs text-gray-500">Código: {editando.codigo}</p>
+            <div className="mb-4 p-3 bg-slate-50 rounded-lg border border-slate-200">
+              <p className="text-sm font-semibold text-slate-900">{editando.nombre}</p>
+              <p className="text-xs text-slate-500 mt-0.5">{editando.codigo}</p>
             </div>
 
             <div className="space-y-3 mb-5">
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Turno</label>
+                <label className="block text-xs font-medium text-slate-600 mb-1.5">Turno</label>
                 <select
                   value={editTipo}
                   onChange={(e) => setEditTipo(e.target.value as any)}
-                  className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm"
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
                 >
-                  <option value="ambos">🍽️ Ambos</option>
-                  <option value="almuerzo">🥗 Almuerzo</option>
-                  <option value="cena">🌙 Cena</option>
+                  <option value="ambos">Ambos</option>
+                  <option value="almuerzo">Almuerzo</option>
+                  <option value="cena">Cena</option>
                 </select>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1">Desde</label>
+                  <label className="block text-xs font-medium text-slate-600 mb-1.5">Desde</label>
                   <input
                     type="date"
                     value={editInicio}
                     onChange={(e) => setEditInicio(e.target.value)}
-                    className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm"
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1">Hasta</label>
+                  <label className="block text-xs font-medium text-slate-600 mb-1.5">Hasta</label>
                   <input
                     type="date"
                     value={editFin}
                     onChange={(e) => setEditFin(e.target.value)}
                     min={editInicio}
-                    className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm"
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Motivo</label>
+                <label className="block text-xs font-medium text-slate-600 mb-1.5">Motivo</label>
                 <input
                   type="text"
                   value={editMotivo}
                   onChange={(e) => setEditMotivo(e.target.value)}
-                  className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm"
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
                 />
               </div>
             </div>
@@ -495,13 +487,13 @@ export default function SuspensionesPage() {
             <div className="flex gap-3">
               <button
                 onClick={guardarEdicion}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-semibold transition"
+                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-lg font-medium text-sm transition"
               >
-                💾 Guardar Cambios
+                Guardar Cambios
               </button>
               <button
                 onClick={() => setEditando(null)}
-                className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-3 rounded-xl font-semibold transition"
+                className="flex-1 border border-slate-300 hover:bg-slate-50 text-slate-700 py-2.5 rounded-lg font-medium text-sm transition"
               >
                 Cancelar
               </button>
