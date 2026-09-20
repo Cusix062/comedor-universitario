@@ -26,6 +26,7 @@ export default function RegistroPage() {
   const [estudiante, setEstudiante] = useState<Estudiante | null>(null);
   const [cupos, setCupos] = useState<{ almuerzo: CupoInfo; cena: CupoInfo } | null>(null);
   const [mensaje, setMensaje] = useState("");
+  const [listaEnVivo, setListaEnVivo] = useState<{ numero_orden: number; estado: string; codigo: string; nombre: string; ciclo: number; turno: string }[]>([]);
   const [error, setError] = useState("");
   const [cargando, setCargando] = useState(false);
   const [horaActual, setHoraActual] = useState(new Date());
@@ -383,6 +384,24 @@ export default function RegistroPage() {
   useEffect(() => {
     fetchCupos();
     const interval = setInterval(fetchCupos, 10000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Lista en vivo de inscritos
+  const fetchLista = async () => {
+    try {
+      const fecha = new Date().toISOString().split("T")[0];
+      const res = await fetch(`/api/registro/lista?fecha=${fecha}`);
+      const data = await res.json();
+      setListaEnVivo(data);
+    } catch {
+      // Silenciar errores de red
+    }
+  };
+
+  useEffect(() => {
+    fetchLista();
+    const interval = setInterval(fetchLista, 5000);
     return () => clearInterval(interval);
   }, []);
 
@@ -927,6 +946,57 @@ export default function RegistroPage() {
           </div>
         </div>
           </>
+        )}
+
+        {/* Lista en vivo de inscritos */}
+        {listaEnVivo.length > 0 && (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
+                <h3 className="text-sm font-bold text-gray-800">Lista en Vivo</h3>
+              </div>
+              <span className="text-xs text-gray-400">{listaEnVivo.length} inscritos</span>
+            </div>
+
+            <div className="divide-y divide-gray-50 max-h-80 overflow-y-auto">
+              {listaEnVivo.map((inscrito, idx) => (
+                <div key={idx} className="px-5 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <span className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold text-white" style={{
+                      background: inscrito.turno === "almuerzo"
+                        ? "linear-gradient(135deg, #22c55e, #16a34a)"
+                        : "linear-gradient(135deg, #f59e0b, #d97706)"
+                    }}>
+                      {inscrito.numero_orden}
+                    </span>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-800">{inscrito.nombre}</p>
+                      <p className="text-[10px] text-gray-400">{inscrito.codigo}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                      inscrito.turno === "almuerzo"
+                        ? "bg-green-50 text-green-600"
+                        : "bg-amber-50 text-amber-600"
+                    }`}>
+                      {inscrito.turno === "almuerzo" ? "Almuerzo" : "Cena"}
+                    </span>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                      inscrito.estado === "reservado"
+                        ? "bg-blue-50 text-blue-600"
+                        : inscrito.estado === "atendido"
+                        ? "bg-green-50 text-green-600"
+                        : "bg-red-50 text-red-600"
+                    }`}>
+                      {inscrito.estado === "reservado" ? "Reservado" : inscrito.estado === "atendido" ? "Atendido" : "Cancelado"}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
 
         {/* Botones */}
