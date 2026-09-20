@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { esBeneficiario, getDbAsync } from "@/lib/db";
 import { getCicloNumero } from "@/lib/ciclos";
 import { withRateLimit } from "@/lib/api-helpers";
+import { enviarReporteDiario } from "@/lib/telegram";
 
 export const POST = withRateLimit(async (req: NextRequest) => {
   try {
@@ -94,6 +95,38 @@ export const POST = withRateLimit(async (req: NextRequest) => {
       const cupoActualizado = await db.prepare("SELECT * FROM cupos WHERE id = ?").get(cupo_id) as any;
       if (cupoActualizado.ocupados >= cupoActualizado.capacidad) {
         await db.prepare("UPDATE cupos SET estado = 'cerrado' WHERE id = ?").run(cupo_id);
+
+        // Enviar reporte por Telegram cuando se llenan los cupos
+        try {
+          const fecha = new Date().toISOString().split("T")[0];
+          const almuerzos = await db.prepare(`
+            SELECT i.numero_orden, e.nombre, e.codigo, e.ciclo
+            FROM inscripciones i
+            JOIN estudiantes e ON i.estudiante_id = e.id
+            JOIN cupos c ON i.cupo_id = c.id
+            WHERE c.fecha = ? AND c.tipo = 'almuerzo'
+            ORDER BY i.numero_orden
+          `).all(fecha) as any[];
+          const cenas = await db.prepare(`
+            SELECT i.numero_orden, e.nombre, e.codigo, e.ciclo
+            FROM inscripciones i
+            JOIN estudiantes e ON i.estudiante_id = e.id
+            JOIN cupos c ON i.cupo_id = c.id
+            WHERE c.fecha = ? AND c.tipo = 'cena'
+            ORDER BY i.numero_orden
+          `).all(fecha) as any[];
+          const capAlm = await db.prepare("SELECT capacidad FROM cupos WHERE fecha = ? AND tipo = 'almuerzo'").get(fecha) as any;
+          const capCena = await db.prepare("SELECT capacidad FROM cupos WHERE fecha = ? AND tipo = 'cena'").get(fecha) as any;
+          await enviarReporteDiario(
+            fecha,
+            almuerzos,
+            cenas,
+            capAlm?.capacidad || 0,
+            capCena?.capacidad || 0
+          );
+        } catch (e) {
+          console.error("Error enviando reporte Telegram:", e);
+        }
       }
 
       return {
