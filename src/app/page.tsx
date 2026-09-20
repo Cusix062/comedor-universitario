@@ -1,11 +1,26 @@
 "use client";
 
-import { useState } from "react";
-import { signIn } from "next-auth/react";
+import { useState, useEffect } from "react";
+import { signIn, useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+
+const ADMIN_EMAIL = "jairecusi@gmail.com";
 
 export default function LoginPage() {
+  const { data: session, status } = useSession();
   const [error, setError] = useState("");
   const [cargando, setCargando] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === "authenticated" && session?.user?.email) {
+      if (session.user.email === ADMIN_EMAIL) {
+        router.push("/admin");
+      } else {
+        router.push("/registro");
+      }
+    }
+  }, [session, status, router]);
 
   const handleLoginGoogle = async () => {
     setError("");
@@ -18,6 +33,21 @@ export default function LoginPage() {
       setCargando(false);
     }
   };
+
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "linear-gradient(135deg, #1e3a5f 0%, #2563eb 50%, #3b82f6 100%)" }}>
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="mt-4 text-white font-medium">Verificando sesión...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (status === "authenticated") {
+    return null;
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center p-3 sm:p-4" style={{ background: "linear-gradient(135deg, #1e3a5f 0%, #2563eb 50%, #3b82f6 100%)" }}>

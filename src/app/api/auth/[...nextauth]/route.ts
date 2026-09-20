@@ -46,7 +46,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return session;
     },
     async redirect({ url, baseUrl }) {
-      // Redirigir según el tipo de usuario
+      // Después del login, redirigir según el tipo de usuario
+      // Si viene del callback de Google, redirigir a la página principal
+      if (url === baseUrl || url === `${baseUrl}/`) {
+        return `${baseUrl}/`;
+      }
       if (url.startsWith("/")) return `${baseUrl}${url}`;
       if (new URL(url).origin === baseUrl) return url;
       return baseUrl;

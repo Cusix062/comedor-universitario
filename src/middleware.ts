@@ -7,36 +7,24 @@ export async function middleware(req: NextRequest) {
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
   const path = req.nextUrl.pathname;
 
-  if (token && token.email) {
-    const email = token.email;
-    const isAdmin = email === ADMIN_EMAIL;
+  // Si no hay token, dejar pasar (login page o public)
+  if (!token || !token.email) {
+    return NextResponse.next();
+  }
 
-    // Root: redirigir según rol
-    if (path === "/") {
-      if (isAdmin) {
-        return NextResponse.redirect(new URL("/admin", req.url));
-      }
-      return NextResponse.redirect(new URL("/registro", req.url));
+  const isAdmin = token.email === ADMIN_EMAIL;
+
+  // Admin pages: solo el admin
+  if (path.startsWith("/admin")) {
+    if (!isAdmin) {
+      return NextResponse.redirect(new URL("/auth/error?error=access_denied", req.url));
     }
+  }
 
-    // Admin pages: solo el admin
-    if (path.startsWith("/admin")) {
-      if (!isAdmin) {
-        const res = NextResponse.redirect(new URL("/auth/error?error=access_denied", req.url));
-        res.cookies.set("next-auth.session-token", "", { maxAge: 0 });
-        res.cookies.set("__Secure-next-auth.session-token", "", { maxAge: 0 });
-        return res;
-      }
-    }
-
-    // Student pages: admin no puede entrar
-    if (path.startsWith("/registro") || path.startsWith("/dashboard") || path.startsWith("/historial")) {
-      if (isAdmin) {
-        const res = NextResponse.redirect(new URL("/auth/error?error=access_denied", req.url));
-        res.cookies.set("next-auth.session-token", "", { maxAge: 0 });
-        res.cookies.set("__Secure-next-auth.session-token", "", { maxAge: 0 });
-        return res;
-      }
+  // Student pages: admin no puede entrar
+  if (path.startsWith("/registro") || path.startsWith("/dashboard") || path.startsWith("/historial")) {
+    if (isAdmin) {
+      return NextResponse.redirect(new URL("/auth/error?error=access_denied", req.url));
     }
   }
 
@@ -45,7 +33,6 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
-    "/",
     "/dashboard/:path*",
     "/registro/:path*",
     "/historial/:path*",
