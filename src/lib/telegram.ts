@@ -1,5 +1,7 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import fs from "fs";
+import path from "path";
 
 const TELEGRAM_API = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}`;
 const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
@@ -36,20 +38,18 @@ type Comensal = {
 
 const GREEN: [number, number, number] = [26, 92, 58];
 
-function drawCirclePlaceholder(doc: jsPDF, cx: number, cy: number, r: number) {
-  doc.setDrawColor(...GREEN);
-  doc.setLineWidth(0.8);
-  doc.circle(cx, cy, r);
-  doc.setFontSize(5);
-  doc.setTextColor(...GREEN);
-  doc.text("LOGO", cx, cy + 1.5, { align: "center" });
-}
-
 function drawFormattedHeader(doc: jsPDF, tipo: "almuerzo" | "cena", fecha: string) {
   const pageWidth = doc.internal.pageSize.getWidth();
 
-  // Left circle placeholder (UNDC)
-  drawCirclePlaceholder(doc, 22, 18, 9);
+  const undcPath = path.join(process.cwd(), "public", "UNDC_logo.jpg");
+  const dbuPath = path.join(process.cwd(), "public", "DBU.jpg");
+  const undcImg = fs.readFileSync(undcPath);
+  const dbuImg = fs.readFileSync(dbuPath);
+  const undcBase64 = undcImg.toString("base64");
+  const dbuBase64 = dbuImg.toString("base64");
+
+  // Left logo (UNDC)
+  doc.addImage(undcBase64, "JPEG", 12, 8, 20, 20);
 
   // Center text block
   doc.setTextColor(0, 0, 0);
@@ -62,8 +62,8 @@ function drawFormattedHeader(doc: jsPDF, tipo: "almuerzo" | "cena", fecha: strin
   doc.setFont("helvetica", "normal");
   doc.text("SERVICIO DE COMEDOR UNIVERSITARIO", pageWidth / 2, 22, { align: "center" });
 
-  // Right circle placeholder (DBU)
-  drawCirclePlaceholder(doc, pageWidth - 22, 18, 9);
+  // Right logo (DBU)
+  doc.addImage(dbuBase64, "JPEG", pageWidth - 32, 8, 20, 20);
 
   // Green bar
   doc.setFillColor(...GREEN);
