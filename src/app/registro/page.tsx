@@ -945,16 +945,21 @@ export default function RegistroPage() {
         )}
 
         {/* Lista en vivo de inscritos */}
-        {listaEnVivo.length > 0 && (
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
-                <h3 className="text-sm font-bold text-gray-800">Lista en Vivo</h3>
-              </div>
-              <span className="text-xs text-gray-400">{listaEnVivo.length} inscritos</span>
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
+              <h3 className="text-sm font-bold text-gray-800">Lista en Vivo</h3>
             </div>
+            <span className="text-xs text-gray-400">{listaEnVivo.length} inscritos hoy</span>
+          </div>
 
+          {listaEnVivo.length === 0 ? (
+            <div className="px-5 py-8 text-center">
+              <p className="text-gray-400 text-sm">Aún no hay inscritos hoy</p>
+              <p className="text-gray-300 text-xs mt-1">Los inscritos aparecerán aquí en tiempo real</p>
+            </div>
+          ) : (
             <div className="divide-y divide-gray-50 max-h-80 overflow-y-auto">
               {listaEnVivo.map((inscrito, idx) => (
                 <div key={idx} className="px-5 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors">
@@ -992,8 +997,8 @@ export default function RegistroPage() {
                 </div>
               ))}
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Botones */}
         <div className="flex gap-4">
