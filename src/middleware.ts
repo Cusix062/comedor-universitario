@@ -11,6 +11,14 @@ export async function middleware(req: NextRequest) {
     const email = token.email;
     const isAdmin = email === ADMIN_EMAIL;
 
+    // Root: redirigir según rol
+    if (path === "/") {
+      if (isAdmin) {
+        return NextResponse.redirect(new URL("/admin", req.url));
+      }
+      return NextResponse.redirect(new URL("/registro", req.url));
+    }
+
     // Admin pages: solo el admin
     if (path.startsWith("/admin")) {
       if (!isAdmin) {
@@ -22,7 +30,7 @@ export async function middleware(req: NextRequest) {
     }
 
     // Student pages: admin no puede entrar
-    if (path.startsWith("/registro") || path.startsWith("/dashboard")) {
+    if (path.startsWith("/registro") || path.startsWith("/dashboard") || path.startsWith("/historial")) {
       if (isAdmin) {
         const res = NextResponse.redirect(new URL("/auth/error?error=access_denied", req.url));
         res.cookies.set("next-auth.session-token", "", { maxAge: 0 });
@@ -37,8 +45,10 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
+    "/",
     "/dashboard/:path*",
     "/registro/:path*",
+    "/historial/:path*",
     "/admin/:path*",
   ],
 };

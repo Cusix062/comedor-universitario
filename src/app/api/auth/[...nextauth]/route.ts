@@ -8,12 +8,6 @@ const ADMIN_EMAIL = "jairecusi@gmail.com";
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
     Google({
-      id: "google",
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    }),
-    Google({
-      id: "google-admin",
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
@@ -22,35 +16,27 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async signIn({ user, account }) {
       if (!user.email) return false;
 
-      // Admin solo puede entrar por google-admin
-      if (account?.provider === "google-admin") {
-        if (user.email !== ADMIN_EMAIL) return false;
-        return true;
-      }
+      // Admin: solo correo autorizado
+      if (user.email === ADMIN_EMAIL) return true;
 
-      // Estudiantes: solo @undc.edu.pe, admin bloqueado
-      if (account?.provider === "google") {
-        if (user.email === ADMIN_EMAIL) return false;
-        if (!user.email.endsWith("@undc.edu.pe")) return false;
+      // Estudiantes: solo @undc.edu.pe
+      if (!user.email.endsWith("@undc.edu.pe")) return false;
 
-        // Auto-crear estudiante en BD con ciclo calculado
-        try {
-          const codigo = user.email.split("@")[0];
-          const db = await getDbAsync();
-          const existente = await db.prepare("SELECT id FROM estudiantes WHERE codigo = ?").get(codigo);
-          if (!existente) {
-            const cicloCalculado = getCicloNumero(codigo);
-            await db.prepare(
-              "INSERT INTO estudiantes (codigo, nombre, correo, ciclo, telefono) VALUES (?, ?, ?, ?, ?)"
-            ).run(codigo, user.name || codigo, user.email, cicloCalculado, "");
-          }
-        } catch (e) {
-          console.error("Error creando estudiante:", e);
+      // Auto-crear estudiante en BD con ciclo calculado
+      try {
+        const codigo = user.email.split("@")[0];
+        const db = await getDbAsync();
+        const existente = await db.prepare("SELECT id FROM estudiantes WHERE codigo = ?").get(codigo);
+        if (!existente) {
+          const cicloCalculado = getCicloNumero(codigo);
+          await db.prepare(
+            "INSERT INTO estudiantes (codigo, nombre, correo, ciclo, telefono) VALUES (?, ?, ?, ?, ?)"
+          ).run(codigo, user.name || codigo, user.email, cicloCalculado, "");
         }
-        return true;
+      } catch (e) {
+        console.error("Error creando estudiante:", e);
       }
-
-      return false;
+      return true;
     },
     async session({ session, token }) {
       if (session.user) {
@@ -58,6 +44,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         (session.user as any).isAdmin = session.user.email === ADMIN_EMAIL;
       }
       return session;
+    },
+    async redirect({ url, baseUrl }) {
+      // Redirigir según el tipo de usuario
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      if (new URL(url).origin === baseUrl) return url;
+      return baseUrl;
     },
   },
   pages: {
