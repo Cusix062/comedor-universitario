@@ -224,6 +224,48 @@ export async function enviarReporteConPDF(
   }
 }
 
+export async function enviarReporteTurno(
+  fecha: string,
+  tipo: "almuerzo" | "cena",
+  inscritos: Comensal[],
+  capacidad: number
+): Promise<boolean> {
+  const total = inscritos.length;
+  const porcentaje = capacidad > 0 ? Math.round((total / capacidad) * 100) : 0;
+
+  const emoji = tipo === "almuerzo" ? "🥗" : "🌙";
+  const label = tipo === "almuerzo" ? "ALMUERZO" : "CENA";
+
+  let mensaje = `${emoji} <b>REPORTE ${label} - COMEDOR UNIVERSITARIO</b>\n`;
+  mensaje += `📅 ${fecha}\n`;
+  mensaje += `━━━━━━━━━━━━━━━━━━━━\n\n`;
+  mensaje += `${emoji} <b>${label}</b> (${total}/${capacidad}) ${porcentaje}%\n`;
+  mensaje += `━━━━━━━━━━━━━━━━━━━━\n`;
+  if (inscritos.length === 0) {
+    mensaje += `   Sin inscritos\n`;
+  } else {
+    inscritos.forEach((a) => {
+      mensaje += `   ${a.numero_orden}. ${a.nombre}\n`;
+    });
+  }
+
+  const msgOk = await enviarMensajeTelegram(mensaje);
+  if (!msgOk) return false;
+
+  try {
+    const buffer = generarPDF(fecha, tipo, inscritos, capacidad);
+    const formData = new FormData();
+    formData.append("chat_id", CHAT_ID!);
+    formData.append("document", new Blob([new Uint8Array(buffer)], { type: "application/pdf" }), `${tipo}-${fecha}.pdf`);
+    const res = await fetch(`${TELEGRAM_API}/sendDocument`, { method: "POST", body: formData });
+    const data = await res.json();
+    return data.ok;
+  } catch (error) {
+    console.error("Error enviando PDF por Telegram:", error);
+    return false;
+  }
+}
+
 export async function enviarReporteDiario(
   fecha: string,
   almuerzos: Comensal[],

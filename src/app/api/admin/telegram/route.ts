@@ -1,45 +1,35 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDbAsync } from "@/lib/db";
-import { enviarReporteDiario } from "@/lib/telegram";
+import { enviarReporteTurno } from "@/lib/telegram";
 
 export async function POST(req: NextRequest) {
   try {
-    const { fecha } = await req.json();
+    const { fecha, turno } = await req.json();
     const fechaConsulta = fecha || new Date().toISOString().split("T")[0];
+    const turnoConsulta = turno || "almuerzo";
 
     const db = await getDbAsync();
 
-    const almuerzos = await db.prepare(`
+    const inscritos = await db.prepare(`
       SELECT i.numero_orden, e.nombre, e.codigo, e.ciclo
       FROM inscripciones i
       JOIN estudiantes e ON i.estudiante_id = e.id
       JOIN cupos c ON i.cupo_id = c.id
-      WHERE c.fecha = ? AND c.tipo = 'almuerzo'
+      WHERE c.fecha = ? AND c.tipo = ?
       ORDER BY i.numero_orden
-    `).all(fechaConsulta) as any[];
+    `).all(fechaConsulta, turnoConsulta) as any[];
 
-    const cenas = await db.prepare(`
-      SELECT i.numero_orden, e.nombre, e.codigo, e.ciclo
-      FROM inscripciones i
-      JOIN estudiantes e ON i.estudiante_id = e.id
-      JOIN cupos c ON i.cupo_id = c.id
-      WHERE c.fecha = ? AND c.tipo = 'cena'
-      ORDER BY i.numero_orden
-    `).all(fechaConsulta) as any[];
+    const cap = await db.prepare("SELECT capacidad FROM cupos WHERE fecha = ? AND tipo = ?").get(fechaConsulta, turnoConsulta) as any;
 
-    const capAlm = await db.prepare("SELECT capacidad FROM cupos WHERE fecha = ? AND tipo = 'almuerzo'").get(fechaConsulta) as any;
-    const capCena = await db.prepare("SELECT capacidad FROM cupos WHERE fecha = ? AND tipo = 'cena'").get(fechaConsulta) as any;
-
-    const enviado = await enviarReporteDiario(
+    const enviado = await enviarReporteTurno(
       fechaConsulta,
-      almuerzos,
-      cenas,
-      capAlm?.capacidad || 0,
-      capCena?.capacidad || 0
+      turnoConsulta as "almuerzo" | "cena",
+      inscritos,
+      cap?.capacidad || 0
     );
 
     if (enviado) {
-      return NextResponse.json({ success: true, mensaje: "Reporte enviado a Telegram" });
+      return NextResponse.json({ success: true, mensaje: `Reporte de ${turnoConsulta} enviado a Telegram` });
     } else {
       return NextResponse.json({ error: "Error al enviar reporte" }, { status: 500 });
     }
