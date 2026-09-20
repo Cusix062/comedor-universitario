@@ -9,6 +9,7 @@ interface Inscripcion {
   numero_orden: number;
   nombre: string;
   ciclo: number;
+  codigo: string;
   estado: string;
 }
 
@@ -42,6 +43,7 @@ export default function FormatoPage() {
           numero_orden: i.numero_orden,
           nombre: i.nombre,
           ciclo: i.ciclo,
+          codigo: i.codigo,
           estado: i.estado,
         }));
       setInscritos(filtrados);
@@ -101,6 +103,7 @@ export default function FormatoPage() {
       numero: String(i + 1).padStart(2, "0"),
       nombre: insc?.nombre || "",
       ciclo: insc?.ciclo ? cicloARomano(insc.ciclo) : "",
+      codigo: insc?.codigo || "",
     };
   });
 
@@ -256,7 +259,7 @@ export default function FormatoPage() {
                       <th className="border border-gray-400 py-1.5 px-2 text-left">APELLIDOS Y NOMBRES</th>
                       <th className="border border-gray-400 py-1.5 px-2 text-left">ESCUELA</th>
                       <th className="border border-gray-400 py-1.5 px-1 w-10">CICLO</th>
-                      <th className="border border-gray-400 py-1.5 px-1 w-14">FIRMA</th>
+                      <th className="border border-gray-400 py-1.5 px-1 w-14">CODIGO U.</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -272,7 +275,7 @@ export default function FormatoPage() {
                           </td>
                           <td className="border border-gray-300 py-1.5 px-2 text-gray-500">ING. SISTEMAS</td>
                           <td className="border border-gray-300 py-1.5 px-1 text-center text-gray-600">{fila.ciclo || "—"}</td>
-                          <td className="border border-gray-300 py-1.5 px-1"></td>
+                          <td className="border border-gray-300 py-1.5 px-1 text-center text-gray-600 text-[10px] font-mono">{fila.codigo || "—"}</td>
                         </tr>
                       );
                     })}
@@ -311,7 +314,7 @@ export default function FormatoPage() {
               <th className="border border-gray-400 py-2 px-3 text-left">APELLIDOS Y NOMBRES</th>
               <th className="border border-gray-400 py-2 px-3 text-left">ESCUELA PROFESIONAL</th>
               <th className="border border-gray-400 py-2 px-2 w-16">CICLO</th>
-              <th className="border border-gray-400 py-2 px-2 w-20">FIRMA</th>
+              <th className="border border-gray-400 py-2 px-2 w-20">CODIGO U.</th>
             </tr>
           </thead>
           <tbody>
@@ -321,7 +324,7 @@ export default function FormatoPage() {
                 <td className="border border-gray-300 py-2 px-3">{fila.nombre}</td>
                 <td className="border border-gray-300 py-2 px-3 text-gray-600">ING. DE SISTEMAS</td>
                 <td className="border border-gray-300 py-2 px-2 text-center">{fila.ciclo}</td>
-                <td className="border border-gray-300 py-2 px-2"></td>
+                <td className="border border-gray-300 py-2 px-2 text-center font-mono text-xs">{fila.codigo}</td>
               </tr>
             ))}
           </tbody>

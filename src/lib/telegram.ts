@@ -1,5 +1,6 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { cicloARomano } from "@/lib/ciclos";
 import fs from "fs";
 import path from "path";
 
@@ -34,6 +35,7 @@ type Comensal = {
   numero_orden: number;
   nombre: string;
   ciclo: number;
+  codigo: string;
 };
 
 const GREEN: [number, number, number] = [26, 92, 58];
@@ -94,7 +96,7 @@ function drawFormattedHeader(doc: jsPDF, tipo: "almuerzo" | "cena", fecha: strin
 export function generarPDF(
   fecha: string,
   tipo: "almuerzo" | "cena",
-  inscritos: { numero_orden: number; nombre: string; ciclo: number }[],
+  inscritos: { numero_orden: number; nombre: string; ciclo: number; codigo: string }[],
   capacidad: number
 ): Buffer {
   const doc = new jsPDF();
@@ -109,14 +111,14 @@ export function generarPDF(
       String(i + 1).padStart(2, "0"),
       inscrito ? inscrito.nombre : "",
       "ING. DE SISTEMAS",
-      inscrito ? String(inscrito.ciclo) : "",
-      "",
+      inscrito ? cicloARomano(inscrito.ciclo) : "",
+      inscrito ? inscrito.codigo : "",
     ]);
   }
 
   autoTable(doc, {
     startY: y,
-    head: [["N°", "APELLIDOS Y NOMBRES", "ESCUELA PROFESIONAL", "CICLO", "FIRMA"]],
+    head: [["N°", "APELLIDOS Y NOMBRES", "ESCUELA PROFESIONAL", "CICLO", "CODIGO U."]],
     body: rows,
     headStyles: {
       fillColor: GREEN,
@@ -131,10 +133,10 @@ export function generarPDF(
     },
     columnStyles: {
       0: { halign: "center", cellWidth: 12 },
-      1: { cellWidth: 65 },
-      2: { cellWidth: 50 },
+      1: { cellWidth: 60 },
+      2: { cellWidth: 45 },
       3: { halign: "center", cellWidth: 15 },
-      4: { cellWidth: 30 },
+      4: { halign: "center", cellWidth: 30 },
     },
     margin: { left: 14, right: 14 },
   });
