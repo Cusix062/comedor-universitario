@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import AdminLayout from "@/components/AdminLayout";
 
 interface Inscripcion {
   id: number;
@@ -57,60 +58,41 @@ export default function MonitoreoPage() {
   const pendientes = inscritos.filter((i) => i.estado === "reservado").length;
 
   return (
-    <div className="min-h-screen" style={{ background: "linear-gradient(180deg, #0f172a 0%, #1e293b 100%)" }}>
-      <header className="border-b border-gray-700/50 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-emerald-500/20 rounded-xl flex items-center justify-center text-lg">
-              📊
-            </div>
-            <div>
-              <h1 className="text-lg font-bold text-white">Monitoreo en Vivo</h1>
-              <p className="text-gray-400 text-xs">Actualización cada 5 segundos</p>
-            </div>
-          </div>
-          <div className="flex gap-3 items-center">
-            <input
-              type="date"
-              value={fecha}
-              onChange={(e) => setFecha(e.target.value)}
-              className="bg-gray-800 border border-gray-600 rounded-xl px-4 py-2 text-sm text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
-            />
-            <button
-              onClick={() => router.push("/admin")}
-              className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-xl transition text-sm font-medium"
-            >
-              ← Volver
-            </button>
-          </div>
+    <AdminLayout>
+      <div className="space-y-5 max-w-7xl">
+        <div className="flex items-center gap-3 mb-2">
+          <input
+            type="date"
+            value={fecha}
+            onChange={(e) => setFecha(e.target.value)}
+            className="border-2 border-gray-200 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+          />
         </div>
-      </header>
 
-      <main className="max-w-7xl mx-auto p-4 space-y-5">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="rounded-2xl p-6 text-center" style={{ background: "linear-gradient(135deg, #166534, #15803d)" }}>
-            <p className="text-5xl font-bold text-white">{almuerzos.length}</p>
+          <div className="rounded-2xl p-6 text-center text-white" style={{ background: "linear-gradient(135deg, #166534, #15803d)" }}>
+            <p className="text-5xl font-bold">{almuerzos.length}</p>
             <p className="text-green-200 mt-2 text-sm font-medium">🥗 Almuerzos</p>
           </div>
-          <div className="rounded-2xl p-6 text-center" style={{ background: "linear-gradient(135deg, #92400e, #b45309)" }}>
-            <p className="text-5xl font-bold text-white">{cenas.length}</p>
+          <div className="rounded-2xl p-6 text-center text-white" style={{ background: "linear-gradient(135deg, #92400e, #b45309)" }}>
+            <p className="text-5xl font-bold">{cenas.length}</p>
             <p className="text-amber-200 mt-2 text-sm font-medium">🌙 Cenas</p>
           </div>
-          <div className="rounded-2xl p-6 text-center" style={{ background: "linear-gradient(135deg, #1e40af, #2563eb)" }}>
-            <p className="text-5xl font-bold text-white">{atendidos}</p>
+          <div className="rounded-2xl p-6 text-center text-white" style={{ background: "linear-gradient(135deg, #1e40af, #2563eb)" }}>
+            <p className="text-5xl font-bold">{atendidos}</p>
             <p className="text-blue-200 mt-2 text-sm font-medium">✅ Atendidos</p>
           </div>
-          <div className="rounded-2xl p-6 text-center" style={{ background: "linear-gradient(135deg, #475569, #64748b)" }}>
-            <p className="text-5xl font-bold text-white">{pendientes}</p>
+          <div className="rounded-2xl p-6 text-center text-white" style={{ background: "linear-gradient(135deg, #475569, #64748b)" }}>
+            <p className="text-5xl font-bold">{pendientes}</p>
             <p className="text-gray-300 mt-2 text-sm font-medium">⏳ Pendientes</p>
           </div>
         </div>
 
         <div className="grid md:grid-cols-2 gap-5">
-          <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-5">
-            <h2 className="text-base font-bold text-white mb-4 flex items-center gap-2">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+            <h2 className="text-base font-bold text-gray-800 mb-4 flex items-center gap-2">
               🥗 Almuerzos
-              <span className="bg-green-600 text-white text-xs px-2.5 py-1 rounded-full">{almuerzos.length}</span>
+              <span className="bg-green-100 text-green-700 text-xs px-2.5 py-1 rounded-full font-semibold">{almuerzos.length}</span>
             </h2>
             <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
               {almuerzos.map((insc) => (
@@ -118,16 +100,16 @@ export default function MonitoreoPage() {
                   key={insc.id}
                   className={`p-4 rounded-xl flex justify-between items-center transition-all ${
                     insc.estado === "atendido"
-                      ? "bg-green-900/30 border border-green-700/50"
-                      : "bg-gray-700/50 border border-gray-600/50"
+                      ? "bg-green-50 border border-green-200"
+                      : "bg-gray-50 border border-gray-200"
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <span className="text-2xl font-bold text-white">#{insc.numero_orden}</span>
-                    <span className="text-gray-200 font-medium text-sm">{insc.nombre}</span>
+                    <span className="text-2xl font-bold text-gray-800">#{insc.numero_orden}</span>
+                    <span className="text-gray-700 font-medium text-sm">{insc.nombre}</span>
                   </div>
                   <span className={`text-lg ${
-                    insc.estado === "atendido" ? "text-green-400" : "text-amber-400"
+                    insc.estado === "atendido" ? "text-green-500" : "text-amber-500"
                   }`}>
                     {insc.estado === "atendido" ? "✅" : "⏳"}
                   </span>
@@ -135,16 +117,16 @@ export default function MonitoreoPage() {
               ))}
               {almuerzos.length === 0 && (
                 <div className="text-center py-8">
-                  <p className="text-gray-500 text-sm">Sin inscripciones</p>
+                  <p className="text-gray-400 text-sm">Sin inscripciones</p>
                 </div>
               )}
             </div>
           </div>
 
-          <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-5">
-            <h2 className="text-base font-bold text-white mb-4 flex items-center gap-2">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+            <h2 className="text-base font-bold text-gray-800 mb-4 flex items-center gap-2">
               🌙 Cenas
-              <span className="bg-amber-600 text-white text-xs px-2.5 py-1 rounded-full">{cenas.length}</span>
+              <span className="bg-amber-100 text-amber-700 text-xs px-2.5 py-1 rounded-full font-semibold">{cenas.length}</span>
             </h2>
             <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
               {cenas.map((insc) => (
@@ -152,16 +134,16 @@ export default function MonitoreoPage() {
                   key={insc.id}
                   className={`p-4 rounded-xl flex justify-between items-center transition-all ${
                     insc.estado === "atendido"
-                      ? "bg-green-900/30 border border-green-700/50"
-                      : "bg-gray-700/50 border border-gray-600/50"
+                      ? "bg-green-50 border border-green-200"
+                      : "bg-gray-50 border border-gray-200"
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <span className="text-2xl font-bold text-white">#{insc.numero_orden}</span>
-                    <span className="text-gray-200 font-medium text-sm">{insc.nombre}</span>
+                    <span className="text-2xl font-bold text-gray-800">#{insc.numero_orden}</span>
+                    <span className="text-gray-700 font-medium text-sm">{insc.nombre}</span>
                   </div>
                   <span className={`text-lg ${
-                    insc.estado === "atendido" ? "text-green-400" : "text-amber-400"
+                    insc.estado === "atendido" ? "text-green-500" : "text-amber-500"
                   }`}>
                     {insc.estado === "atendido" ? "✅" : "⏳"}
                   </span>
@@ -169,13 +151,13 @@ export default function MonitoreoPage() {
               ))}
               {cenas.length === 0 && (
                 <div className="text-center py-8">
-                  <p className="text-gray-500 text-sm">Sin inscripciones</p>
+                  <p className="text-gray-400 text-sm">Sin inscripciones</p>
                 </div>
               )}
             </div>
           </div>
         </div>
-      </main>
-    </div>
+      </div>
+    </AdminLayout>
   );
 }

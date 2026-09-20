@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import AdminLayout from "@/components/AdminLayout";
 import {
   BarChart,
   Bar,
@@ -84,14 +85,6 @@ export default function DashboardPage() {
     }
   };
 
-  const cerrarSesion = async () => {
-    localStorage.removeItem("admin_session");
-    localStorage.removeItem("google_admin_session");
-    const { signOut } = await import("next-auth/react");
-    await signOut({ redirect: false });
-    router.push("/");
-  };
-
   const ultimos7Dias = stats?.inscriptionsPerDay.slice(-7) || [];
   const todayStr = new Date().toISOString().split("T")[0];
   const inscritosHoyCount = inscritosHoy.length;
@@ -112,59 +105,8 @@ export default function DashboardPage() {
   }));
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header
-        className="text-white shadow-lg"
-        style={{
-          background: "linear-gradient(135deg, #0f172a, #1e293b)",
-        }}
-      >
-        <div className="max-w-7xl mx-auto px-4 py-4 flex flex-wrap justify-between items-center gap-3">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center text-lg">
-              📊
-            </div>
-            <div>
-              <h1 className="text-lg font-bold">Dashboard</h1>
-              <p className="text-gray-400 text-xs">Estadísticas del Comedor</p>
-            </div>
-          </div>
-          <div className="flex gap-2 flex-wrap">
-            <button
-              onClick={() => router.push("/admin")}
-              className="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-xl transition text-sm font-medium"
-            >
-              📋 Validar
-            </button>
-            <button
-              onClick={() => router.push("/admin/turnos")}
-              className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-xl transition text-sm font-medium"
-            >
-              ⚙️ Cupos
-            </button>
-            <button
-              onClick={() => router.push("/admin/historial")}
-              className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-xl transition text-sm font-medium"
-            >
-              📚 Historial
-            </button>
-            <button
-              onClick={() => router.push("/admin/monitoreo")}
-              className="bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded-xl transition text-sm font-medium"
-            >
-              📈 Monitoreo
-            </button>
-            <button
-              onClick={cerrarSesion}
-              className="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-xl transition text-sm font-medium"
-            >
-              🚪 Salir
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto p-4 space-y-5">
+    <AdminLayout>
+      <div className="space-y-5 max-w-7xl">
         {cargando ? (
           <div className="text-center py-16">
             <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto" />
@@ -181,27 +123,27 @@ export default function DashboardPage() {
           <>
             {/* Stats Cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 text-center">
-                <p className="text-3xl font-bold text-blue-600">{inscritosHoyCount}</p>
-                <p className="text-gray-500 text-sm mt-1 font-medium">
+              <div className="rounded-2xl p-5 text-center text-white" style={{ background: "linear-gradient(135deg, #1e40af, #3b82f6)" }}>
+                <p className="text-3xl font-bold">{inscritosHoyCount}</p>
+                <p className="text-white/80 text-sm mt-1 font-medium">
                   👥 Inscritos Hoy
                 </p>
               </div>
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 text-center">
-                <p className="text-3xl font-bold text-green-600">{almuerzosHoy}</p>
-                <p className="text-gray-500 text-sm mt-1 font-medium">
+              <div className="rounded-2xl p-5 text-center text-white" style={{ background: "linear-gradient(135deg, #166534, #22c55e)" }}>
+                <p className="text-3xl font-bold">{almuerzosHoy}</p>
+                <p className="text-white/80 text-sm mt-1 font-medium">
                   🥗 Almuerzos Hoy
                 </p>
               </div>
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 text-center">
-                <p className="text-3xl font-bold text-amber-600">{cenasHoy}</p>
-                <p className="text-gray-500 text-sm mt-1 font-medium">
+              <div className="rounded-2xl p-5 text-center text-white" style={{ background: "linear-gradient(135deg, #92400e, #f59e0b)" }}>
+                <p className="text-3xl font-bold">{cenasHoy}</p>
+                <p className="text-white/80 text-sm mt-1 font-medium">
                   🌙 Cenas Hoy
                 </p>
               </div>
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 text-center">
-                <p className="text-3xl font-bold text-purple-600">{ocupacionHoy}%</p>
-                <p className="text-gray-500 text-sm mt-1 font-medium">
+              <div className="rounded-2xl p-5 text-center text-white" style={{ background: "linear-gradient(135deg, #7c3aed, #a78bfa)" }}>
+                <p className="text-3xl font-bold">{ocupacionHoy}%</p>
+                <p className="text-white/80 text-sm mt-1 font-medium">
                   📈 Ocupación
                 </p>
               </div>
@@ -344,10 +286,10 @@ export default function DashboardPage() {
                     {ultimos7Dias
                       .slice()
                       .reverse()
-                      .map((d) => (
+                      .map((d, idx) => (
                         <tr
                           key={d.fecha}
-                          className="border-b border-gray-50 hover:bg-gray-50 transition-colors"
+                          className={`border-b border-gray-50 hover:bg-gray-50 transition-colors ${idx % 2 === 0 ? "bg-white" : "bg-gray-50/50"}`}
                         >
                           <td className="py-3 px-4 font-semibold text-gray-800">
                             {d.fecha === todayStr
@@ -415,7 +357,7 @@ export default function DashboardPage() {
             </div>
           </>
         )}
-      </main>
-    </div>
+      </div>
+    </AdminLayout>
   );
 }

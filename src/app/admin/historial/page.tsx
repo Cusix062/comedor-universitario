@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import AdminLayout from "@/components/AdminLayout";
 import { cicloARomano } from "@/lib/ciclos";
 
 interface FormatoGuardado {
@@ -103,28 +104,8 @@ export default function HistorialPage() {
         }
       `}</style>
 
-      <div className="no-print min-h-screen bg-gray-50">
-        <header className="text-white shadow-lg" style={{ background: "linear-gradient(135deg, #0f172a, #1e293b)" }}>
-          <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center text-lg">
-                📚
-              </div>
-              <div>
-                <h1 className="text-lg font-bold">Historial de Formatos</h1>
-                <p className="text-gray-400 text-xs">Formatos guardados por fecha</p>
-              </div>
-            </div>
-            <button
-              onClick={() => router.push("/admin")}
-              className="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-xl text-sm font-medium transition"
-            >
-              ← Volver
-            </button>
-          </div>
-        </header>
-
-        <main className="max-w-6xl mx-auto p-4 space-y-5">
+      <AdminLayout>
+        <div className="space-y-5 max-w-6xl">
           <div className="grid md:grid-cols-3 gap-5">
             {/* Lista de formatos */}
             <div className="md:col-span-1 space-y-3">
@@ -280,8 +261,8 @@ export default function HistorialPage() {
               )}
             </div>
           </div>
-        </main>
-      </div>
+        </div>
+      </AdminLayout>
     </>
   );
 }

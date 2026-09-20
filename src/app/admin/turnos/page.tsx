@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import AdminLayout from "@/components/AdminLayout";
 
 interface Cupo {
   id: number;
@@ -251,28 +252,8 @@ export default function AdminTurnosPage() {
   const semanaLabels = ["Esta semana", "Próxima semana", "En 2 semanas"];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="text-white shadow-lg" style={{ background: "linear-gradient(135deg, #1e3a5f, #2563eb)" }}>
-        <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center text-lg">
-              📅
-            </div>
-            <div>
-              <h1 className="text-lg font-bold">Configurar Cupos</h1>
-              <p className="text-blue-200 text-xs">Panel de Administración</p>
-            </div>
-          </div>
-          <button
-            onClick={() => router.push("/admin")}
-            className="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-xl transition text-sm font-medium"
-          >
-            ← Volver
-          </button>
-        </div>
-      </header>
-
-      <main className="max-w-6xl mx-auto p-4 space-y-5">
+    <AdminLayout>
+      <div className="space-y-5 max-w-6xl">
         {mensaje && (
           <div className={`px-5 py-4 rounded-xl flex items-center gap-3 ${
             mensaje.startsWith("✅")
@@ -435,7 +416,7 @@ export default function AdminTurnosPage() {
             </div>
           ))}
         </div>
-      </main>
+      </div>
 
       {/* Modal Editar */}
       {modalEditar && (
@@ -754,6 +735,6 @@ export default function AdminTurnosPage() {
           </div>
         </div>
       )}
-    </div>
+    </AdminLayout>
   );
 }

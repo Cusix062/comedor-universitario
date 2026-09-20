@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import AdminLayout from "@/components/AdminLayout";
 
 interface Estudiante {
   id: number;
@@ -214,26 +215,8 @@ export default function SuspensionesPage() {
   const programados = suspendidos.filter((s) => s.fecha_inicio > hoy);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="text-white shadow-lg" style={{ background: "linear-gradient(135deg, #0f172a, #1e293b)" }}>
-        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center text-lg">🚫</div>
-            <div>
-              <h1 className="text-lg font-bold">Gestión de Suspensiones</h1>
-              <p className="text-gray-400 text-xs">Comedor Universitario</p>
-            </div>
-          </div>
-          <button
-            onClick={() => router.push("/admin")}
-            className="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-xl transition text-sm font-medium"
-          >
-            ← Volver
-          </button>
-        </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto p-4 space-y-5">
+    <AdminLayout>
+      <div className="space-y-5 max-w-7xl">
         {mensaje && (
           <div className="bg-green-50 border border-green-200 text-green-700 px-5 py-4 rounded-xl flex items-center gap-3">
             <span className="text-xl">✅</span>
@@ -249,17 +232,17 @@ export default function SuspensionesPage() {
 
         {/* Estadísticas */}
         <div className="grid grid-cols-3 gap-4">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 text-center">
-            <p className="text-3xl font-bold text-red-600">{activos.length}</p>
-            <p className="text-gray-500 text-sm mt-1 font-medium">🔴 Activas hoy</p>
+          <div className="rounded-2xl p-5 text-center text-white" style={{ background: "linear-gradient(135deg, #991b1b, #ef4444)" }}>
+            <p className="text-3xl font-bold">{activos.length}</p>
+            <p className="text-white/80 text-sm mt-1 font-medium">🔴 Activas hoy</p>
           </div>
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 text-center">
-            <p className="text-3xl font-bold text-amber-600">{programados.length}</p>
-            <p className="text-gray-500 text-sm mt-1 font-medium">🟡 Programadas</p>
+          <div className="rounded-2xl p-5 text-center text-white" style={{ background: "linear-gradient(135deg, #92400e, #f59e0b)" }}>
+            <p className="text-3xl font-bold">{programados.length}</p>
+            <p className="text-white/80 text-sm mt-1 font-medium">🟡 Programadas</p>
           </div>
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 text-center">
-            <p className="text-3xl font-bold text-gray-600">{suspendidos.length}</p>
-            <p className="text-gray-500 text-sm mt-1 font-medium">📋 Total activas</p>
+          <div className="rounded-2xl p-5 text-center text-white" style={{ background: "linear-gradient(135deg, #475569, #94a3b8)" }}>
+            <p className="text-3xl font-bold">{suspendidos.length}</p>
+            <p className="text-white/80 text-sm mt-1 font-medium">📋 Total activas</p>
           </div>
         </div>
 
@@ -441,7 +424,7 @@ export default function SuspensionesPage() {
             )}
           </div>
         </div>
-      </main>
+      </div>
 
       {/* Modal de edición */}
       {editando && (
@@ -526,6 +509,6 @@ export default function SuspensionesPage() {
           </div>
         </div>
       )}
-    </div>
+    </AdminLayout>
   );
 }
