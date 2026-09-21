@@ -17,6 +17,10 @@ const securityHeaders = [
   { key: "X-XSS-Protection", value: "1; mode=block" },
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
   { key: "Content-Security-Policy", value: ContentSecurityPolicy },
+  { key: "Access-Control-Allow-Origin", value: "https://comedor-universitario-brown.vercel.app" },
+  { key: "Access-Control-Allow-Methods", value: "GET, POST, PUT, DELETE, OPTIONS" },
+  { key: "Access-Control-Allow-Headers", value: "Content-Type, Authorization" },
+  { key: "Access-Control-Allow-Credentials", value: "true" },
 ];
 
 const nextConfig: NextConfig = {
