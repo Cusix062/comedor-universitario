@@ -1,14 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDbAsync } from "@/lib/db";
 import { calcularCiclo } from "@/lib/ciclos";
-import { requireAuth } from "@/lib/security";
 import { withRateLimit } from "@/lib/api-helpers";
 
 export const GET = withRateLimit(async (req: NextRequest) => {
   try {
-    const auth = await requireAuth();
-    if (!auth.authorized) return auth.response;
-
     const { searchParams } = new URL(req.url);
     const codigo = searchParams.get("codigo");
 

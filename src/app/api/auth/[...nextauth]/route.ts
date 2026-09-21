@@ -31,7 +31,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           ).run(codigo, user.name || codigo, user.email, cicloCalculado, "");
         }
       } catch (e) {
-        console.error("Error creando estudiante:", e);
+        console.error("Error creando estudiante (no bloqueante):", e);
       }
       return true;
     },
