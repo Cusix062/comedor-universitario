@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimit } from "@/lib/rate-limit";
 
-type RouteHandler = (req: NextRequest) => Promise<NextResponse>;
+type RouteHandler = (req: NextRequest) => Promise<NextResponse | undefined>;
 
 function withRateLimit(handler: RouteHandler, maxRequests = 60, windowMs = 60000): RouteHandler {
   return async (req: NextRequest) => {

@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDbAsync } from "@/lib/db";
 import { getCicloNumero } from "@/lib/ciclos";
+import { requireAdmin } from "@/lib/security";
 
 const API_URL = "https://sivireno.undc.edu.pe/tiger/consulta/con_searchEstudiante.php";
 
 export async function GET(req: NextRequest) {
+  const auth = await requireAdmin();
+  if (!auth.authorized) return auth.response;
   try {
     const { searchParams } = new URL(req.url);
     const busqueda = searchParams.get("q") || "";
@@ -115,6 +118,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const auth = await requireAdmin();
+  if (!auth.authorized) return auth.response;
   try {
     const { estudiante_id, tipo, fecha_inicio, fecha_fin, motivo } = await req.json();
 
@@ -158,6 +163,8 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
+  const auth = await requireAdmin();
+  if (!auth.authorized) return auth.response;
   try {
     const { id, tipo, fecha_inicio, fecha_fin, motivo } = await req.json();
 
@@ -207,6 +214,8 @@ export async function PUT(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  const auth = await requireAdmin();
+  if (!auth.authorized) return auth.response;
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");

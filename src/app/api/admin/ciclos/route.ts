@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
 import { getDbAsync } from "@/lib/db";
 import { calcularCiclo } from "@/lib/ciclos";
+import { requireAdmin } from "@/lib/security";
 
 export async function POST() {
+  const auth = await requireAdmin();
+  if (!auth.authorized) return auth.response;
   try {
     const db = await getDbAsync();
 
@@ -50,6 +53,8 @@ export async function POST() {
 }
 
 export async function GET() {
+  const auth = await requireAdmin();
+  if (!auth.authorized) return auth.response;
   try {
     const db = await getDbAsync();
 

@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDbAsync } from "@/lib/db";
+import { requireAdmin } from "@/lib/security";
 
 export async function GET(req: NextRequest) {
+  const auth = await requireAdmin();
+  if (!auth.authorized) return auth.response;
   try {
     const { searchParams } = new URL(req.url);
     const fecha = searchParams.get("fecha");
@@ -26,6 +29,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const auth = await requireAdmin();
+  if (!auth.authorized) return auth.response;
   try {
     const { fecha, tipo, capacidad, cantidad_inscritos, inscritos_json } = await req.json();
 
@@ -52,6 +57,8 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  const auth = await requireAdmin();
+  if (!auth.authorized) return auth.response;
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");

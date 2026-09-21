@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDbAsync } from "@/lib/db";
 import { enviarReporteTurno } from "@/lib/telegram";
+import { requireAdmin } from "@/lib/security";
 
 export async function POST(req: NextRequest) {
+  const auth = await requireAdmin();
+  if (!auth.authorized) return auth.response;
   try {
     const { fecha, turno } = await req.json();
     const fechaConsulta = fecha || new Date().toISOString().split("T")[0];

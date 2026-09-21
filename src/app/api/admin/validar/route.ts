@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDbAsync } from "@/lib/db";
 import { logAccion } from "@/lib/audit";
+import { requireAdmin } from "@/lib/security";
 
 // Renumerar inscripciones de un cupo (sin huecos)
 async function renumerar(db: any, cupo_id: number) {
@@ -16,6 +17,8 @@ async function renumerar(db: any, cupo_id: number) {
 }
 
 export async function GET(req: NextRequest) {
+  const auth = await requireAdmin();
+  if (!auth.authorized) return auth.response;
   try {
     const { searchParams } = new URL(req.url);
     const cupo_id = searchParams.get("cupo_id");
@@ -50,6 +53,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
+  const auth = await requireAdmin();
+  if (!auth.authorized) return auth.response;
   try {
     const { inscripcion_id, accion } = await req.json();
 
@@ -87,6 +92,8 @@ export async function PUT(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  const auth = await requireAdmin();
+  if (!auth.authorized) return auth.response;
   try {
     const { searchParams } = new URL(req.url);
     const inscripcion_id = searchParams.get("id");

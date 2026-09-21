@@ -4,8 +4,6 @@ import { useState, useEffect } from "react";
 import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
-const ADMIN_EMAIL = "jairecusi@gmail.com";
-
 export default function LoginPage() {
   const { data: session, status } = useSession();
   const [error, setError] = useState("");
@@ -13,8 +11,9 @@ export default function LoginPage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (status === "authenticated" && session?.user?.email) {
-      if (session.user.email === ADMIN_EMAIL) {
+    if (status === "authenticated" && session?.user) {
+      const isAdmin = (session.user as any).isAdmin;
+      if (isAdmin) {
         router.push("/admin");
       } else {
         router.push("/registro");

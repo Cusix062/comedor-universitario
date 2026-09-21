@@ -3,7 +3,7 @@ import Google from "next-auth/providers/google";
 import { getDbAsync } from "@/lib/db";
 import { getCicloNumero } from "@/lib/ciclos";
 
-const ADMIN_EMAIL = "jairecusi@gmail.com";
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "jairecusi@gmail.com";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -16,13 +16,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async signIn({ user, account }) {
       if (!user.email) return false;
 
-      // Admin: solo correo autorizado
       if (user.email === ADMIN_EMAIL) return true;
 
-      // Estudiantes: solo @undc.edu.pe
       if (!user.email.endsWith("@undc.edu.pe")) return false;
 
-      // Auto-crear estudiante en BD con ciclo calculado
       try {
         const codigo = user.email.split("@")[0];
         const db = await getDbAsync();
@@ -41,13 +38,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async session({ session, token }) {
       if (session.user) {
         (session.user as any).id = token.sub;
-        (session.user as any).isAdmin = session.user.email === ADMIN_EMAIL;
+        (session.user as any).isAdmin = token.email === ADMIN_EMAIL;
       }
       return session;
     },
     async redirect({ url, baseUrl }) {
-      // Después del login, redirigir según el tipo de usuario
-      // Si viene del callback de Google, redirigir a la página principal
       if (url === baseUrl || url === `${baseUrl}/`) {
         return `${baseUrl}/`;
       }

@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDbAsync } from "@/lib/db";
+import { requireAdmin } from "@/lib/security";
 
 export async function GET(req: NextRequest) {
+  const auth = await requireAdmin();
+  if (!auth.authorized) return auth.response;
   try {
     const { searchParams } = new URL(req.url);
     const limit = parseInt(searchParams.get("limit") || "100", 10);

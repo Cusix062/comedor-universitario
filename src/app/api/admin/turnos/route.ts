@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDbAsync } from "@/lib/db";
 import { logAccion } from "@/lib/audit";
+import { requireAdmin } from "@/lib/security";
 
 export async function GET() {
+  const auth = await requireAdmin();
+  if (!auth.authorized) return auth.response;
   try {
     const db = await getDbAsync();
     const cupos = await db.prepare(
@@ -15,6 +18,8 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const auth = await requireAdmin();
+  if (!auth.authorized) return auth.response;
   try {
     const { fecha, almuerzo_capacidad, cena_capacidad } = await req.json();
 
@@ -70,6 +75,8 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
+  const auth = await requireAdmin();
+  if (!auth.authorized) return auth.response;
   try {
     const { id, capacidad, estado } = await req.json();
 
@@ -102,6 +109,8 @@ export async function PUT(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  const auth = await requireAdmin();
+  if (!auth.authorized) return auth.response;
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");

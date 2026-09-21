@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDbAsync } from "@/lib/db";
+import { requireAuth } from "@/lib/security";
+import { withRateLimit } from "@/lib/api-helpers";
 
-export async function GET(req: NextRequest) {
+export const GET = withRateLimit(async (req: NextRequest) => {
   try {
+    const auth = await requireAuth();
+    if (!auth.authorized) return auth.response;
+
     const { searchParams } = new URL(req.url);
     const codigo = searchParams.get("codigo");
 
@@ -32,4 +37,4 @@ export async function GET(req: NextRequest) {
     console.error("Error al obtener historial:", error);
     return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
   }
-}
+});

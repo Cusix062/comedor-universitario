@@ -103,14 +103,6 @@ async function getDbTurso(): Promise<any> {
     );
   `);
 
-  const adminResult = await client.execute({ sql: "SELECT id FROM admins WHERE usuario = ?", args: ["admin"] });
-  if (adminResult.rows.length === 0) {
-    await client.execute({
-      sql: "INSERT INTO admins (usuario, password_hash, nombre) VALUES (?, ?, ?)",
-      args: ["admin", "Chester2006@", "Administrador General"],
-    });
-  }
-
   const countResult = await client.execute("SELECT COUNT(*) as total FROM beneficiarios");
   if (Number(countResult.rows[0].total) === 0) {
     const jsonPath = path.join(process.cwd(), "data", "beneficiarios.json");
@@ -221,12 +213,6 @@ function initSchemaSync(database: any) {
     CREATE INDEX IF NOT EXISTS idx_suspenciones_fechas ON suspenciones(fecha_inicio, fecha_fin);
   `);
 
-  const adminExists = database.prepare("SELECT id FROM admins WHERE usuario = ?").get("admin");
-  if (!adminExists) {
-    database.prepare("INSERT INTO admins (usuario, password_hash, nombre) VALUES (?, ?, ?)").run(
-      "admin", "Chester2006@", "Administrador General"
-    );
-  }
 }
 
 function loadBeneficiariosSync(database: any) {

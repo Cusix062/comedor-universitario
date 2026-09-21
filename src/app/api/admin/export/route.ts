@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDbAsync } from "@/lib/db";
 import * as XLSX from "xlsx";
+import { requireAdmin } from "@/lib/security";
 
 export async function GET(req: NextRequest) {
+  const auth = await requireAdmin();
+  if (!auth.authorized) return auth.response;
   try {
     const { searchParams } = new URL(req.url);
     const fecha = searchParams.get("fecha") || new Date().toISOString().split("T")[0];

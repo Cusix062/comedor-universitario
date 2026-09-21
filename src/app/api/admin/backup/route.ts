@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { getDbAsync } from "@/lib/db";
+import { requireAdmin } from "@/lib/security";
 
 export async function GET() {
+  const auth = await requireAdmin();
+  if (!auth.authorized) return auth.response;
   try {
     const db = await getDbAsync();
 

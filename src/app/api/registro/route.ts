@@ -3,9 +3,17 @@ import { esBeneficiario, getDbAsync } from "@/lib/db";
 import { getCicloNumero } from "@/lib/ciclos";
 import { withRateLimit } from "@/lib/api-helpers";
 import { enviarReporteTurno } from "@/lib/telegram";
+import { requireAuth } from "@/lib/security";
 
 export const POST = withRateLimit(async (req: NextRequest) => {
   try {
+    const auth = await requireAuth();
+    if (!auth.authorized) return auth.response;
+
+    if (!auth.session?.user?.email?.endsWith("@undc.edu.pe")) {
+      return NextResponse.json({ error: "Solo estudiantes UNDC pueden registrarse" }, { status: 403 });
+    }
+
     const { estudiante_id, cupo_id, codigo, nombre, correo } = await req.json();
 
     if (!cupo_id) {
