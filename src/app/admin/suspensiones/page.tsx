@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import AdminLayout from "@/components/AdminLayout";
 
 interface Estudiante {
@@ -32,7 +31,6 @@ export default function SuspensionesPage() {
   const [cargando, setCargando] = useState(false);
   const [mensaje, setMensaje] = useState("");
   const [error, setError] = useState("");
-  const router = useRouter();
 
   const [estudianteSel, setEstudianteSel] = useState<Estudiante | null>(null);
   const [tipoSuspension, setTipoSuspension] = useState<"almuerzo" | "cena" | "ambos">("ambos");
@@ -47,21 +45,8 @@ export default function SuspensionesPage() {
   const [editMotivo, setEditMotivo] = useState("");
 
   useEffect(() => {
-    const adminSession = localStorage.getItem("admin_session");
-    const googleAdmin = localStorage.getItem("google_admin_session");
-    if (!adminSession && !googleAdmin) {
-      fetch("/api/auth/session").then(r => r.json()).then(session => {
-        if (session?.user?.isAdmin) {
-          localStorage.setItem("google_admin_session", "true");
-          cargarSuspendidos();
-        } else {
-          router.push("/");
-        }
-      }).catch(() => router.push("/"));
-      return;
-    }
     cargarSuspendidos();
-  }, [router]);
+  }, []);
 
   useEffect(() => {
     if (busqueda.length < 2) {

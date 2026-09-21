@@ -1,33 +1,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import AdminLayout from "@/components/AdminLayout";
 
 export default function BackupPage() {
   const [lastBackup, setLastBackup] = useState<string | null>(null);
   const [descargando, setDescargando] = useState(false);
-  const router = useRouter();
 
   useEffect(() => {
-    const adminSession = localStorage.getItem("admin_session");
-    const googleAdmin = localStorage.getItem("google_admin_session");
-    if (!adminSession && !googleAdmin) {
-      fetch("/api/auth/session")
-        .then((r) => r.json())
-        .then((session) => {
-          if (session?.user?.isAdmin) {
-            localStorage.setItem("google_admin_session", "true");
-          } else {
-            router.push("/");
-          }
-        })
-        .catch(() => router.push("/"));
-    }
-
     const saved = localStorage.getItem("last_backup_time");
     if (saved) setLastBackup(saved);
-  }, [router]);
+  }, []);
 
   const descargarBackup = async () => {
     setDescargando(true);

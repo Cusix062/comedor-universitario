@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import AdminLayout from "@/components/AdminLayout";
 import {
   BarChart,
@@ -39,27 +38,10 @@ export default function DashboardPage() {
     new Date().toISOString().split("T")[0]
   );
   const [inscritosHoy, setInscritosHoy] = useState<any[]>([]);
-  const router = useRouter();
 
   useEffect(() => {
-    const adminSession = localStorage.getItem("admin_session");
-    const googleAdmin = localStorage.getItem("google_admin_session");
-    if (!adminSession && !googleAdmin) {
-      fetch("/api/auth/session")
-        .then((r) => r.json())
-        .then((session) => {
-          if (session?.user?.isAdmin) {
-            localStorage.setItem("google_admin_session", "true");
-            fetchStats();
-          } else {
-            router.push("/");
-          }
-        })
-        .catch(() => router.push("/"));
-      return;
-    }
     fetchStats();
-  }, [router]);
+  }, []);
 
   const fetchStats = async () => {
     setCargando(true);

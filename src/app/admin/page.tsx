@@ -1,8 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { useSession, signOut } from "next-auth/react";
 import PDFReport from "@/components/PDFReport";
 import AdminLayout from "@/components/AdminLayout";
 
@@ -10,24 +8,10 @@ export default function AdminPage() {
   const [fecha, setFecha] = useState(new Date().toISOString().split("T")[0]);
   const [inscritos, setInscritos] = useState<any[]>([]);
   const [cargando, setCargando] = useState(false);
-  const router = useRouter();
 
   useEffect(() => {
-    const adminSession = localStorage.getItem("admin_session");
-    const googleAdmin = localStorage.getItem("google_admin_session");
-    if (!adminSession && !googleAdmin) {
-      fetch("/api/auth/session").then(r => r.json()).then(session => {
-        if (session?.user?.isAdmin) {
-          localStorage.setItem("google_admin_session", "true");
-          fetchInscritos();
-        } else {
-          router.push("/");
-        }
-      }).catch(() => router.push("/"));
-      return;
-    }
     fetchInscritos();
-  }, [router, fecha]);
+  }, [fecha]);
 
   const fetchInscritos = async () => {
     setCargando(true);

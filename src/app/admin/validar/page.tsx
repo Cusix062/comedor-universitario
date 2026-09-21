@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
 import PDFReport from "@/components/PDFReport";
 import AdminLayout from "@/components/AdminLayout";
 
@@ -17,27 +16,10 @@ export default function ValidarPage() {
   const [filtroCiclo, setFiltroCiclo] = useState("todos");
   const [filtroEstado, setFiltroEstado] = useState("todos");
   const inputRef = useRef<HTMLInputElement>(null);
-  const router = useRouter();
 
   useEffect(() => {
-    const adminSession = localStorage.getItem("admin_session");
-    const googleAdmin = localStorage.getItem("google_admin_session");
-    if (!adminSession && !googleAdmin) {
-      fetch("/api/auth/session")
-        .then((r) => r.json())
-        .then((session) => {
-          if (session?.user?.isAdmin) {
-            localStorage.setItem("google_admin_session", "true");
-            fetchInscritos();
-          } else {
-            router.push("/");
-          }
-        })
-        .catch(() => router.push("/"));
-      return;
-    }
     fetchInscritos();
-  }, [router, fecha]);
+  }, [fecha]);
 
   const fetchInscritos = async () => {
     setCargando(true);

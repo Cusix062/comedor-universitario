@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import AdminLayout from "@/components/AdminLayout";
 
 interface Cupo {
@@ -42,24 +41,10 @@ export default function AdminTurnosPage() {
   const [capAlmuerzoGen, setCapAlmuerzoGen] = useState(30);
   const [capCenaGen, setCapCenaGen] = useState(30);
   const [diaSeleccionado, setDiaSeleccionado] = useState(0);
-  const router = useRouter();
 
   useEffect(() => {
-    const adminSession = localStorage.getItem("admin_session");
-    const googleAdmin = localStorage.getItem("google_admin_session");
-    if (!adminSession && !googleAdmin) {
-      fetch("/api/auth/session").then(r => r.json()).then(session => {
-        if (session?.user?.isAdmin) {
-          localStorage.setItem("google_admin_session", "true");
-          fetchCupos();
-        } else {
-          router.push("/");
-        }
-      }).catch(() => router.push("/"));
-      return;
-    }
     fetchCupos();
-  }, [router]);
+  }, []);
 
   useEffect(() => {
     generarCalendario();

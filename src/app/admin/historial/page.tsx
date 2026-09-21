@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import AdminLayout from "@/components/AdminLayout";
 import { cicloARomano } from "@/lib/ciclos";
 
@@ -19,24 +18,10 @@ export default function HistorialPage() {
   const [formatos, setFormatos] = useState<FormatoGuardado[]>([]);
   const [seleccionado, setSeleccionado] = useState<FormatoGuardado | null>(null);
   const [inscritos, setInscritos] = useState<any[]>([]);
-  const router = useRouter();
 
   useEffect(() => {
-    const adminSession = localStorage.getItem("admin_session");
-    const googleAdmin = localStorage.getItem("google_admin_session");
-    if (!adminSession && !googleAdmin) {
-      fetch("/api/auth/session").then(r => r.json()).then(session => {
-        if (session?.user?.isAdmin) {
-          localStorage.setItem("google_admin_session", "true");
-          fetchFormatos();
-        } else {
-          router.push("/");
-        }
-      }).catch(() => router.push("/"));
-      return;
-    }
     fetchFormatos();
-  }, [router]);
+  }, []);
 
   const fetchFormatos = async () => {
     try {
