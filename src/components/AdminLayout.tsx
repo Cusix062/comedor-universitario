@@ -11,7 +11,6 @@ const navItems = [
   { icon: "📈", label: "Monitoreo", href: "/admin/monitoreo" },
   { icon: "📚", label: "Historial", href: "/admin/historial" },
   { icon: "🚫", label: "Suspensiones", href: "/admin/suspensiones" },
-  { icon: "📄", label: "Formato", href: "/admin/formato" },
   { icon: "📥", label: "Backup", href: "/admin/backup" },
 ];
 
@@ -23,7 +22,6 @@ const titles: Record<string, string> = {
   "/admin/monitoreo": "📈 Monitoreo",
   "/admin/historial": "📚 Historial",
   "/admin/suspensiones": "🚫 Suspensiones",
-  "/admin/formato": "📄 Formato",
   "/admin/backup": "📥 Backup",
 };
 
